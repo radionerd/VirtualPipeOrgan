@@ -424,6 +424,26 @@ float  keySupports(float x,float y, float length, float hw,float hb ){
 
 // Bracket to attach to music stand
 void bracket_h ( float x , float y ,float thickness ) {
+  for ( float i = 0 ; i < 80 ; i+=8 ) {
+    if ( i < 28 ) {
+      circle ( x+i+70,y+74,1.6); // round spacer washers for PCB mounting
+      circle ( x+i+70,y+74,4);
+    }
+    if ( i < 48 ) {
+      circle ( x+i+55,y+82,1.6); // round spacer washers for PCB mounting
+      circle ( x+i+55,y+82,4);
+    }
+    if ( i < 32 ) {
+      circle ( x+i+166,y+40,1.35); // round spacer washers for PCB mounting
+      circle ( x+i+166,y+40,4);    
+    }
+    if ( i < 56 ) {
+      circle ( x+i+145,y+48,1.35); // round spacer washers for PCB mounting
+      circle ( x+i+145,y+48,4);    
+    }
+    circle ( x+i+120,y+56,1.35); // round spacer washers for PCB mounting
+    circle ( x+i+120,y+56,4);    
+  }
   float w=70; // width of bracket foot
 
    /* 7, 
@@ -798,7 +818,7 @@ void cuttingPlan() {
   postamble();
 }
 
-
+// Invoke by typing make
 int main (int argc , char * argv[] ) {
   // internal dimensions in mm, revised for 9mm constant finger joint gap
   float thickness=9.36;

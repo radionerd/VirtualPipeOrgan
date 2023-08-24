@@ -1,11 +1,11 @@
 # This file contains the rules to generate virtual pipe organ enclosure drawings for laser cutting.
 # Type 'make' at the command line to generate and view the dxf files
 all:	test.dxf musicStand.dxf tray.dxf
-	librecad    test.dxf
+#	librecad    test.dxf
 #	librecad bracket.dxf
 #	librecad musicStand.dxf
 #	librecad keySupports.dxf
-#	librecad tray172.dxf
+	librecad tray172.dxf
 #	librecad tray308.dxf
 #	librecad tray444.dxf
 #	librecad cutting.dxf
