@@ -1,0 +1,7 @@
+for i in ButtonMountingBoard MidiInterfaceKS61 MidiInterfacePedalBoard PCMountButtonDriver WiredButtonDriver
+do
+ echo $i
+ mv GerberZips/$i.zip GerberZips/$i.zip.prev
+ zip GerberZips/$i.zip $i/Gerbers/*
+done
+
