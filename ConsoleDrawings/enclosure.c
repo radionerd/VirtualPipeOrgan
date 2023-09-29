@@ -280,7 +280,7 @@ void lcd (float cx, float cy ) {
 }
 
 void squareButton (float bx, float by , int rh_hole ){
-  float switch_mm = 17.0;
+  float switch_mm = 14.5;
   float fix = (25.4*1.1)/2;
   circle ( bx-fix, by, 1 ) ; // 2mm diameter screw holes        
   square ( bx, by, switch_mm/2.0 ) ; // 17mm wide squares
@@ -542,8 +542,10 @@ void tray(float length,float width,float rearHeight,float frontHeight,float thic
   circle(xsw + 37.5,ysw+147.0, kbd_screw_radius ); 
   circle(xsw +189.0,ysw+ 72.5, kbd_screw_radius ); 
   circle(xsw +189.0,ysw+147.0, kbd_screw_radius ); 
-  circle(xsw +384.0,ysw+ 72.5, kbd_screw_radius ); 
-  circle(xsw +384.0,ysw+147.0, kbd_screw_radius ); 
+  circle(xsw +326.5,ysw+ 72.5, 0.5              ); //Not fitted
+  circle(xsw +326.5,ysw+147.0, 0.5              ); //Not Fitted
+  circle(xsw +354.0,ysw+ 72.5, kbd_screw_radius ); //was 384 in error
+  circle(xsw +354.0,ysw+147.0, kbd_screw_radius ); //was 384 
   circle(xsw +491.0,ysw+ 72.5, kbd_screw_radius ); 
   circle(xsw +491.0,ysw+147.0, kbd_screw_radius ); 
   circle(xsw +671.0,ysw+ 72.5, kbd_screw_radius ); 
@@ -666,7 +668,7 @@ void tray(float length,float width,float rearHeight,float frontHeight,float thic
       line( max_x-200,max_y+90,max_x,max_y+90 );
       max_y += 90;
     break;
-    case 444 :
+    case 462 :
       float endClearance=2.54;
       preamble();
       for ( int i = 0 ; i < 3 ; i++ ) {
@@ -782,22 +784,18 @@ void cuttingPlan() {
   float margin = 10; // mm
   float cut = 10; //
   preamble();      
-  rectangle(0,0,1200,1200); // Draw blank material sheets
-  rectangle(1200,0,2400,1200);
+  rectangle(0,0,2400,1200); // Draw blank material sheet 1220x2440 or 4x1200x600
+  setColour(GREEN);
+  line ( 0,600,2400,600); // horizontal cut in half
+  line ( 1200,0,1200,1200); // vertical half cut
+  setColour(DEFAULT_COLOUR);
   text(1200-150, 1230,30 , "Cutting Plan");
 
-  panel(x,y,973.7,width= 403.7,margin,cut,"tray308");
-  y += width+margin*2+cut;
-
-  panel(x,y,873.7,width= 379.4,margin,cut,"MusicStand");
-  text(x+873.7+30,y+379.4/2,15 , "Test");
-  y += width+margin*2+cut;
-
-  panel(x1,y1,973.7,width= 563.9,margin,cut,"tray444");  
-  y1 += width+margin*2+cut;
-
-  panel(x1,1200-521.4,973.7,width=501.4,margin,cut,"tray172");
-  y1 += width+margin*2+cut; 
+  panel(x,y,973.7,width= 412.7,margin,cut,"trayII");
+  panel(x,1200-379.4-20,873.7,width= 379.4,margin,cut,"MusicStand");
+  text(x+873.7+30,1200-379.4/2,15 , "Test");
+  panel(x1,y1,973.7,width= 557.9,margin,cut,"trayI");  
+  panel(x1,1200-501.4-20,973.7,width=501.4,margin,cut,"trayIII");
 
 /*  panel(x1,y1,852,width=26.2,margin,cut,"KeySupports");
   y1 += width+margin*2+cut;  
@@ -805,16 +803,16 @@ void cuttingPlan() {
   panel(x1,y1,width=800,90,margin,cut,"Brackets");
   y1 += width+margin*2+cut; */
 
-  setColour(RED); // Left hand side
-  line ( 0,403.7+20+5,0+973.7+30+5,403.7+20+5); // Horizontal
-  line ( 0,403.7+379.4+40+15,1200/*0+973.7+30+5*/,403.7+379.4+40+15); // Horizontal
-  line ( 0+973.7+30+5,0,0+973.7+30+5,403.7+379.4+40+15); // Vertical
+//  setColour(RED); // Left hand side
+//  line ( 0,403.7+20+5,0+973.7+30+5,403.7+20+5); // Horizontal
+//  line ( 0,403.7+379.4+40+15,1200/*0+973.7+30+5*/,403.7+379.4+40+15); // Horizontal
+//  line ( 0+973.7+30+5,0,0+973.7+30+5,403.7+379.4+40+15); // Vertical
 
-  setColour (BLUE); // Right hand side
-  line (1200,600,1200+973.7+20+5 /*2400*/,600); // Short Half 
-  setColour(GREEN); 
+//  setColour (BLUE); // Right hand side
+//  line (1200,600,1200+973.7+20+5 /*2400*/,600); // Short Half 
+//  setColour(GREEN); 
   //line(1200,539.7+20+5,1200+973.7+20+5,539.7+20+5); // Horizontal
-  line ( 1200+973.7+20+5,0,1200+973.7+20+5,1200 ); // Vertical
+//  line ( 1200+973.7+20+5,0,1200+973.7+20+5,1200 ); // Vertical
   postamble();
 }
 
@@ -822,7 +820,7 @@ void cuttingPlan() {
 int main (int argc , char * argv[] ) {
   // internal dimensions in mm, revised for 9mm constant finger joint gap
   float thickness=9.36;
-  thickness=9.0;
+  // thickness=9.0; 
   float length=855.0; // 95*9=855
   float width = -1.0; // set by argv[1] 117.0+thickness+134.0=254 round up 30*9=270 (was 254)
   float rearHeight=50.0; // internal
