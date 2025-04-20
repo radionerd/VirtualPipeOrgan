@@ -537,21 +537,25 @@ void tray(float length,float width,float rearHeight,float frontHeight,float thic
   line  (xne+thickness,yne+rearHeight/2+thickness,xne+rearHeight+thickness,yne+rearHeight/2+thickness); // split spacer
 
   // Base Keyboard Mounting holes
+  {
   float kbd_screw_radius = 2.0;
-  circle(xsw + 37.5,ysw+ 72.5, kbd_screw_radius ); 
-  circle(xsw + 37.5,ysw+147.0, kbd_screw_radius ); 
-  circle(xsw +189.0,ysw+ 72.5, kbd_screw_radius ); 
-  circle(xsw +189.0,ysw+147.0, kbd_screw_radius ); 
-  circle(xsw +326.5,ysw+ 72.5, 0.5              ); //Not fitted
-  circle(xsw +326.5,ysw+147.0, 0.5              ); //Not Fitted
-  circle(xsw +354.0,ysw+ 72.5, kbd_screw_radius ); //was 384 in error
-  circle(xsw +354.0,ysw+147.0, kbd_screw_radius ); //was 384 
-  circle(xsw +491.0,ysw+ 72.5, kbd_screw_radius ); 
-  circle(xsw +491.0,ysw+147.0, kbd_screw_radius ); 
-  circle(xsw +671.0,ysw+ 72.5, kbd_screw_radius ); 
-  circle(xsw +671.0,ysw+147.0, kbd_screw_radius ); 
-  circle(xsw +836.0,ysw+ 72.5, kbd_screw_radius ); 
-  circle(xsw +836.0,ysw+147.0, kbd_screw_radius ); 
+    float y1 = 73.5; // was  72.5 recess kbd by 1mm more to clear front button pcb & screws
+    float y2 = 148.0;// was 147.0
+    circle(xsw + 37.5,ysw + y1, kbd_screw_radius ); 
+    circle(xsw + 37.5,ysw + y2, kbd_screw_radius ); 
+    circle(xsw +189.0,ysw + y1, kbd_screw_radius ); 
+    circle(xsw +189.0,ysw + y2, kbd_screw_radius ); 
+    circle(xsw +326.5,ysw + y1, 0.5              ); //Not fitted
+    circle(xsw +326.5,ysw + y2, 0.5              ); //Not Fitted
+    circle(xsw +354.0,ysw + y1, kbd_screw_radius ); //was 384 in error
+    circle(xsw +354.0,ysw + y2, kbd_screw_radius ); //was 384 
+    circle(xsw +491.0,ysw + y1, kbd_screw_radius ); 
+    circle(xsw +491.0,ysw + y2, kbd_screw_radius ); 
+    circle(xsw +671.0,ysw + y1, kbd_screw_radius ); 
+    circle(xsw +671.0,ysw + y2, kbd_screw_radius ); 
+    circle(xsw +836.0,ysw + y1, kbd_screw_radius ); 
+    circle(xsw +836.0,ysw + y2, kbd_screw_radius ); 
+  }
   
   // slot( xsw+130,ysw+160,xsw+170, ysw+160,10 ); // keyboard ribbon cable 139mm from rear panel
     
