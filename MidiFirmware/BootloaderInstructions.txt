@@ -1,0 +1,12 @@
+To install the bootloader into the STM32F103C8T6 using the stlink-gui tool in Linux
+
+1. Do not connect USB to STM32 board
+   Connect the STM32 board to the ST-LINK V2 programmer with a 4 way lead.
+   Be careful as pins mays be out of order.
+2. Install stlink-gui software: sudo apt install stlink-gui
+3. Plug the programmer into a USB port
+4. Start the stlink-gui
+5. Press Reset on the board and click the green connect button on the gui
+6. Click on 'No File' and select the generic_boot20_pc13.bin file to load and press the red flash button. 
+7. Disconnect the programmer before connecting the STM32 board to USB
+8. Use the Arduino IDE to upload VPO Console application into the STM32 using STM32duino bootloader upload method

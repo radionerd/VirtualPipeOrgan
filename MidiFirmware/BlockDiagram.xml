@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<indexing>
+ <object name="Shape 2" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 2">USB</paragraph>
+ <object name="Shape 3" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 3">Midi</paragraph>
+ <object name="Shape 1" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 1">HID / Keyboard</paragraph>
+ <object name="Shape 5" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 5">Serial</paragraph>
+ <object name="Shape 6" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 6">8 x 10 Matrix Scan</paragraph>
+ <object name="Shape 7" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 7">Shift Reg I/F</paragraph>
+ <object name="Shape 8" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 8">I2C</paragraph>
+ <object name="Shape 9" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 9">ADC x 8</paragraph>
+ <object name="Shape 4" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 4">16x2 LCD Display</paragraph>
+ <object name="Shape 10" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 10">16x2 LCD Display</paragraph>
+ <object name="Shape 11" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 11">Shift</paragraph>
+ <paragraph index="1" node_type="common" object_name="Shape 11">Register</paragraph>
+ <paragraph index="2" node_type="common" object_name="Shape 11">IF to</paragraph>
+ <paragraph index="3" node_type="common" object_name="Shape 11">Illuminated</paragraph>
+ <paragraph index="4" node_type="common" object_name="Shape 11">Pushbuttons</paragraph>
+ <paragraph index="5" node_type="common" object_name="Shape 11">8 per s/r</paragraph>
+ <paragraph index="6" node_type="common" object_name="Shape 11">12 x s/r or</paragraph>
+ <paragraph index="7" node_type="common" object_name="Shape 11">More!</paragraph>
+ <object name="Shape 12" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 12">8 x 10+</paragraph>
+ <paragraph index="1" node_type="common" object_name="Shape 12">Scanned</paragraph>
+ <paragraph index="2" node_type="common" object_name="Shape 12">Diode Matrix</paragraph>
+ <paragraph index="3" node_type="common" object_name="Shape 12">For keyboard,</paragraph>
+ <paragraph index="4" node_type="common" object_name="Shape 12">Pedal board or</paragraph>
+ <paragraph index="5" node_type="common" object_name="Shape 12">Non-illuminated</paragraph>
+ <paragraph index="6" node_type="common" object_name="Shape 12">contacts</paragraph>
+ <object name="Vertical line 1" alt="" object_type="shape" description=""/>
+ <object name="Vertical line 2" alt="" object_type="shape" description=""/>
+ <object name="Line 1" alt="" object_type="shape" description=""/>
+ <object name="Vertical line 3" alt="" object_type="shape" description=""/>
+ <object name="Vertical line 4" alt="" object_type="shape" description=""/>
+ <object name="Vertical line 5" alt="" object_type="shape" description=""/>
+ <object name="Shape 13" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 13">Up to 8</paragraph>
+ <paragraph index="1" node_type="common" object_name="Shape 13">Potentiometers</paragraph>
+ <paragraph index="2" node_type="common" object_name="Shape 13">for</paragraph>
+ <paragraph index="3" node_type="common" object_name="Shape 13">expression pedals</paragraph>
+ <paragraph index="4" node_type="common" object_name="Shape 13">and</paragraph>
+ <paragraph index="5" node_type="common" object_name="Shape 13">other analogue</paragraph>
+ <paragraph index="6" node_type="common" object_name="Shape 13">controls</paragraph>
+ <paragraph index="7" node_type="common" object_name="Shape 13"></paragraph>
+ <object name="Vertical line 6" alt="" object_type="shape" description=""/>
+ <object name="Text Frame 1" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Text Frame 1">Up to</paragraph>
+ <paragraph index="1" node_type="common" object_name="Text Frame 1">8 Displays</paragraph>
+ <object name="Line 2" alt="" object_type="shape" description=""/>
+ <object name="Shape 14" alt="" object_type="shape" description=""/>
+ <paragraph index="0" node_type="common" object_name="Shape 14">STM32F103C8T6  Blue Pill</paragraph>
+</indexing>

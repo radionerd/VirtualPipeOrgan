@@ -1,0 +1,120 @@
+#ifndef __LCD_H
+#define __LCD_H
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include <Wire.h>
+#include <LiquidCrystal_PCF8574.h>
+#include "pin.h"
+#include "USBSerialUI.h"
+
+//LiquidCrystal_PCF8574 lcd(0x25);  // set the LCD i2c address for a 16 chars and 2 line display
+
+class LCD_N_C32 {
+  
+  public:
+  LCD_N_C32( char *msg16="VirtualPipeOrganI2C" ) {
+    if ( SUI.hasLCD() == 0 ) return;
+    if ( i2cCheck() ) {
+      if ( SUI.Cfg.Bits.hasEventLog )
+        CompositeSerial.println("LCD I2C Bus check fail");
+      return;
+    } else {
+      if ( SUI.Cfg.Bits.hasEventLog )
+        CompositeSerial.println("LCD I2C Bus check pass");      
+    }
+    if( msg16[0] ) {
+      char buff[80];
+      Wire.begin(1);
+      Wire.setClock(400000); // fast speed
+      for ( int i = 1 ; i < 128 ; i++ ) {
+        Wire.begin(1);
+        //Wire.setClock(400000); // fast speed
+        //sprintf(buff,"Wire.beginTransmission(%d);",i);
+        //CompositeSerial.println(buff);      
+        Wire.beginTransmission(i);
+        //CompositeSerial.println("Wire.endTransmission()");      
+        int error = Wire.endTransmission(false);
+        //sprintf(buff,"Wire.endTransmission(stop)==%d;", error );
+        //CompositeSerial.println(buff);              
+        if ( error == 0 ) {
+          char buff[80];
+          sprintf ( buff , "TextToOverwrite i2cAddress%2d x%02X",i,i);
+          if ( msg16 != NULL ) strncpy(buff,msg16,16);
+          write(i,buff);
+        }
+      }
+    }
+  }
+  int write(uint8_t LCDNumberLSB, char *buffer ) {
+      static int lastAddress;
+      if ( SUI.hasLCD() == 0 ) return 0;
+      if ( i2cCheck() ) return 1 ;
+      Wire.begin(1);
+      Wire.setClock(400000); // fast speed
+      Wire.beginTransmission(LCDNumberLSB);
+      delay(1);
+      int error = Wire.endTransmission();
+      if ( error ) {
+         char buff[80];
+         sprintf ( buff , "LCD[0x%02X] Error %d",LCDNumberLSB, error );
+         CompositeSerial.println(buff);
+      } else {
+         LiquidCrystal_PCF8574 lcd(LCDNumberLSB);  // set the LCD i2c address for a 16 chars and 2 line display
+         lcd.begin(16, 2, Wire);  // 7913us initialize the lcd  
+         lcd.setBacklight(255);
+         lcd.setCursor(0, 0);
+         char temp = buffer[16];
+         buffer[16] = 0;
+         lcd.print( buffer );   // 2096us
+         buffer[16] = temp;
+         lcd.setCursor(0, 1);
+         lcd.print(buffer+16);
+    }
+    return error; // 6.3ms 32 characters write Total with delays in library LiquidCrystal_PCF8574.begin() reduced to 200us each
+  }
+
+  // Return non-zero if i2c bus has slow rise time eg No pullup resistors
+  int i2cCheck( void ) {
+    int port = PB6;
+    int result;
+    int error = 0;
+    const int PB6_SCL_ID = 33;
+    const int PB7_SDA_ID = 34;
+    //Serial.print("Probing PB6 I2C Bus ");
+    pinMode(port,OUTPUT);
+    digitalWrite(port,0 );
+    pinMode(port,INPUT);
+    result = digitalRead(port);
+    if ( result == 0 ) { // check for short rise time on port
+      // LiveConfigs[PB6_SCL_ID].fault = '!';
+      SUI.setFault(PB6_SCL_ID,'!');
+      error = port;
+    }
+      
+    port = PB7;
+    //Serial.print("Probing PB7 I2C Bus ");
+    pinMode(port,OUTPUT);
+    digitalWrite(port,0 );
+    pinMode(port,INPUT);
+    result = digitalRead(port);
+    digitalWrite(port,1 );
+    if ( result == 0 ) {
+      SUI.setFault(PB7_SDA_ID,'!');
+      // LiveConfigs[PB7_SDA_ID].fault = '!';
+      error = port;
+    }
+    return error;
+  }
+
+};
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __LCD_H */

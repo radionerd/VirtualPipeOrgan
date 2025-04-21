@@ -1,0 +1,3 @@
+Defines for GPIO, ADC & Timer
+Arduino/hardware/Arduino_STM32/STM32F1/variants/generic_stm32f103c/board.cpp
+Arduino/hardware/Arduino_STM32/STM32F1/variants/generic_stm32f103c/board/board.h
