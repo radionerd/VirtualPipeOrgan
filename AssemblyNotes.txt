@@ -1,0 +1,36 @@
+MDF
+1.✓ Adjust lengths of trays in makefile I+=18, II+=9?
+   ✓ Adjust button size in enclosure.c to current
+2.✓ BaseBoard Move/Add one pair of mounting holes
+PCB Assembly
+Button mounting board. 
+3. ✓ Add version number V1.1 to silk screen 
+4. ✓ J3 Label SW -> 0V, LED->SW
+    ✓ J1 Label LED -> 0V
+    ✓ Add centre line to Front silk screen
+   Consider optional 3mm LED
+    ✓ Trim 0.5mm from bottom board edge
+   Consider 3xButton board for $2
+5. Counter sink mounting holes if required to clear KS61 white keys.
+6. mount buttons spaced off board by 1.6mm if required.
+7. Create Dual button mounting board
+8. KS61 Midi Interface 
+   Cut 40 way socket strip 19/20. 19 way connector leaves VB unconnected.
+   Bottom silk screen
+    ✓ Reverse PB10 & PB12 on Buttons connector, Mark Pin 1
+    ✓ Re-arrange GPIO Data output to common PB7 SDA
+9. PC Button & LED Driver V1.0 
+   Consider solder bridge to omit Qa1, or delete Qa1 & assoc components if not reqd
+   Mark pin 1 on input and output connectors, maybe 0V,5V as well, top & bottom
+10.When assembly is complete and tested use hot melt glue to secure keyboard connectors
+Display Panel
+    Stand buttons off button mounting board so that leads do not protrude though PCB back.
+    PCBs mount flush to panel. Solder connectors after screwing pcbs to mdf
+11. Cut recess for LCD backlight. A 12mm forstner bit and 1/4" chisel worked well
+    Lightly sand edges of 7 seg display and LCD if reqd to fit
+Division Piston Panel
+    PCBs mount flush to panel. Solder connectors after screwing pcbs to mdf
+12. Make 4-way joiners for extending lcd leads.
+13. If LCD and Buttons do not work, but do work with 7 segment display disconnected
+    Remove 7 segment display filter capacitors
+    https://github.com/bxparks/AceSegment/blob/develop/docs/tm1637/capacitor_removal.md
