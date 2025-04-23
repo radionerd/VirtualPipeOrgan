@@ -13,7 +13,7 @@ This project was conceived to connect controls to Virtual Pipe Organ software su
 - Multiple STM32 boards may be deployed to ease wiring or increase capacity
 - 128 scanned contacts arranged as a 16 input x 8 output diode switch matrix
 - Contacts may send Midi Note On/Off messages for pedalboard, stops, couplers or toe pistons
-- Contacts may instead send Keyboard HID messages for turning music pages displayed on a host computer monitor
+- Contacts may instead send QWERTY Keyboard HID messages for turning music pages displayed on a host computer monitor
 - Page turning may use a single sustain pedal type contact e.g. short press forward, long press back.
 - Contacts and potentiometers are individually debounced for 50ms to reduce message floods
 - Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 22.04 X86 & Arm Linux
