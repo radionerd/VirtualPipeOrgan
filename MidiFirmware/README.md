@@ -5,7 +5,7 @@
 This project was conceived to connect controls to Virtual Pipe Organ software such as Hauptwerk, GrandOrgue, Cecilia etc running on a touch screen laptop. The design uses an inexpensive microcontroller board with few external components. Flexibility is the main motivation as I started with little Midi or VPO experience. This project may work for you too. Let me know how you get on and whether improvements should be made.
 ## Block Diagram
 
-<img src="BlockDiagram.png" style="height: 446px; width:580px;"/>
+<img src="BlockDiagramTBG.png" style="height: 446px; width:580px;"/>
 
 ## Features
 - Hosted on the STM32 Blue Pill, a $2US development board
