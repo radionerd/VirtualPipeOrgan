@@ -26,33 +26,35 @@ class USBSerialUI {
     };
     Image ShiftRegImage[128];
     const int Octave = 12; // half steps
-
+    const int MAX_15 = 15;
+    const int MAX_8  =  8;
+    const int MAX_1  =  1;
 
     struct ConfigItem {
       int maxval;
       char *text;
     } ;
-
+   
 
     ConfigItem const ConfigItems[11] = {
-      { 15, "Keyboard Midi Channel"},  // A
-      { 10, "Number of ADC Inputs"}, // B
-      {  1, "Pedal Board"} ,         // C
-      {  1, "PCF8574 LCDs 16x2 I2C" }, // D
-      {  1, "TM1637 6 Digit,7 Segment Display" }, // E
-      {  1, "Shift Register Based Buttons & LEDs"}, // F
-      {  1, "Shift Register LED invert", },  // G
-      {  1, "Use PC13 as scan output and LED"},  // H
-      {  1, "Use Boot 1, and Debug Connector as Outputs PB2,PA13,PA14"}, // I
-      {  1, "Event Log to USB Serial (may slow response time)"}, // J
+      { MAX_15, "Key/Pedal Midi Channel"},  // A
+      { MAX_1, "Pedalboard (Enables ADC & WS8212 LED strip)"} ,//B
+      { MAX_8, "  Number of ADC Inputs PA2-PB1"}, // C
+      { MAX_1, "  WS2812 LED strip PB1"} ,//D     
+      { MAX_1, "PCF8574 I2C LCDs 16x2" }, //E
+      { MAX_1, "TM1637 7 segment, 6 digit display" }, // F
+      { MAX_1, "74HC164 Shift register LED buttons"}, // G
+      { MAX_1, "74HC164 Shift register LED invert", },  // H
+      { MAX_1, "Use Boot 1, and Debug Connector as Outputs PB2,PA13,PA14"}, // I
+      { MAX_1, "Event Log to USB Serial (may slow response time)"}, // J
       {  0, "" }
     };
-    const char *function_text[27] = {
+    const char *function_text[28] = {
       "Spare",
       "", // Reserved
       "OP_LED",
-      "OP_SCAN",
-      "ScanInput",
+      "Scan Out",
+      "Scan In ",
       "IP_ADC ",
       "IP_ADC_LED_DIM",
       "OP_SR_CLOCK",
@@ -63,8 +65,8 @@ class USBSerialUI {
       "TM1637_DA",
       "CommonData",
       "IP_CONTACT",
-      "I2C_SDA", // I2C_SDA"
-      "I2C_SCL",
+      "Share I2C_SDA",
+      "LCD   I2C_SCL",
       "USB-",
       "USB+",
       "V5",
@@ -74,7 +76,8 @@ class USBSerialUI {
       "SWCLK",
       "SWDIO",
       "BOOT1",
-      "NRST"
+      "NRST",
+      "WS2812 LEDs"
     };
 
     typedef struct GPIOPinConfig {
@@ -102,13 +105,13 @@ class USBSerialUI {
 
       struct {
         unsigned midiChannelOffset : 4; // A  4
-        unsigned numberADCInputs : 4;   // B  8
-        unsigned hasPedalBoard : 1;     // C  9
-        unsigned hasI2C: 1;             // D 10
-        unsigned hasTM1637 : 1;         // E 11
-        unsigned hasShiftRegs: 1;       // F 12
-        unsigned hasShiftRegLEDInvert:1;// G 13
-        unsigned hasPC13Scan: 1;        // H 14
+        unsigned hasPedalBoard : 1;     // B  5
+        unsigned numberADCInputs : 4;   // C  9
+        unsigned hasWS2812: 1;          // D 10
+        unsigned hasI2C: 1;             // E 11
+        unsigned hasTM1637 : 1;         // F 12
+        unsigned hasShiftRegs: 1;       // G 13
+        unsigned hasShiftRegLEDInvert:1;// H 14
         unsigned hasPB2PA13PA14Scan: 1; // I 15
         unsigned hasEventLog: 1;        // J 16
       } Bits;

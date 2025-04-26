@@ -1,17 +1,3 @@
-/*
-#include <BridgeSSLClient.h>
-#include <BridgeUdp.h>
-#include <HttpClient.h>
-#include <Process.h>
-#include <Console.h>
-#include <YunServer.h>
-#include <FileIO.h>
-#include <Bridge.h>
-#include <BridgeClient.h>
-#include <BridgeServer.h>
-#include <YunClient.h>
-#include <Mailbox.h> */
-
 #include <Arduino.h>
 #include <USBComposite.h>
 #include <flash_stm32.h>
@@ -273,14 +259,13 @@ void USBSerialUI::CommandCharDecode( char c )
       case ' ' :
         {
           ConfigValue [0] = Cfg.Bits.midiChannelOffset;
-          ConfigValue [1] = Cfg.Bits.numberADCInputs;
-          // Cfg.Bits.numberOfKeyboards = ConfigValue [2];
-          ConfigValue [2] = Cfg.Bits.hasPedalBoard;
-          ConfigValue [3] = Cfg.Bits.hasI2C       ;
-          ConfigValue [4] = Cfg.Bits.hasTM1637    ;
-          ConfigValue [5] = Cfg.Bits.hasShiftRegs ;
-          ConfigValue [6] = Cfg.Bits.hasShiftRegLEDInvert;
-          ConfigValue [7] = Cfg.Bits.hasPC13Scan  ; // I
+          ConfigValue [1] = Cfg.Bits.hasPedalBoard;
+          ConfigValue [2] = Cfg.Bits.numberADCInputs;
+          ConfigValue [3] = Cfg.Bits.hasWS2812  ;
+          ConfigValue [4] = Cfg.Bits.hasI2C       ;
+          ConfigValue [5] = Cfg.Bits.hasTM1637    ;
+          ConfigValue [6] = Cfg.Bits.hasShiftRegs ;
+          ConfigValue [7] = Cfg.Bits.hasShiftRegLEDInvert;
           ConfigValue [8] = Cfg.Bits.hasPB2PA13PA14Scan;
           ConfigValue [9] = Cfg.Bits.hasEventLog  ; // K
           int i = 0;
@@ -297,13 +282,13 @@ void USBSerialUI::CommandCharDecode( char c )
                 ConfigValue[i] = ConfigItems[i].maxval;
             }
             Cfg.Bits.midiChannelOffset = ConfigValue [0];
-            Cfg.Bits.numberADCInputs   = ConfigValue [1];
-            Cfg.Bits.hasPedalBoard     = ConfigValue [2];
-            Cfg.Bits.hasI2C            = ConfigValue [3];
-            Cfg.Bits.hasTM1637         = ConfigValue [4];
-            Cfg.Bits.hasShiftRegs      = ConfigValue [5];
-            Cfg.Bits.hasShiftRegLEDInvert = ConfigValue[6]; // G
-            Cfg.Bits.hasPC13Scan       = ConfigValue [7]; // H
+            Cfg.Bits.hasPedalBoard     = ConfigValue [1];
+            Cfg.Bits.numberADCInputs   = ConfigValue [2];
+            Cfg.Bits.hasWS2812         = ConfigValue [3];
+            Cfg.Bits.hasI2C            = ConfigValue [4];
+            Cfg.Bits.hasTM1637         = ConfigValue [5];
+            Cfg.Bits.hasShiftRegs      = ConfigValue [6];
+            Cfg.Bits.hasShiftRegLEDInvert = ConfigValue[7];
             Cfg.Bits.hasPB2PA13PA14Scan= ConfigValue [8]; // I
             Cfg.Bits.hasEventLog       = ConfigValue [9]; // J
           }
@@ -456,13 +441,13 @@ void USBSerialUI::DisplayConfigurationMenu() {
   char buff[80];
 
   ConfigValue [0] = Cfg.Bits.midiChannelOffset;
-  ConfigValue [1] = Cfg.Bits.numberADCInputs;
-  ConfigValue [2] = Cfg.Bits.hasPedalBoard;
-  ConfigValue [3] = Cfg.Bits.hasI2C       ;
-  ConfigValue [4] = Cfg.Bits.hasTM1637    ;
-  ConfigValue [5] = Cfg.Bits.hasShiftRegs ;
-  ConfigValue [6] = Cfg.Bits.hasShiftRegLEDInvert;
-  ConfigValue [7] = Cfg.Bits.hasPC13Scan  ; // I
+  ConfigValue [1] = Cfg.Bits.hasPedalBoard;
+  ConfigValue [2] = Cfg.Bits.numberADCInputs;
+  ConfigValue [3] = Cfg.Bits.hasWS2812  ;
+  ConfigValue [4] = Cfg.Bits.hasI2C       ;
+  ConfigValue [5] = Cfg.Bits.hasTM1637    ;
+  ConfigValue [6] = Cfg.Bits.hasShiftRegs ;
+  ConfigValue [7] = Cfg.Bits.hasShiftRegLEDInvert;
   ConfigValue [8] = Cfg.Bits.hasPB2PA13PA14Scan;
   ConfigValue [9] = Cfg.Bits.hasEventLog  ; // K
 
@@ -482,7 +467,7 @@ void USBSerialUI::DisplayConfigurationMenu() {
     if ( i == 0 )
       sprintf(buff, "%c [%d] %s, Button channel=%d%s\r\n", 'A' + i,midiKeyboardChannel() + 1, ConfigItems[i].text,midiButtonChannel() + 1, VT100_CLR_EOL );
     else
-      sprintf(buff, "%c [%s]=%s%s\r\n", 'A' + i, valtext, ConfigItems[i].text, VT100_CLR_EOL );    
+      sprintf(buff, "%c [%s] %s%s\r\n", 'A' + i, valtext, ConfigItems[i].text, VT100_CLR_EOL );    
     CompositeSerial.write(buff);
     i++;
   }
@@ -531,27 +516,21 @@ void USBSerialUI::DisplayFunctionPinOut(void) {
   sprintf(buff, "%-13s%c%-4s---+ +---%s%c  %s%s\r\n", function_text1,LiveConfigs[i].fault, pinCfg[i].description, pinCfg[i+1].description,LiveConfigs[i+1].fault,function_text2, VT100_CLR_EOL );
   CompositeSerial.write(buff);
   getFunctionText(&MenuConfigs[i+2], function_text1, 20 );
-  sprintf(buff, "%-13s%c%-4s (on Jumper via 100K resistor)%s\r\n", function_text1,LiveConfigs[i+2].fault, pinCfg[i+2].description, VT100_CLR_EOL );
+  sprintf(buff, "%-13s%c%-4s (on Jumper via 100K resistor)%s\r\n\r\n", function_text1,LiveConfigs[i+2].fault, pinCfg[i+2].description, VT100_CLR_EOL );
   CompositeSerial.write(buff);
 }
 
 char * USBSerialUI::getFunctionText(GPIOPinConfig *pinCfg, char *buff, int n ) {
-  int i = 0 ;
   int pin_function = pinCfg->function;
   int count = pinCfg->count;
-  int kbd = pinCfg->keyboard;
-  
+
   strncpy( buff, function_text[pin_function], n );
-  if ( pin_function == IP_ADC || pin_function == IP_SCAN ) {
-    sprintf( buff + strlen(buff), "%2d", count);
+  switch ( pin_function ) {
+    case IP_ADC :
+    case IP_SCAN :
+    case OP_SCAN :
+      sprintf( buff + strlen(buff), " %x", count);
   } 
-  if ( pin_function == OP_SCAN ) {
-    if ( kbd == 0 ) {
-      sprintf ( buff , "Pedalboard-%c", 'a' + count );
-    } else {
-      sprintf ( buff , "Keyboard%d-%c", kbd, 'a' + count );
-    }
-  }
   return buff;
 }
 
@@ -561,6 +540,8 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
   int op_count  = 0;
   int ip_count  = 0;
   int keyboard  = 0;
+
+  /*
   typedef union {
     unsigned Word;
 
@@ -576,31 +557,65 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
       unsigned hasPB2PA13PA14Scan: 1; // I 15
       unsigned hasEventLog: 1;        // J 16
     } Bits;
-  } Config1; // Redefined here to work around 'not declared in this scope' error
+  } Config1; // Redefined here to work around 'not declared in this scope' error */
+
+   typedef union {
+      unsigned Word;
+
+      struct {
+        unsigned midiChannelOffset : 4; // A  4
+        unsigned hasPedalBoard : 1;     // B  5
+        unsigned numberADCInputs : 4;   // C  9
+        unsigned hasWS2812: 1;          // D 10
+        unsigned hasI2C: 1;             // E 11
+        unsigned hasTM1637 : 1;         // F 12
+        unsigned hasShiftRegs: 1;       // G 13
+        unsigned hasShiftRegLEDInvert:1;// H 14
+        unsigned hasPB2PA13PA14Scan: 1; // I 15
+        unsigned hasEventLog: 1;        // J 16
+      } Bits;
+    } Config1; // Redefined here to work around 'not declared in this scope' error
+
+  
   Config1 tcfg;
   tcfg.Word = ConfigWord;
   for ( int gpio_index = 0 ; gpio_index < NUM_GPIO_PINS ; gpio_index ++ ) {
     newCfgs[gpio_index].function = pinCfg[gpio_index].function;
-    newCfgs[gpio_index].count = 0;
+    newCfgs[gpio_index].count = pinCfg[gpio_index].ccCommand;
     newCfgs[gpio_index].keyboard = 0;    
     newCfgs[gpio_index].error = 0;
     newCfgs[gpio_index].fault = ' ';
-    if ( op_count >= maxopcount [ keyboard ] ) {
+    // Enable ADCs and WS2812 with peddleboard
+    if ( tcfg.Bits.hasPedalBoard ) {
+      if ( newCfgs[gpio_index].function == IP_SCAN ) { 
+        if ( newCfgs[gpio_index].count > 7 ) {
+          newCfgs[gpio_index].function = IP_ADC ;
+          newCfgs[gpio_index].count = 15-newCfgs[gpio_index].count;
+          if ( newCfgs[gpio_index].count >= tcfg.Bits.numberADCInputs ) {
+            newCfgs[gpio_index].function = IO_SPARE ;
+          }          
+          if ( tcfg.Bits.hasWS2812 && ( newCfgs[gpio_index].count == 7 ) )
+            newCfgs[gpio_index].function = IO_WS2812 ;
+        }
+      }
+    }
+/*    if ( op_count >= maxopcount [ keyboard ] ) {
       op_count = 0;
       keyboard+=1;
     }
     switch ( pinCfg[gpio_index].function ) {
       case OP_LED :
-        if ( tcfg.Bits.hasPC13Scan == 0 ) {
-          break;
-        }
+//        if ( tcfg.Bits.hasPC13Scan == 0 ) {
+//          break;
+//        }
+      break;
       case OP_SCAN :
         newCfgs[gpio_index].function = OP_SCAN;
-        if ( ( keyboard == 0 ) && ( op_count == 0 ) ) { // Adjust count for pedalboard ( or not)
-          if (tcfg.Bits.hasPedalBoard == 0 ) {
-            op_count = 2; // skip first two pedalboard octaves, use final part octave for top note of each keyboard
-          }
-        }
+        //if ( ( keyboard == 0 ) && ( op_count == 0 ) ) { // Adjust count for pedalboard ( or not)
+        //  if (tcfg.Bits.hasPedalBoard == 0 ) {
+        //    op_count = 2; // skip first two pedalboard octaves, use final part octave for top note of each keyboard
+        //  }
+        //}
         newCfgs[gpio_index].count    = op_count++;
         newCfgs[gpio_index].keyboard = keyboard;            
       break;
@@ -655,7 +670,7 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
           newCfgs[gpio_index].keyboard = keyboard;            
         }
         break;
-    }
+    }*/
   }
 }
 
@@ -780,6 +795,7 @@ void USBSerialUI::TestIO()
   pinMode(LED_BUILTIN , OUTPUT);
 }
 
+/*
 void USBSerialUI::GPIOScan(void) {
   static int ip_scan_min = 0;
   static int ip_scan_max = 0;
@@ -946,7 +962,7 @@ void USBSerialUI::GPIOScan(void) {
         break;
     }
   }
-}
+}*/
 
 void USBSerialUI::DisplayStatus(void) {
   char buff[80];
