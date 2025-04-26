@@ -1,19 +1,19 @@
-# USB Midi HID Pedalboard
+# USB Midi HID Pedalboard Firmware
 
 ## Introduction
 
-This project was conceived to connect controls to Virtual Pipe Organ software such as Hauptwerk, Grande Orgue, Cecilia etc running on a touch screen laptop. The design uses an inexpensive microcontroller board with few external components. Flexibility is the main motivation as I started with little Midi or VPO experience. This project may work for you too. Let me know how you get on and whether improvements should be made.
+This project was conceived to connect controls to Virtual Pipe Organ software such as Hauptwerk, GrandOrgue, Cecilia etc running on a touch screen laptop. The design uses an inexpensive microcontroller board with few external components. Flexibility is the main motivation as I started with little Midi or VPO experience. This project may work for you too. Let me know how you get on and whether improvements should be made.
 ## Block Diagram
 
-<img src="BlockDiagram.png" style="height: 446px; width:580px;"/>
+<img src="BlockDiagramTBG.png" style="height: 446px; width:580px;"/>
 
 ## Features
 - Hosted on the STM32 Blue Pill, a $2US development board
 - USB Connection to host computer, LED blink on Midi activity
 - Multiple STM32 boards may be deployed to ease wiring or increase capacity
-- 80 scanned contacts arranged as a 8 input x 10 output diode switch matrix
+- 128 scanned contacts arranged as a 16 input x 8 output diode switch matrix
 - Contacts may send Midi Note On/Off messages for pedalboard, stops, couplers or toe pistons
-- Contacts may instead send Keyboard HID messages for turning music pages displayed on a host computer monitor
+- Contacts may instead send QWERTY Keyboard HID messages for turning music pages displayed on a host computer monitor
 - Page turning may use a single sustain pedal type contact e.g. short press forward, long press back.
 - Contacts and potentiometers are individually debounced for 50ms to reduce message floods
 - Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 22.04 X86 & Arm Linux
@@ -22,9 +22,10 @@ This project was conceived to connect controls to Virtual Pipe Organ software su
 - Up to 8 ADC inputs may be used for expression pedals and other purposes.
 - Up to 8 I2C 16 x 2 line LCDs show their auto detected i2c address at power on.
 ## Current Configuration
-- 80 Pedalboard inputs in 10x8 matrix mapped to Midi Channel 3/4 Note 36-67 (C2-G4) and 4 HID keybd buttons for page turning
+- MAudio Keystation61Mk3 interface for 61 key keyboard with velocity sensing or 32 input pedalboard
+- TBD HID keybd buttons for page turning
 - 96 Button & LED Shift register IO's mapped to Midi Channels 5-8 Notes 1-24 for pistons or stops
--  8 Filter ADC inputs are mapped to Channel 9 Midi CC 20-27 values 0-127 for expression pedals and LED dimming
+-  8 Filter ADC inputs are mapped to Midi CC 20-27 values 0-127 for expression pedals and LED dimming (only with pedalboard option selected)
 -  I2C Display addresses are configured by PCF8574 solder bridge inputs on the LCD modules, these addresses are then configured in Hauptwerk and map through the blue pill. Expect address 0x38-0x3f for Philips/NXP ICs and 0x20-0x27 for TI. The highest address is used when no solder bridges are fitted.
 
 ## Initial Midi Channel Assignments
