@@ -28,7 +28,7 @@ private:
   volatile uint32_t* PB12_BB = (volatile uint32_t*) (0x42000000 + (0x10c08<<5) + (12<<2) ); // BB Port B IDR bit 12
 public:
   ButtonScan(void);
-	uint32_t Scan(uint32_t *sr_input_list,uint32_t*sr_outputs);
+	uint32_t Scan(uint32_t *sr_input_list,uint32_t*sr_outputs, bool LEDInvert );
 };
 
 #ifdef __cplusplus

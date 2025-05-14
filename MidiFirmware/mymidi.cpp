@@ -74,8 +74,8 @@ void myMidi::handleSysExEnd(void) {
     const int SysExManufacturerID=0x7D;
     const int SysExLCD32MessageIdentifier=0x01;
     const int SysExLCD16MessageIdentifier=0x19;
-    const int SysExLCDNumberMSB=0;
-//    const int SysExLCDColourIndex=3; // 1 = White Unused
+//  const int SysExLCDNumberMSB=0;
+//  const int SysExLCDColourIndex=3; // 1 = White Unused
     const int SysExLCD16TextStartIndex=4;
     const int SysExLCD32TextStartIndex=6;
 
@@ -106,7 +106,7 @@ void myMidi::handleSysExEnd(void) {
       if ( LCDNumberLSB == 0x20 ) {
           SEG7.displayPChar( sysexBuf + SysExLCD16TextStartIndex );         
       } else {
-        LCD_N_C32 lcd("");
+        LCD_N_C32 lcd((const char *)"");
 //        if ( strncmp ( sysexBuf + SysExLCD16TextStartIndex + 3 , "BPM",3 ) == 0 || strncmp ( sysexBuf + SysExLCD16TextStartIndex + 4 , "BPM",3 )==0 ) {
 //          strncpy ( sysexBuf + SysExLCD16TextStartIndex + 12 , "BPB",3 ); // Flag beats per bar / Measure
 //        }
@@ -136,7 +136,7 @@ void myMidi::handleSysExEnd(void) {
        sprintf(buff,"%lu %5lu SysEx: ",last_time , interval );
        CompositeSerial.write( buff );
        //sysexBuf[sysexIndex-1] = 0; // Null terminate
-       for ( int i = 0 ; i < sysexIndex-1 ; i++ ) {
+       for ( unsigned int i = 0 ; i < sysexIndex-1 ; i++ ) {
         char c = sysexBuf[i];
         if ( i > 3 && c >= ' ' ) {
           buff[0] = c;

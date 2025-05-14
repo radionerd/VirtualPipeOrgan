@@ -17,7 +17,7 @@ extern "C" {
 class LCD_N_C32 {
   
   public:
-  LCD_N_C32( char *msg16="VirtualPipeOrganI2C" ) {
+  LCD_N_C32( const char *msg16="VirtualPipeOrganI2C" ) {
     if ( SUI.hasLCD() == 0 ) return;
     if ( i2cCheck() ) {
       if ( SUI.Cfg.Bits.hasEventLog )
@@ -28,7 +28,7 @@ class LCD_N_C32 {
         CompositeSerial.println("LCD I2C Bus check pass");      
     }
     if( msg16[0] ) {
-      char buff[80];
+//      char buff[80];
       Wire.begin(1);
       Wire.setClock(400000); // fast speed
       for ( int i = 1 ; i < 128 ; i++ ) {
@@ -51,7 +51,7 @@ class LCD_N_C32 {
     }
   }
   int write(uint8_t LCDNumberLSB, char *buffer ) {
-      static int lastAddress;
+//      static int lastAddress;
       if ( SUI.hasLCD() == 0 ) return 0;
       if ( i2cCheck() ) return 1 ;
       Wire.begin(1);

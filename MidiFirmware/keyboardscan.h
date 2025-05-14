@@ -16,7 +16,8 @@ const int NUM_KEYBOARD_INPUTS = 16;
 
 class KeyboardScan {
 private:
-uint32_t get_input(void);
+uint32_t get_input(bool pedalboard);
+void activePulldown(bool pedalboard);
   // STM32F103 Cortex M3 Memory Mapped hardware register addresses Ref: RM0008-STM32F1... Sec3.3 P51
   const uint32_t IDR =   0x00000008; // RM0008-STM32F1... Table 59 P194
   const uint32_t ODR   = 0x0000000C;
@@ -35,7 +36,7 @@ uint32_t get_input(void);
   volatile uint32_t* PB12_BB = (volatile uint32_t*) (0x42000000 + (0x10c08<<5) + (12<<2) ); // BB Port B IDR bit 12
 public:
   KeyboardScan();
-  uint32_t Scan(uint32_t *kb_input,uint32_t*kb_image);
+  uint32_t Scan(uint32_t *kb_input,uint32_t*kb_image, bool pedalboard );
 };
 
 #ifdef __cplusplus

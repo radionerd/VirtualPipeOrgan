@@ -9,7 +9,7 @@ extern "C" {
 class myMidi : public USBMIDI {
   private:
     char sysexBuf[80];
-    int sysexIndex=0;
+    unsigned int sysexIndex=0;
     unsigned long last_time=0;    
   public:
     virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity) ;

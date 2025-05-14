@@ -37,10 +37,15 @@ class LED {
      unsigned long time = micros();
      if ( time > holdoff ) {
        holdoff = 0; // Guard against wrap around
-       int pulse_width = ( time & 0x1FFFFF ) >> 6 ; // 2097152us or 0x200000us period
+       unsigned int pulse_width = ( time & 0x1FFFFF ) >> 6 ; // 2097152us or 0x200000us period
        if ( pulse_width > 16383 )
          pulse_width = 32768 - pulse_width;
        int led_state = HIGH;
+       // DEBUG See if breathing LEd can co-exist with WS2812 driver
+       if ( pulse_width > 15383)
+         pulse_width = 15383;
+       if ( pulse_width < 1000 )
+         pulse_width = 1000;
        if ( pulse_width > (time & 16383 ) )  
          led_state = LOW;
        digitalWrite(LED_BUILTIN, led_state );   // update the LED    

@@ -2,6 +2,7 @@
 #include <USBComposite.h>
 #include <flash_stm32.h>
 #include <stdio.h>
+#include "color_wheel.h"
 #include "lcd.h"
 #include "led.h"
 #include "mymidi.h"
@@ -25,12 +26,16 @@ uint32_t sr_outputs   [NUM_SHIFT_REG_OUTPUTS+1];
 USBSerialUI::USBSerialUI(void) {
   RestoreConfigFromFlash();
   TestIO();
+  ADCBegin();
 }
 void USBSerialUI::poll(void) {
-  MusicKeyboardScan();
+  MusicKeyboardScan(Cfg.Bits.hasPedalBoard);
   ButtonScan();
-  //GPIOScan();
-  char buff[80];
+  ADCScan();
+  //ColorWheel();
+  if ( Cfg.Bits.hasPB2PA13PA14Scan )
+    LEDStripCtrl( LED_STRIP_SERVICE );
+//  char buff[80];
   while (CompositeSerial.available()) {
     char c = CompositeSerial.read();
     CommandCharDecode(c);
@@ -47,11 +52,11 @@ void USBSerialUI::poll(void) {
     }
   }
 }
-int USBSerialUI::midiButtonChannel(void) {
+unsigned int USBSerialUI::midiButtonChannel(void) {
   const int MIDI_BUTTON_OFFSET = 8;
   return ( (Cfg.Bits.midiChannelOffset + MIDI_BUTTON_OFFSET) & 0xF );
 }
-int USBSerialUI::midiKeyboardChannel(void) {
+unsigned int USBSerialUI::midiKeyboardChannel(void) {
   return Cfg.Bits.midiChannelOffset;
 }
 
@@ -100,7 +105,7 @@ void USBSerialUI::ButtonScan(void) {
   const unsigned long AUTO_REPEAT_PERIOD_US = 333000; // 0.333 seconds
 
   static int active_buttons=0;
-  int result = Button.Scan( sr_input_list,sr_outputs );
+  int result = Button.Scan( sr_input_list,sr_outputs , Cfg.Bits.hasShiftRegLEDInvert );
   // NB The strange sr_input_list interface yields a fast inactive scan result
   if ( ( active_buttons != result ) || active_buttons ) { 
     active_buttons = result;
@@ -122,9 +127,12 @@ void USBSerialUI::ButtonScan(void) {
           midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
           monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_BUTTON  );
           RequestDisplayUpdate();
+          if ( midi_note==0 )
+            if ( Cfg.Bits.hasPB2PA13PA14Scan )
+               LEDStripCtrl( LED_BUTTON_ON ); 
         } else {
           ShiftRegImage[ sr_input_list[j] ].Input = 2; // Flag is active
-          unsigned long elapsed_time_us = time_now - ShiftRegImage[ sr_input_list[j] ].Time;
+//          unsigned long elapsed_time_us = time_now - ShiftRegImage[ sr_input_list[j] ].Time;
           //char buf[80];
           //sprintf(buf,"Tnow=%lu Telapsed=%lu\r\n",time_now,elapsed_time_us);
           //CompositeSerial.write(buf);
@@ -159,30 +167,35 @@ void USBSerialUI::ButtonScan(void) {
           midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
           monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_BUTTON  );
           RequestDisplayUpdate();
-
+          if ( midi_note==0 )
+            if ( Cfg.Bits.hasPB2PA13PA14Scan )
+              LEDStripCtrl( LED_BUTTON_OFF ); 
         }
       }
     }
   }
 }
 
-void USBSerialUI::MusicKeyboardScan(void) {
+void USBSerialUI::MusicKeyboardScan( bool pedalboard ) {
   char buf[120];
-  const char *note_name[12] = {
-    "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
-  };
-  const int OCTAVE = 12;
-  int note_id=-1;
-  int change = MusicKeyboard.Scan(kb_input,kb_image);
+//  const char *note_name[12] = {
+//    "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
+//  };
+//  const int OCTAVE = 12;
+//  int note_id=-1;
+  int change = MusicKeyboard.Scan(kb_input,kb_image, pedalboard );
   if ( change ) {
     // process MusicKeyboard changes
     //sprintf(buf,"Keyboard change = %d\r\n",change);
     //CompositeSerial.write(buf);    
     for ( int i = 0 ; i < NUM_KEYBOARD_OUTPUTS ; i++ ) {
       int difference = kb_input [i] ^ kb_image[i];
+      //if ( pedalboard) difference &= 0x55 ; //  ignore top 8 and first contact inputs on pedalboard
       if ( difference ) {
         RequestDisplayUpdate();
-        for ( int j = 0 ; j < NUM_KEYBOARD_INPUTS; j++ ) {
+        int inputs = NUM_KEYBOARD_INPUTS;
+        if ( pedalboard ) inputs-=8;
+        for ( int j = 0 ; j < inputs; j++ ) {
           if ( difference & ( 1 << j ) ) {
             int index = i*NUM_KEYBOARD_INPUTS + j ;
             long int key_travel_time;
@@ -203,18 +216,31 @@ void USBSerialUI::MusicKeyboardScan(void) {
             }
             buf[0]=0;
             int midi_channel = Cfg.Bits.midiChannelOffset ;
-            if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
-              if ( ( j & 1 ) == 0 ) { // lower contact?
-                midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
-                monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_KEYBOARD  );
-                // sprintf(buf,"Midi Note =%d ON  Velocity=%d Name=%2s i=%d j=%d diff=%02X time=%ld\r\n",note,velocity,note_name[note%OCTAVE],i,j,difference,key_travel_time);
+            if ( ! pedalboard ) {
+              if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
+                if ( ( j & 1 ) == 0 ) { // lower contact?
+                  midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
+                  monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_KEYBOARD  );
+                }
+              } else { // contact just opened
+                if ( j & 1 ) { // upper contact?
+                  midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
+                  monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_KEYBOARD  );
+                }
               }
-            } else { // contact just opened
-              if ( j & 1 ) { // upper contact?
-                midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
-                monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_KEYBOARD  );
-                // sprintf(buf,"Midi Note =%d OFF Velocity=%d Name=%2s i=%d j=%d diff=%02X time=%ld\r\n",note,velocity,note_name[note%OCTAVE],i,j,difference,key_travel_time);
-              }
+            } else {
+              midi_velocity = 64; // single contact set medium velocity
+              if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
+                if ( ( j & 1 ) == 0 ) { // lower contact closing?
+                  midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
+                  monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_PEDALBOARD  );
+                }
+              } else {
+                if ( ( j & 1 ) == 0 ) { // lower contact opening
+                  midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
+                  monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_PEDALBOARD  );
+                }
+              }             
             }
             if ( buf[0]) {
               CompositeSerial.write(buf);    
@@ -261,7 +287,7 @@ void USBSerialUI::CommandCharDecode( char c )
           ConfigValue [0] = Cfg.Bits.midiChannelOffset;
           ConfigValue [1] = Cfg.Bits.hasPedalBoard;
           ConfigValue [2] = Cfg.Bits.numberADCInputs;
-          ConfigValue [3] = Cfg.Bits.hasWS2812  ;
+          ConfigValue [3] = Cfg.Bits.hasKeyVelocity  ;
           ConfigValue [4] = Cfg.Bits.hasI2C       ;
           ConfigValue [5] = Cfg.Bits.hasTM1637    ;
           ConfigValue [6] = Cfg.Bits.hasShiftRegs ;
@@ -284,7 +310,7 @@ void USBSerialUI::CommandCharDecode( char c )
             Cfg.Bits.midiChannelOffset = ConfigValue [0];
             Cfg.Bits.hasPedalBoard     = ConfigValue [1];
             Cfg.Bits.numberADCInputs   = ConfigValue [2];
-            Cfg.Bits.hasWS2812         = ConfigValue [3];
+            Cfg.Bits.hasKeyVelocity    = ConfigValue [3];
             Cfg.Bits.hasI2C            = ConfigValue [4];
             Cfg.Bits.hasTM1637         = ConfigValue [5];
             Cfg.Bits.hasShiftRegs      = ConfigValue [6];
@@ -347,13 +373,13 @@ void USBSerialUI::DisplayFlashSummary(void) {
     if ( ( allfs == 8 && lastfs != 8 ) || ( allfs != 8 && lastfs == 8 ) ) {
       char buff[80] ;
       sprintf ( buff , "%08X %04X %04X %04X %04X %04X %04X %04X %04X\r\n",
-                &address[0],
+                (unsigned int)&address[0],
                 address[0x0], address[0x1], address[0x2], address[0x3],
                 address[0x4], address[0x5], address[0x6], address[0x7] );
       CompositeSerial.write(buff);
       address += 8;
       sprintf ( buff , "%08X %04X %04X %04X %04X %04X %04X %04X %04X\r\n",
-                &address[0],
+                (unsigned int)&address[0],
                 address[0x0], address[0x1], address[0x2], address[0x3],
                 address[0x4], address[0x5], address[0x6], address[0x7] );
       CompositeSerial.write(buff);
@@ -390,7 +416,7 @@ void USBSerialUI::SaveConfigToFlash( char c ) {
     int i = 0;
     while ( FlashPage[++i] != 0xFFFF ) ;
     if ( FlashPage[i - 1] != Cfg.Word  ) {
-      sprintf( buff, "Flash Write %08X=%04X\r\n", (uint32)FlashPage + i * 2, Cfg.Word );
+      sprintf( buff, "Flash Write %08X=%04X\r\n", (unsigned int )FlashPage + i * 2, Cfg.Word );
       CompositeSerial.write(buff);
       pstatus = FLASH_ProgramHalfWord( (uint32)FlashPage + i * 2, Cfg.Word );
       sprintf( buff, "Flash Program Status=%d\r\n", pstatus );
@@ -417,7 +443,7 @@ unsigned USBSerialUI::getFlashConfig(void) {
 // Flash signature present read latest config
 void USBSerialUI::RestoreConfigFromFlash() {
   int i = 0;
-  int oldCfg = Cfg.Word;
+//  int oldCfg = Cfg.Word;
   Cfg.Word = 0;
   if ( FlashPage[0] == FlashSignature ) {
     while ( FlashPage[++i] != 0xFFFF ) ;
@@ -426,13 +452,13 @@ void USBSerialUI::RestoreConfigFromFlash() {
   fillCfgPinData( Cfg.Word , &LiveConfigs[0] );
 }
 
-void USBSerialUI::DisplayTitle( char *title ) {
+void USBSerialUI::DisplayTitle( const char *title ) {
   char buff[80];
   sprintf(buff, "%s%s%s%s\r\n", VT100_UNDERLINE, title, VT100_NO_UNDERLINE, VT100_CLR_EOL );
   CompositeSerial.write( buff );
 }
 
-void USBSerialUI::DisplayPrompt(char *prompt ) {
+void USBSerialUI::DisplayPrompt(const char *prompt ) {
   CompositeSerial.write(prompt);
   CompositeSerial.write(VT100_ERASE_DOWN );
 }
@@ -443,7 +469,7 @@ void USBSerialUI::DisplayConfigurationMenu() {
   ConfigValue [0] = Cfg.Bits.midiChannelOffset;
   ConfigValue [1] = Cfg.Bits.hasPedalBoard;
   ConfigValue [2] = Cfg.Bits.numberADCInputs;
-  ConfigValue [3] = Cfg.Bits.hasWS2812  ;
+  ConfigValue [3] = Cfg.Bits.hasKeyVelocity  ;
   ConfigValue [4] = Cfg.Bits.hasI2C       ;
   ConfigValue [5] = Cfg.Bits.hasTM1637    ;
   ConfigValue [6] = Cfg.Bits.hasShiftRegs ;
@@ -473,7 +499,7 @@ void USBSerialUI::DisplayConfigurationMenu() {
   }
   sprintf(buff, "Cfg.Word=%04X%s\r\n", Cfg.Word, VT100_CLR_EOL);
   CompositeSerial.write(buff);
-  DisplayPrompt("Enter A-L,a-l To adjust configured value. S to Save:");
+  DisplayPrompt((const char *)"Enter A-L,a-l To adjust cfg value, S to Save, ? - Menu:");
 }
 
 void USBSerialUI::DisplayFunctionPinOut(void) {
@@ -535,10 +561,10 @@ char * USBSerialUI::getFunctionText(GPIOPinConfig *pinCfg, char *buff, int n ) {
 }
 
 void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs ) {
-  const int maxopcount[5] = { 3,5,5,5,5 } ; // max number of scan outputs per pedalboard or keyboard
-  int adc_count = 1; // Offset by 1 for display
+//  const int maxopcount[5] = { 3,5,5,5,5 } ; // max number of scan outputs per pedalboard or keyboard
+//  int adc_count = 1; // Offset by 1 for display
   int op_count  = 0;
-  int ip_count  = 0;
+//  int ip_count  = 0;
   int keyboard  = 0;
 
   /*
@@ -585,29 +611,8 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
     newCfgs[gpio_index].keyboard = 0;    
     newCfgs[gpio_index].error = 0;
     newCfgs[gpio_index].fault = ' ';
-    // Enable ADCs and WS2812 with peddleboard
-    if ( tcfg.Bits.hasPedalBoard ) {
-      if ( newCfgs[gpio_index].function == IP_SCAN ) { 
-        if ( newCfgs[gpio_index].count > 7 ) {
-          newCfgs[gpio_index].function = IP_ADC ;
-          newCfgs[gpio_index].count = 15-newCfgs[gpio_index].count;
-          if ( newCfgs[gpio_index].count >= tcfg.Bits.numberADCInputs ) {
-            newCfgs[gpio_index].function = IO_SPARE ;
-          }          
-          if ( tcfg.Bits.hasWS2812 && ( newCfgs[gpio_index].count == 7 ) )
-            newCfgs[gpio_index].function = IO_WS2812 ;
-        }
-      }
-    }
-/*    if ( op_count >= maxopcount [ keyboard ] ) {
-      op_count = 0;
-      keyboard+=1;
-    }
     switch ( pinCfg[gpio_index].function ) {
       case OP_LED :
-//        if ( tcfg.Bits.hasPC13Scan == 0 ) {
-//          break;
-//        }
       break;
       case OP_SCAN :
         newCfgs[gpio_index].function = OP_SCAN;
@@ -620,9 +625,20 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
         newCfgs[gpio_index].keyboard = keyboard;            
       break;
       case IP_SCAN :
-        newCfgs[gpio_index].count    = ip_count++;
-        break;
-      case IP_ADC :
+        // Enable ADCs and WS2812 with peddleboard
+        if ( tcfg.Bits.hasPedalBoard ) {
+          if ( newCfgs[gpio_index].count > 7 ) {
+            newCfgs[gpio_index].function = IP_ADC ;
+            newCfgs[gpio_index].count = 15-newCfgs[gpio_index].count;
+            if ( newCfgs[gpio_index].count >= tcfg.Bits.numberADCInputs ) {
+              newCfgs[gpio_index].function = IO_SPARE ;
+            }          
+            //if ( tcfg.Bits.hasWS2812 && ( newCfgs[gpio_index].count == 7 ) )
+            //  newCfgs[gpio_index].function = IO_WS2812 ;
+          }
+        }
+      break;
+/*      case IP_ADC :
         if ( adc_count >  tcfg.Bits.numberADCInputs ) {
           newCfgs[gpio_index].function = OP_SCAN;
           newCfgs[gpio_index].count    = op_count++;
@@ -630,47 +646,38 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
         } else {
           newCfgs[gpio_index].count    = adc_count++;
         }
-        break;
+        break;*/
       case I2C_SCL :
         if ( tcfg.Bits.hasI2C == 0 ) {
-          newCfgs[gpio_index].function = OP_SCAN;
-          newCfgs[gpio_index].count    = op_count++;
-          newCfgs[gpio_index].keyboard = keyboard;            
+          newCfgs[gpio_index].function = IO_SPARE;
         }
-        break;
+      break;
       case TM1637_CK :
         if ( tcfg.Bits.hasTM1637 == 0 ) {
-          newCfgs[gpio_index].function = OP_SCAN;
-          newCfgs[gpio_index].count    = op_count++;
-          newCfgs[gpio_index].keyboard = keyboard;            
+          newCfgs[gpio_index].function = IO_SPARE;
         }
         break;
       case IP_SR_DATA :
       case OP_SR_CLOCK :
         if ( tcfg.Bits.hasShiftRegs == 0 ) {
-          newCfgs[gpio_index].function = OP_SCAN;
-          newCfgs[gpio_index].count    = op_count++;
-          newCfgs[gpio_index].keyboard = keyboard;            
+          newCfgs[gpio_index].function = IO_SPARE;
         }
         break;
       case I2C_SDA :
       case COMMON_DATA :
         if ( ( Cfg.Bits.hasI2C | Cfg.Bits.hasTM1637 | Cfg.Bits.hasShiftRegs ) == 0 ) {
-          newCfgs[gpio_index].function = OP_SCAN;
-          newCfgs[gpio_index].count    = op_count++;
-          newCfgs[gpio_index].keyboard = keyboard;            
+          newCfgs[gpio_index].function = IO_SPARE;
         }
         break;
       case BOOT1 :
+      break;
       case SWCLK :
       case SWDIO :
         if ( Cfg.Bits.hasPB2PA13PA14Scan ) {
-          newCfgs[gpio_index].function = OP_SCAN;
-          newCfgs[gpio_index].count    = op_count++;
-          newCfgs[gpio_index].keyboard = keyboard;            
+          newCfgs[gpio_index].function = IO_WS2812;
         }
         break;
-    }*/
+    }
   }
 }
 
@@ -678,7 +685,7 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
 const char *NoteNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 void USBSerialUI::DisplayKeyboardContacts() {
   char buf[80];
-  char * op_names[] = {
+  const char * op_names[] = {
     "CN13 PIN4",
     "CN13 PIN3",
     "CN13 PIN2",
@@ -688,12 +695,12 @@ void USBSerialUI::DisplayKeyboardContacts() {
     "CN14 PIN2",
     "CN14 PIN1"
   };
-  char *note_name[] = {
-    "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
-  };
+ // char *note_name[] = {
+ //   "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
+ // };
   int note_id=-1;
   //CompositeSerial.write(VT100_CLEAR);
-  sprintf(buf, "Keyboard Scan Result Midi Channel %d\r\n", 1 + ((5 + Cfg.Bits.midiChannelOffset) & 0xF) );
+  sprintf(buf, "Keyboard Scan Result Midi Channel %d\r\n", 1 + (Cfg.Bits.midiChannelOffset & 0xF) );
   DisplayTitle( buf );
 
   for ( int i = 0 ; i < NUM_KEYBOARD_OUTPUTS ; i++ ) {
@@ -774,6 +781,7 @@ void USBSerialUI::TestIO()
   char pass = ' ';
   char result;
   int failures=0;
+  char buff[90];
   for ( int i = 0 ; i < NUM_GPIO_PINS ; i++ ) {
     result = pass;
     if (pinCfg[i].description[0] == 'P' && function_text[pinCfg[i].function][0] !='U' ) { // test port pins excluding USB
@@ -792,6 +800,8 @@ void USBSerialUI::TestIO()
       pinMode(pinCfg[i].portPin, INPUT );
     }
   }
+  sprintf(buff,"Test Result %d failures\r\n",failures);
+  CompositeSerial.write(buff);
   pinMode(LED_BUILTIN , OUTPUT);
 }
 
@@ -968,7 +978,7 @@ void USBSerialUI::DisplayStatus(void) {
   char buff[80];
   char function_text[21];
   CompositeSerial.write(VT100_CLEAR);
-  DisplayTitle("USB Midi Interface Status" );
+  DisplayTitle( (const char *) "USB Midi Interface Status" );
   sprintf(buff,"id  port   function     kbd  count input error fault\n\r");
   CompositeSerial.write(buff);
   for ( int pin_id = 0 ; pin_id < NUM_GPIO_PINS ; pin_id ++ ) {
@@ -1005,4 +1015,64 @@ void USBSerialUI::monitorNoteOff( unsigned int channel, unsigned int note, unsig
     CompositeSerial.write(buff);
   }
   RequestDisplayUpdate();
+}
+
+void USBSerialUI::ADCBegin(void) {
+  // Read current potentiometer input to avoid a message stream at startup
+   for ( int gpioId = 0 ; gpioId < NUM_GPIO_PINS ; gpioId++ ) {
+     switch ( LiveConfigs[gpioId].function ) {
+      case IP_ADC :
+      {
+        pinMode (  pinCfg[gpioId].portPin, INPUT);
+        LiveConfigs[gpioId].input = analogRead( pinCfg[gpioId].portPin ); // a value between 0-4095
+      }
+     }
+   }
+}
+void USBSerialUI::ADCScan(void) {
+   static unsigned long last_time=0;
+
+   // scan at 40ms intervals for consistant performance
+   // multiples of mains cycle period eg 20,40,60ms etc
+   // balance between response time and message flood
+   unsigned long time_now = micros();
+   if ( time_now - last_time < 40000 ) return;
+   last_time += 40000;
+   for ( int gpioId = 0 ; gpioId < NUM_GPIO_PINS ; gpioId++ ) {
+     switch ( LiveConfigs[gpioId].function ) {
+      case IP_ADC :
+      {
+        pinMode (  pinCfg[gpioId].portPin, INPUT);
+        int ain = analogRead( pinCfg[gpioId].portPin ); // a value between 0-4095
+        // Filter the adc input to get a stable result
+        int prevInput = LiveConfigs[gpioId].input;
+        const int FILTER_SAMPLES = 4;
+        LiveConfigs[gpioId].input = ( prevInput * ( FILTER_SAMPLES - 1 ) + ain ) / FILTER_SAMPLES; // Moving average
+        const int SCALE_0_TO_127 = 32;  // Range 0-127. May need adjustment depending on swell pedal shoe geometry
+        int prev_result = prevInput / SCALE_0_TO_127; // scale 0-4095 to 0-127 for midi cc command
+        int new_result  = LiveConfigs[gpioId].input / SCALE_0_TO_127; // scale 0-4095 to 0-127 for midi cc command
+        int error = abs( LiveConfigs[gpioId].error - LiveConfigs[gpioId].input);
+        // Avoid hunting between adjacent numbers while allowing min and max scale
+        if( new_result != prev_result ) {
+           if ( ( error >= ( SCALE_0_TO_127/2 ) ) || ( new_result == 0 ) || ( new_result == 127 ) ) {
+            if ( error > SCALE_0_TO_127 * 3 )
+              LiveConfigs[gpioId].input = ain;
+            LiveConfigs[gpioId].error = LiveConfigs[gpioId].input;
+            int midi_channel      = Cfg.Bits.midiChannelOffset;
+            int cc_command_number = LiveConfigs[gpioId].count + 0x20; // FIXME Midi CC command range
+            digitalWrite(LED_BUILTIN, true ); // Indicate USB signalling PCB LED
+            midi.sendControlChange(midi_channel,cc_command_number, new_result );
+            if ( Cfg.Bits.hasEventLog ) {
+                char buff[80];
+                sprintf(buff,"MidiControl Ch=%-2d  Cont=%d  Val=%d  ADC\r\n",midi_channel+1,cc_command_number, new_result );
+                CompositeSerial.write(buff);
+                RequestDisplayUpdate();
+            }
+            digitalWrite(LED_BUILTIN, false );
+          }
+        }
+      }
+      break;
+     }
+   }
 }

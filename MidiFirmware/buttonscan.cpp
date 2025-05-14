@@ -40,7 +40,7 @@ void ButtonScan::ShiftRegN8ClockBB( int count ) {
 
 // 43.6us when a button is active
 // 19.2us when all buttons inactive
-uint32_t ButtonScan::Scan(uint32_t *sr_input_list,uint32_t*sr_outputs) {
+uint32_t ButtonScan::Scan(uint32_t *sr_input_list,uint32_t*sr_outputs, bool LEDInvert) {
 	  static int active_inputs=0;
 	  pinMode(PB12,INPUT_PULLDOWN); // data in
 	  pinMode(PB11,OUTPUT); // Clock
@@ -78,10 +78,18 @@ uint32_t ButtonScan::Scan(uint32_t *sr_input_list,uint32_t*sr_outputs) {
 	    }
 	  }
 	  // Load output LEDs
-	  for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
-	    *PB07_BB = sr_outputs[NUM_SHIFT_REG_OUTPUTS-index];
+    if ( LEDInvert ) {
+	   for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
+	    *PB07_BB = sr_outputs[NUM_SHIFT_REG_OUTPUTS-index]^1;
 	    *PB11_BB = 0;
 	    *PB11_BB = 1;
+	   }
+	  } else {
+     for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
+      *PB07_BB = sr_outputs[NUM_SHIFT_REG_OUTPUTS-index];
+      *PB11_BB = 0;
+      *PB11_BB = 1;
+     }
 	  }
 	  *PB07_BB = 1; // Tidy up for scope monitoring
 	  return active_inputs;

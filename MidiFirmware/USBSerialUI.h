@@ -32,22 +32,22 @@ class USBSerialUI {
 
     struct ConfigItem {
       int maxval;
-      char *text;
+      const char *text;
     } ;
    
 
     ConfigItem const ConfigItems[11] = {
-      { MAX_15, "Key/Pedal Midi Channel"},  // A
-      { MAX_1, "Pedalboard (Enables ADC & WS8212 LED strip)"} ,//B
-      { MAX_8, "  Number of ADC Inputs PA2-PB1"}, // C
-      { MAX_1, "  WS2812 LED strip PB1"} ,//D     
-      { MAX_1, "PCF8574 I2C LCDs 16x2" }, //E
-      { MAX_1, "TM1637 7 segment, 6 digit display" }, // F
-      { MAX_1, "74HC164 Shift register LED buttons"}, // G
-      { MAX_1, "74HC164 Shift register LED invert", },  // H
-      { MAX_1, "Use Boot 1, and Debug Connector as Outputs PB2,PA13,PA14"}, // I
-      { MAX_1, "Event Log to USB Serial (may slow response time)"}, // J
-      {  0, "" }
+      { MAX_15,(const char *)"Key/Pedal Midi Channel"},  // A
+      { MAX_1, (const char *)"Pedalboard & Expression Pedals (ADC inputs)"} ,//B
+      { MAX_8, (const char *)"  Number of ADC Inputs PA2-PB1"}, // C
+      { MAX_1, (const char *)"Keyboard Velocity Reporting"} ,//D     
+      { MAX_1, (const char *)"PCF8574 I2C LCDs 16x2" }, //E
+      { MAX_1, (const char *)"TM1637 7 segment, 6 digit display" }, // F
+      { MAX_1, (const char *)"74HC164 Shift register LED buttons"}, // G
+      { MAX_1, (const char *)"74HC164 Shift register LED invert", },  // H
+      { MAX_1, (const char *)"Use Debug Connector for WS2812 RGB LEDs PA13,PA14"}, // I
+      { MAX_1, (const char *)"Event Log to USB Serial (may slow response time)"}, // J
+      {     0, (const char *)"" }
     };
     const char *function_text[28] = {
       "Spare",
@@ -65,8 +65,8 @@ class USBSerialUI {
       "TM1637_DA",
       "CommonData",
       "IP_CONTACT",
-      "Share I2C_SDA",
-      "LCD   I2C_SCL",
+      "ShareI2C_SDA",
+      "LCD  I2C_SCL",
       "USB-",
       "USB+",
       "V5",
@@ -91,8 +91,8 @@ class USBSerialUI {
 
     GPIOPinConfig MenuConfigs [NUM_GPIO_PINS];
     GPIOPinConfig LiveConfigs [NUM_GPIO_PINS];
-    enum  { DEV_UNKNOWN,DEV_KEYBOARD,DEV_BUTTON,DEV_LED } devices;
-    const char * device_names[4] = {"Unknown", "Keyboard","Button","LED"};
+    enum  { DEV_UNKNOWN,DEV_PEDALBOARD,DEV_KEYBOARD,DEV_BUTTON,DEV_LED } devices;
+    const char * device_names[5] = {"Unknown", "Pedalboard","Keyboard","Button","LED"};
   const char *note_name[12] = {
     "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
   };
@@ -107,7 +107,7 @@ class USBSerialUI {
         unsigned midiChannelOffset : 4; // A  4
         unsigned hasPedalBoard : 1;     // B  5
         unsigned numberADCInputs : 4;   // C  9
-        unsigned hasWS2812: 1;          // D 10
+        unsigned hasKeyVelocity: 1;     // D 10
         unsigned hasI2C: 1;             // E 11
         unsigned hasTM1637 : 1;         // F 12
         unsigned hasShiftRegs: 1;       // G 13
@@ -126,11 +126,13 @@ class USBSerialUI {
     void handleNoteOn ( unsigned int channel, unsigned int note, unsigned int velocity );
     void handleControlChange( unsigned int channel, unsigned int controller, unsigned int velocity );
     int  hasLCD(void){ return Cfg.Bits.hasTM1637; };
-    int  midiKeyboardChannel(void);
-    int  midiButtonChannel(void);
+    unsigned int  midiKeyboardChannel(void);
+    unsigned int  midiButtonChannel(void);
     
 
   private:
+    void ADCBegin(void);
+    void ADCScan(void);
     int  AppOnline(void);
     void ButtonScan(void);
     void CommandCharDecode(char command);
@@ -139,10 +141,10 @@ class USBSerialUI {
     void DisplayFunctionPinOut(void);
     void DisplayKeyboardContacts(void);
     void DisplayMenu(void);
-    void DisplayPrompt(char *prompt );
+    void DisplayPrompt(const char *prompt );
     void DisplayShiftRegisterIO(void);
     void DisplayStatus(void);
-    void DisplayTitle( char *title );
+    void DisplayTitle( const char *title );
     void fillCfgPinData( unsigned ConfigWord , GPIOPinConfig *newCfgs );
 //    void OldgetFunctionText(int gpio_index, char *buff, int n ) ;
     unsigned getFlashConfig(void);
@@ -151,7 +153,7 @@ class USBSerialUI {
     void LCDTest(void);
     void monitorNoteOn ( unsigned int channel, unsigned int note, unsigned int velocity, unsigned int device );
     void monitorNoteOff( unsigned int channel, unsigned int note, unsigned int velocity, unsigned int device );
-    void MusicKeyboardScan(void);
+    void MusicKeyboardScan(bool pedalboard);
     void RestoreConfigFromFlash();
     void RequestDisplayUpdate(void) { DisplayUpdate = 1; } 
     void SaveConfigToFlash( char c );

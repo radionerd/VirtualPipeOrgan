@@ -51,7 +51,7 @@ const GPIOPinAssignment pinCfg[43]  = {
   { V5 ,  "+5V" , IO_RESERVED },
   { GND , "GND",  IO_RESERVED },
   { V3_3, "3V3",  IO_RESERVED },
-  { PA13, "PA13", IO_SPARE }, // SWDIO - Located on Debug connector - Install boot loader before using for GPIO
-  { PA14, "PA14", IO_SPARE }, // SWCLK - Located on Debug connector - Install boot loader before using for GPIO
+  { PA13, "PA13", SWDIO }, // SWDIO - Located on Debug connector - Install boot loader before using for GPIO
+  { PA14, "PA14", SWCLK }, // SWCLK - Located on Debug connector - Install boot loader before using for GPIO
   { PB2,  "PB_2", BOOT1 }, // Boot1 - To use for GPIO remove Boot 1 link, and short R10 (100k) using 270R resistor
 };

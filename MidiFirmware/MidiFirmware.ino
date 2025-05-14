@@ -49,7 +49,7 @@ void setup() {
   pinMode ( LED_BUILTIN, OUTPUT );
   SEG7.begin(PB10,PB7,6); // begin(uint8_t clockPin, uint8_t dataPin, uint8_t digits)
   SEG7.setBrightness(1);
-  SEG7.displayPChar("Add=32"); // Briefly Display sysex ID
+  SEG7.displayPChar((char *)"Add=32"); // Briefly Display sysex ID
   USBComposite.setProductId(0x0031);
   //USBComposite.setProductId(0x0003); // spoof DFU device
   USBComposite.setManufacturerString((const char *)"Richard Jones");
@@ -76,7 +76,7 @@ void setup() {
   while (!USBComposite) digitalWrite(LED_BUILTIN, ++i & 1); // Super fast flash while waiting for USB to register
   delay(2000); // for reliable CompositeSerial.write()
   LCD_N_C32 lcd; // Scan i2c bus to discover any displays & initialise them
-  SEG7.displayPChar("ready ");
+  SEG7.displayPChar( (char *) "ready ");
   if ( SUI.Cfg.Bits.hasEventLog ) {
     CompositeSerial.println( VPOConsoleMsg[ SUI.midiKeyboardChannel() ] );
   }
