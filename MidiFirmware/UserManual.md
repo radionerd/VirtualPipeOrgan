@@ -1,16 +1,39 @@
-richard@richard-desktop-rpi4:~/Projects/VirtualPipeOrgan/MidiFirmware$ lsusb
-Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
-Bus 002 Device 002: ID 0bda:9210 Realtek Semiconductor Corp. RTL9210 M.2 NVME Adapter
-Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
-Bus 001 Device 080: ID 0000:3825   USB OPTICAL MOUSE
-Bus 001 Device 082: ID 258a:0001 SINO WEALTH USB KEYBOARD
-Bus 001 Device 094: ID 1eaf:0031 Leaflabs VPO Console Ch3
-Bus 001 Device 063: ID 05e3:0610 Genesys Logic, Inc. Hub
-Bus 001 Device 061: ID 05e3:0610 Genesys Logic, Inc. Hub
-Bus 001 Device 060: ID 214b:7250 Huasheng Electronics USB2.0 HUB
-Bus 001 Device 002: ID 2109:3431 VIA Labs, Inc. Hub
-Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+# USB Midi HID User Manual
 
+This user manual uses Linux examples, for Windows and Mac similar commands will exist.
+
+## Midi Messages
+
+|  Control   |   Midi Message  | Direction |
+|:----------:|:---------------:|:---------:|
+| Keyboard   | Midi Note 32-96 | To Comp   |
+| Pedalboard | Midi Note 32-64 | To Comp   |
+| Buttons    | Midi Note 0-127 | To   Comp |  
+| Button LEDs| Midi Note 0-127 | From Comp |
+| Expression | Midi CC 32-40   | To   Comp |
+| LED 7Seg   | Midi Sysex 32   | From Comp |
+| LCD Display| Midi Sysex      | From Comp |
+
+
+
+
+## The USB Connection
+To discover whether the midi interface is successfully connected to the computer type 'lsusb' at the command prompt. The midi interfaces and the configured midi channel numbers for keyboard/pedalboard and illuminated buttons should show up in the response.
+```
+$ lsusb
+   ...
+   Bus 001 Device 094: ID 1eaf:0031 Leaflabs VPO Console Midi Ch1, 9
+   Bus 001 Device 095: ID 1eaf:0031 Leaflabs VPO Console Midi Ch2, 10
+    ...
+```
+## Configuring the Midi Interface
+A USB serial connection is used to communicate with the Midi Interface.
+Connect one STM32 BluePill to the computer using a USB cable.
+Install minicom and configure it to connect to /dev/ttyACM0.
+Once connected successfully expand the minicom window and press the spacebar.
+You should see a display that shows which pin functions are assigned.
+Select what you require using the A-J keys, then press 'S' to save.
+```
 STM32 Blue Pill Assigned Pin Functions
 IP_SR_DATA    PB12   USB   GND    
 Scan In  0    PB13         GND    
@@ -49,7 +72,12 @@ I [ ] Use Debug Connector for WS2812 RGB LEDs PA13,PA14
 J [ ] Event Log to USB Serial (may slow response time)
 Cfg.Word=3E02
 Enter A-L,a-l To adjust cfg value, S to Save, ? - Menu:
-
+```
+The event log is usefule to monitor midi messages being sent to the computer. However
+using the event log may slow down performance and so should not be enabled during normal use.
+# Hardware Interface Menu
+To monitor activity on attached devices type '?' to view the hardware interface menu.
+```
 Midi Interface Menu
 A-J Adjust config value
 K - Keyboard Contacts
@@ -62,7 +90,10 @@ T - Test IO Pins
 R - Restore Configuration
 V - Version Info
 Z - Display Status
-
+```
+### 'K' Keyboard scan result.
+The MAudio Keystation 61 Mk3 music keyboard has two contacts per key to sense velocity. Keyboard scanning uses 8 outputs and 16 inputs. When pedalboard is selected the top 8 keyboard input lines are re-assigned to be used as expression pedal (ADC) inputs. The pedalboard scans 32 contacts using 8 outputs and 8 inputs. Alternate inputs are unused when there is no velocity sensing.
+```
 Keyboard Scan Result Midi Channel 3
 
 0000000000000000 OP0  CN13 PIN4
@@ -75,7 +106,10 @@ Keyboard Scan Result Midi Channel 3
 0000000000000000 OP7  CN14 PIN1
 ........******** IP *=CN13 input pins 5-6,7=nc,8-13
 ********........ IP *=CN14 input pins 5-12
-
+```
+### 'M' Flash Memory Summary
+Not really a user feature.  Provided for testing the 'S'ave command.
+```
 Flash Memory Summary
 
 0800C850 0000 0000 0000 0000 0000 0000 A678 0800
@@ -87,17 +121,23 @@ Flash Memory Summary
 0801F820 BE72 3E12 3E02 FFFF FFFF FFFF FFFF FFFF
 0801F830 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF
 ...
+```
 
+```
 Shift Register Midi Channel 11 Note Numbers
 
-SR 1   00   01   02   03   04   05   06   07  
+SR 1   00  i01o  02   03   04   05   06   07  
 SR 2   08   09   10   11   12   13   14   15  
 SR 3   16   17   18   19   20   21   22   23  
 SR 4   24   25   26   27   28   29   30   31  
 SR 5   32   33   34   35   36   37   38   39  
 
 i = input on, o = output on
+```
 
+### 'Z' Pin Status
+This screen may be useful for viewing the 12 bit ADC results before filtering and conversion to 7 bit midi values.
+```
 USB Midi Interface Status
 id  port   function     kbd  count input error fault
  0  VBAT                 0     0     0     0    ' ' 
@@ -143,7 +183,7 @@ id  port   function     kbd  count input error fault
 40  PA13        SWDIO    0     0     0     0    ' ' 
 41  PA14        SWCLK    0     0     0     0    ' ' 
 42  PB_2        BOOT1    0     0     0     0    ' ' 
-
+```
 
 
 
