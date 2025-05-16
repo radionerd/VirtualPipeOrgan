@@ -1,54 +1,9 @@
 Done ✓
-  Rewire test jig
-  Test 74164 vs 4093 @ 5V
-  Kicad Schematic
-  Test Grand Orgue LCD Update
-✓ Move out of .ino towards cpp,.h
-  Version Number screen,lsusb,readme
-   Sticky screens
-✓ Fix cr/nl
-   Reverse scan order
-   Logging & enable
-   Monitor Screen
-   Configuration Screen
-   Pinout Screen
-   ADC Input screen
-   Impliment Configuration
-
-   Page Turn Inc,Dec,Home,End one button/2 button
-   Chord display
-   Metronome Display / sounds, Multi Button enable/Disable
-   Update Readme
-   Timed LCD Displays
-   TBC - Velocity
-   Release Binary
-   Update github
-
-   Attach Pedals to Kawai
-   Attach pedal  to GrandOrgue
-
-   Order:
-✓  Pots
-    Veroboard
-    LED strip display?
-    DIP Switches?
-    Diodes?
-    Reed Switches
-    Magnets
-
-PedalBoard Midi Channel 1 Note Numbers
-       B10 B11 B12 B13 B14 B15 PA8 PA9 A10 A15 PB3 PB4
-        C   C#  D   D#  E   F   F#  G   G#  A   A#  B 
-a PC13  24  .   .   .   .   .   .   .   .   .   .   35
-b PC14  36  .   .   .   .   .   .   .   .   .   .   47
-c PC15  .   .   .   .   .   .   .   55
-Keyboard1  Midi Channel 2 Note Numbers
-       B10 B11 B12 B13 B14 B15 PA8 PA9 A10 A15 PB3 PB4
-        C   C#  D   D#  E   F   F#  G   G#  A   A#  B 
-a PA_0  24  .   .   .   .   .   .   .   .   .   .   .
-b PA_1  .   .   .   .   .   .   .   .   .   .   .   .
-c PA_2  .   .   .   .   .   .   .   .   .   .   .   .
-d PA_3  .   .   .   .   .   .   .   .   .   .   .   .
-e PA_4  .   .   .   .   .   .   .   .   .   .   .   .
-x PC15  85<A15
+  Kicad All Schematic
+  Page Turn Inc,Dec,Home,End one button/2 button
+  Chord display - Enhancement
+  Update Readme / User Manual
+  LCD Display Monitor
+  Velocity Disable
+  WS2812 Control on Lowest sharp?
 

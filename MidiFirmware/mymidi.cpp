@@ -56,25 +56,10 @@ void myMidi::handleSysExData(unsigned char ExData) {
     if ( sysexIndex < (sizeof( sysexBuf)+1) ) {
       sysexBuf[sysexIndex++] = ExData;
       sysexBuf[sysexIndex]=0;
-      c = ' ';
-      //if ( (ExData&0x7f) >= 0x20 ) 
-      //  c = ExData & 0x7f ;
-      sprintf(buff,"%c%02X",c, ExData );
-      CompositeSerial.write( buff );    
     }
     if ( ExData == 0xF7 ) {
-      CompositeSerial.write( "\r\n");    
       handleSysExEnd();
     }
-//    char buff[80];
-//    if ( ExData < ' ' )
-//      ExData = ' ';
-//    if ( ExData < 0x80 ) {
-//      sprintf(buff,"%c",ExData);
-//    } else {
-//      sprintf(buff,".\n");  
-//    }
-//    CompositeSerial.write( buff ) ;
   }
   
 void myMidi::handleSysExEnd(void) {
@@ -88,32 +73,28 @@ void myMidi::handleSysExEnd(void) {
     unsigned long interval;
     interval = last_time - (unsigned long)time_ref ;
     // Accept GrandOrgue 16 or 32 char display messages
-    CompositeSerial.write( "handleSysExEnd\r\n");    
     if ( ( sysexBuf[ 0 ] == SysExStartFlag ) && ( sysexBuf[ 1 ] == SysExExperimentalID ) ) { 
-      CompositeSerial.write( "Got start flag & ExpID\r\n");    
       sysexBuf[sysexIndex-1] = 0; // Null terminate string
       int lcd_address = 0;
       int lcd_colour = 0;
       if (  sysexBuf[ 2 ] == SysExLCD32MessageIdentifier ) {
-        CompositeSerial.write( "Got 32 msgID\r\n");    
         lcd_colour  = sysexBuf[ 3 ];
         lcd_address = sysexBuf[ 4 ];
         // lcd_address += sysexBuf[5]<<8;
         sysexIndex = 6; // Start of Text
       }
       if (  sysexBuf[ 2 ] == SysExLCD16MessageIdentifier ) {
-        CompositeSerial.write( "Got 16 msgID\r\n");    
         lcd_address = sysexBuf[ 3 ];
         sysexIndex = 4; // Start of Text
       }
       int i = 0 ;
       // Add Beats per bar and temp to metronome display if found with space
-      while ( sysexBuf[sysexIndex + ++i]  != 0 ) {
-        if ( sysexBuf[sysexIndex+i-3]=='B' ) {
-          if ( sysexBuf[sysexIndex+i-2]=='P' ) {
-            if ( sysexBuf[sysexIndex+i-1]=='M' ) {
-               if ( sysexBuf[sysexIndex+i-0] == ' ' && sysexBuf[sysexIndex+i-1] == ' ') {
-                 strncpy ( sysexBuf+i-3,"Tempo",5  );
+      while ( sysexBuf[sysexIndex + ++i ]  != 0 ) {
+        if ( sysexBuf[sysexIndex + i - 3 ]=='B' ) {
+          if ( sysexBuf[sysexIndex + i - 2 ]=='P' ) {
+            if ( sysexBuf[sysexIndex + i - 1 ]=='M' ) {
+               if ( ( sysexBuf[sysexIndex + i - 0 ] == ' ' ) && ( sysexBuf[sysexIndex + i + 1 ] == ' ' ) ) {
+                 strncpy ( sysexBuf + sysexIndex + i - 3 ,"Tempo", 5  );
                }
                i-=5;
                while ( isdigit ( sysexBuf[sysexIndex+i] ) ) --i;
