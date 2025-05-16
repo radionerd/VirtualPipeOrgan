@@ -50,14 +50,22 @@ Bytes 6-20: 16 ASCII (7-bit) character codes
 Byte 21: 0xF7 – EOX (end of system exclusive message) */
 
 void myMidi::handleSysExData(unsigned char ExData) {
+    char buff[100],c;
     if ( ExData == 0xF0 )
       sysexIndex=0;
     if ( sysexIndex < (sizeof( sysexBuf)+1) ) {
       sysexBuf[sysexIndex++] = ExData;
       sysexBuf[sysexIndex]=0;
+      c = ' ';
+      //if ( (ExData&0x7f) >= 0x20 ) 
+      //  c = ExData & 0x7f ;
+      sprintf(buff,"%c%02X",c, ExData );
+      CompositeSerial.write( buff );    
     }
-    if ( ExData == 0xF7 )
+    if ( ExData == 0xF7 ) {
+      CompositeSerial.write( "\r\n");    
       handleSysExEnd();
+    }
 //    char buff[80];
 //    if ( ExData < ' ' )
 //      ExData = ' ';
@@ -71,85 +79,70 @@ void myMidi::handleSysExData(unsigned char ExData) {
   
 void myMidi::handleSysExEnd(void) {
     const int SysExStartFlag=0xF0;
-    const int SysExManufacturerID=0x7D;
+    const int SysExExperimentalID=0x7D;
     const int SysExLCD32MessageIdentifier=0x01;
     const int SysExLCD16MessageIdentifier=0x19;
-//  const int SysExLCDNumberMSB=0;
-//  const int SysExLCDColourIndex=3; // 1 = White Unused
-    const int SysExLCD16TextStartIndex=4;
-    const int SysExLCD32TextStartIndex=6;
-
+    int startIndex;
     unsigned long time_ref = last_time;
     last_time = micros();
     unsigned long interval;
     interval = last_time - (unsigned long)time_ref ;
-    if ( sysexBuf[ 0 ] == SysExStartFlag && sysexBuf[ 1 ] == SysExManufacturerID && sysexBuf[ 2 ] == SysExLCD32MessageIdentifier ) { // && sysexBuf[ 4 ] == SysExLCDNumberMSB GrandOrgue work around  ) {
-      sysexBuf[sysexIndex-1] = 0; // Null terminate
-      sysexIndex=0;
-      uint8_t LCDNumberLSB = sysexBuf[3] | sysexBuf[4]; // GrandOrgue & Hauptwerk seem to disagree about MSB and LSB order, so assume MSB==0 for now
-      if ( LCDNumberLSB == 0x20 ) {
-          SEG7.displayPChar( sysexBuf + SysExLCD32TextStartIndex );
-      } else {
-        LCD_N_C32 lcd("");
-        lcd.write(LCDNumberLSB, sysexBuf + SysExLCD32TextStartIndex );
+    // Accept GrandOrgue 16 or 32 char display messages
+    CompositeSerial.write( "handleSysExEnd\r\n");    
+    if ( ( sysexBuf[ 0 ] == SysExStartFlag ) && ( sysexBuf[ 1 ] == SysExExperimentalID ) ) { 
+      CompositeSerial.write( "Got start flag & ExpID\r\n");    
+      sysexBuf[sysexIndex-1] = 0; // Null terminate string
+      int lcd_address = 0;
+      int lcd_colour = 0;
+      if (  sysexBuf[ 2 ] == SysExLCD32MessageIdentifier ) {
+        CompositeSerial.write( "Got 32 msgID\r\n");    
+        lcd_colour  = sysexBuf[ 3 ];
+        lcd_address = sysexBuf[ 4 ];
+        // lcd_address += sysexBuf[5]<<8;
+        sysexIndex = 6; // Start of Text
       }
-      if ( SUI.Cfg.Bits.hasEventLog ) {
-        char buff[80];
-        sprintf(buff,"%lu %5lu LCD[%d]='%s'\r\n",last_time,interval,LCDNumberLSB,sysexBuf + SysExLCD32TextStartIndex);
-        CompositeSerial.write( buff ) ;
+      if (  sysexBuf[ 2 ] == SysExLCD16MessageIdentifier ) {
+        CompositeSerial.write( "Got 16 msgID\r\n");    
+        lcd_address = sysexBuf[ 3 ];
+        sysexIndex = 4; // Start of Text
       }
-    }
-    if ( sysexBuf[ 0 ] == SysExStartFlag && sysexBuf[ 1 ] == SysExManufacturerID && sysexBuf[ 2 ] == SysExLCD16MessageIdentifier ) { // && sysexBuf[ 4 ] == SysExLCDNumberMSB GrandOrgue work around  ) {
-      sysexBuf[sysexIndex-1] = 0; // Null terminate
-      sysexIndex=0;
-      uint8_t LCDNumberLSB = sysexBuf[3] ;
-      if ( LCDNumberLSB == 0x20 ) {
-          SEG7.displayPChar( sysexBuf + SysExLCD16TextStartIndex );         
-      } else {
-        LCD_N_C32 lcd((const char *)"");
-//        if ( strncmp ( sysexBuf + SysExLCD16TextStartIndex + 3 , "BPM",3 ) == 0 || strncmp ( sysexBuf + SysExLCD16TextStartIndex + 4 , "BPM",3 )==0 ) {
-//          strncpy ( sysexBuf + SysExLCD16TextStartIndex + 12 , "BPB",3 ); // Flag beats per bar / Measure
-//        }
-        if ( strncmp ( sysexBuf + SysExLCD16TextStartIndex + 10 , "BPM",3 ) == 0 || strncmp ( sysexBuf + SysExLCD16TextStartIndex + 11 , "BPM",3 )==0 ) {
-          if ( sysexBuf[ SysExLCD16TextStartIndex+1 ] == ' ' )
-            strncpy ( sysexBuf + SysExLCD16TextStartIndex + 2 , "BPB",3 ); // Flag beats per bar
-          else
-            strncpy ( sysexBuf + SysExLCD16TextStartIndex + 3 , "BPB",3 ); // Flag beats per bar
-          if ( sysexBuf[ SysExLCD16TextStartIndex+9 ] == ' ' )          
-            strncpy ( sysexBuf + SysExLCD16TextStartIndex + 10 , "Tempo ",6 ); // beats per minnute
-          else
-            strncpy ( sysexBuf + SysExLCD16TextStartIndex + 11 , "Tempo",5 ); // beats per minnute
-          
+      int i = 0 ;
+      // Add Beats per bar and temp to metronome display if found with space
+      while ( sysexBuf[sysexIndex + ++i]  != 0 ) {
+        if ( sysexBuf[sysexIndex+i-3]=='B' ) {
+          if ( sysexBuf[sysexIndex+i-2]=='P' ) {
+            if ( sysexBuf[sysexIndex+i-1]=='M' ) {
+               if ( sysexBuf[sysexIndex+i-0] == ' ' && sysexBuf[sysexIndex+i-1] == ' ') {
+                 strncpy ( sysexBuf+i-3,"Tempo",5  );
+               }
+               i-=5;
+               while ( isdigit ( sysexBuf[sysexIndex+i] ) ) --i;
+               while ( sysexBuf[sysexIndex+i]==' ' ) --i;
+               if ( isdigit ( sysexBuf[sysexIndex+i] ) && sysexBuf[sysexIndex+i+1]==' ' && 
+                    sysexBuf[sysexIndex+i+2]==' ' && sysexBuf[sysexIndex+i+3]==' ' && sysexBuf[sysexIndex+i+4]==' ' ) {
+                 sysexBuf[sysexIndex+i+2]='B' ;
+                 sysexBuf[sysexIndex+i+3]='P' ;
+                 sysexBuf[sysexIndex+i+4]='B' ;
+               }
+               break;
+             }
+           }
         }
-        lcd.write(LCDNumberLSB, sysexBuf + SysExLCD16TextStartIndex );
       }
-      if ( SUI.Cfg.Bits.hasEventLog ) {
-        char buff[80];
-        sprintf(buff,"%lu %5lu LCD[%d]='%s'\r\n",last_time,interval,LCDNumberLSB,sysexBuf + SysExLCD16TextStartIndex);
-        CompositeSerial.write( buff ) ;
-      }
-    }
-    if ( sysexIndex ) {
-     if ( SUI.Cfg.Bits.hasEventLog ) {
-      if ( sysexBuf[0]==0xF0 ) {
-       char buff[80];
-       sprintf(buff,"%lu %5lu SysEx: ",last_time , interval );
-       CompositeSerial.write( buff );
-       //sysexBuf[sysexIndex-1] = 0; // Null terminate
-       for ( unsigned int i = 0 ; i < sysexIndex-1 ; i++ ) {
-        char c = sysexBuf[i];
-        if ( i > 3 && c >= ' ' ) {
-          buff[0] = c;
-          buff[1]=0;
+      if ( lcd_address ) {
+        if ( lcd_address == 0x20 ) {
+          SEG7.displayPChar( sysexBuf + sysexIndex );         
         } else {
-          sprintf( buff, "%02X ",sysexBuf[i]);
+          LCD_N_C32 lcd((const char *)"");
+          lcd.write(lcd_address, sysexBuf + sysexIndex );
         }
-        CompositeSerial.write(buff);
-       }
-       CompositeSerial.write(" Ignored\r\n");    
       }
-     }
+      if ( SUI.Cfg.Bits.hasEventLog ) {
+        char buff[80];
+        sprintf(buff,"%lu %5lu LCD[%d]='%s'\r\n",last_time,interval,lcd_address,sysexBuf + sysexIndex);
+        CompositeSerial.write( buff ) ;
+      }
     }
     sysexIndex=0;
     sysexBuf[sysexIndex]=0;
-  } // handleSysExEnd
+} // handleSysExEnd

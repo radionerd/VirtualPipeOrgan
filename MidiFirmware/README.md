@@ -2,57 +2,60 @@
 
 ## Introduction
 
-This project was conceived to connect controls to Virtual Pipe Organ software such as Hauptwerk, GrandOrgue, Cecilia etc running on a touch screen laptop. The design uses an inexpensive microcontroller board with few external components. Flexibility is the main motivation as I started with little Midi or VPO experience. This project may work for you too. Let me know how you get on and whether improvements should be made.
+This project was conceived to connect controls to Virtual Pipe Organ software such as GrandOrgue, Hauptwerk, Cecilia etc running on a touch screen laptop. The design uses a BluePill microcontroller board with few external components. Flexibility is the main motivation as I started with little Midi or VPO experience. This project may work for you too. Let me know how you get on and whether improvements should be made. 
 ## Block Diagram
 
 <img src="BlockDiagramTBG.png" style="height: 446px; width:580px;"/>
 
 ## Features
-- Hosted on the STM32 Blue Pill, a $2US development board
+- Hosted on the STM32 Blue Pill, a ~$2 US development board
 - USB Connection to host computer, LED blink on Midi activity
-- Multiple STM32 boards may be deployed to ease wiring or increase capacity
-- 128 scanned contacts arranged as a 16 input x 8 output diode switch matrix
-- Contacts may send Midi Note On/Off messages for pedalboard, stops, couplers or toe pistons
-- Contacts may instead send QWERTY Keyboard HID messages for turning music pages displayed on a host computer monitor
-- Page turning may use a single sustain pedal type contact e.g. short press forward, long press back.
-- Contacts and potentiometers are individually debounced for 50ms to reduce message floods
+- Multiple STM32 boards may be deployed to ease wiring
+- Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
+- 8 ADC inputs for expression pedals when scanning a pedalboard
+- 96 LED illuminated button inputs
+- USB HID (qwerty keyboard) messages for music page turning
+- Up to 8 16x2 Line LCD Display Modules
+- One 6 digit LED display
+- interface to WS2812 LED string for music stand or pedal illumination
+- Simulated serial interface over USB for saving configuration in Flash
 - Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 22.04 X86 & Arm Linux
-- Active High Outputs for the best noise immunity connect to inputs via a diode and switch: 
--   Output-----|>|---Switch----Input
-- Up to 8 ADC inputs may be used for expression pedals and other purposes.
-- Up to 8 I2C 16 x 2 line LCDs show their auto detected i2c address at power on.
-## Current Configuration
-- MAudio Keystation61Mk3 interface for 61 key keyboard with velocity sensing or 32 input pedalboard
-- TBD HID keybd buttons for page turning
-- 96 Button & LED Shift register IO's mapped to Midi Channels 5-8 Notes 1-24 for pistons or stops
--  8 Filter ADC inputs are mapped to Midi CC 20-27 values 0-127 for expression pedals and LED dimming (only with pedalboard option selected)
--  I2C Display addresses are configured by PCF8574 solder bridge inputs on the LCD modules, these addresses are then configured in Hauptwerk and map through the blue pill. Expect address 0x38-0x3f for Philips/NXP ICs and 0x20-0x27 for TI. The highest address is used when no solder bridges are fitted.
+- Printed circuit boards to mount the Blue pill and shift register interfaces use off the shelf cables to interconnect
 
-## Initial Midi Channel Assignments
+## Midi Channel Assignment
+Midi channels for keyboard/pedalboard are configurable from 1-16 with the illuminated button channel offset by 8.
+## Programming the Blue Pill
+Downlad the file MidiFirmware.ino.bin from github
+### First Time
+New boards are programmed with a boot loader using the STLINK programmer or a clone.
+Take care connecting four wires from the programmer to the BluePill debug connector as they are usually not in order.
+The programming tools are incuded with the Arduino enviroment configured for STM32.
+* Install the Arduino environment for STM32
+* Download a copy of https://github.com/rogerclarkmelbourne/STM32duino-bootloader/blob/master/binaries/generic_boot20_pc13.bin
+Run the 'stlink-gui' command.
+```
+ $ stlink-gui
+```
+* Use 'Open' to select the file generic_boot20_pc13.bin
+* Use 'Connect' to the STLINK
+* Use the red flash button to program the bootloader
+Remove the 4 wire connection to the STLink programmer
+### Load the midi software into the BluePill
+Connect the BluePill USB interface to your computer.
+You may have to provide some additional path information to the command below depending on where you installed arduino
+```
+ $ maple_upload ttyACM0 2 1EAF:0003 MidiFirmware.ino.bin ~/Downloads/arduino-1.8.19
+```
+Once the midi software is loaded the BluePill green LED should breath gently at about 0.5Hz to show that all is well.
 
-Initial midi channel assignments are readily altered by editing constant arrays.
-
-|         |Notes|Pistons|Expression|
-| :---:   |:---:| :---: |  :---:   |
-| Manual1 |  1  |   5   |          |
-| Manual2 |  2  |   6   |          |
-| Manual3 |  3  |   7   |          |
-| Pedal   |  4  |   8   |     9    |
-
-### *** RE-PROGRAMMING ***
- * The firmware is configured to use the reserved gpio pins, the Blue Pill may be tricky to re-program.
- * To re-program if you have problems:
- * 1. Set Boot0 Link to position 1
- * 2. Press reset
- * 3. Upon releasing reset immediately upload new code using ST-Link
- * 4. Repeat step 3 until programming success
- * 5. Move Boot0 link to position 0
- * 6. Disconnect programmer
- * 7. OR Use a USB boot loader
 ## Enhancements
-- Output drive for LEDs and displays possibly midi controlled may be needed
+- HID Music Page Turning
+- Chord Feature
+- Photos
  ## Thanks
-The code is based on the excellent examples from: https://github.com/arpruss/USBComposite_stm32f1/tree/master/examples
-Also thanks to the Arduino and STM32 support teams
+The code is based on the excellent examples from: 
+ - https://github.com/arpruss/USBComposite_stm32f1/tree/master/examples
+ - The Arduino and STM32 support teams
+ - https://github.com/FearlessNight/bluepill_ws2812/blob/master/bluepill_ws2812.cpp
 # License
 MIT

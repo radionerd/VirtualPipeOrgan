@@ -1,6 +1,6 @@
 # USB Midi HID User Manual
 
-This user manual uses Linux examples, for Windows and Mac similar commands will exist.
+This user manual uses Linux examples with Grandorgue. For other instruments and Operating Systems similar commands will exist.
 
 ## Midi Messages
 
@@ -26,10 +26,16 @@ $ lsusb
    Bus 001 Device 095: ID 1eaf:0031 Leaflabs VPO Console Midi Ch2, 10
     ...
 ```
+# Monitoring Midi Messages
+Use 'midisnoop' to monitor messages sent between the keyboard/pedalboard and the computer. Use Alsa unless you have Jack configured.
+# Making Midi Connections
+Use 'qjackctl' graph function to view or connect midi outputs to midi inputs
+Connect grandorgue output to midisnoop input using the qjacktctl graph
+
 ## Configuring the Midi Interface
 A USB serial connection is used to communicate with the Midi Interface.
 Connect one STM32 BluePill to the computer using a USB cable.
-Install minicom and configure it to connect to /dev/ttyACM0.
+Install 'minicom' and configure it to connect to /dev/ttyACM0.
 Once connected successfully expand the minicom window and press the spacebar.
 You should see a display that shows which pin functions are assigned.
 Select what you require using the A-J keys, then press 'S' to save.
@@ -107,6 +113,11 @@ Keyboard Scan Result Midi Channel 3
 ........******** IP *=CN13 input pins 5-6,7=nc,8-13
 ********........ IP *=CN14 input pins 5-12
 ```
+
+### 'L' LCD Check
+
+-  I2C Display addresses are configured by PCF8574 solder bridge inputs on the LCD modules, these addresses are then configured in Grandorgue and map through the blue pill. Expect address 0x38-0x3f for Philips/NXP ICs and 0x20-0x27 for TI. The highest address is used when no solder bridges are fitted. Note that Grandorgue specifies the addresses in Base10.
+
 ### 'M' Flash Memory Summary
 Not really a user feature.  Provided for testing the 'S'ave command.
 ```
@@ -146,14 +157,14 @@ id  port   function     kbd  count input error fault
  3  PC15   Scan Out 1    0     1     0     0    ' ' 
  4  PA_0   Scan Out 2    0     2     0     0    ' ' 
  5  PA_1   Scan Out 3    0     3     0     0    ' ' 
- 6  PA_2   Scan In  f    0     f     0     0    ' ' 
- 7  PA_3   Scan In  e    0     e     0     0    ' ' 
- 8  PA_4   Scan In  d    0     d     0     0    ' ' 
- 9  PA_5   Scan In  c    0     c     0     0    ' ' 
-10  PA_6   Scan In  b    0     b     0     0    ' ' 
-11  PA_7   Scan In  a    0     a     0     0    ' ' 
-12  PB_0   Scan In  9    0     9     0     0    ' ' 
-13  PB_1   Scan In  8    0     8     0     0    ' ' 
+ 6  PA_2    IP_ADC  0    0     0    e0    e0    ' ' 
+ 7  PA_3    IP_ADC  1    0     1   36e   37a    ' ' 
+ 8  PA_4    IP_ADC  2    0     2   509   51e    ' ' 
+ 9  PA_5    IP_ADC  3    0     3   749   75c    ' ' 
+10  PA_6    IP_ADC  4    0     4   8b4   8a1    ' ' 
+11  PA_7    IP_ADC  5    0     5   8d8   8c0    ' ' 
+12  PB_0    IP_ADC  6    0     6   a59   a43    ' ' 
+13  PB_1    IP_ADC  7    0     7   e10   e1b    ' ' 
 14  PB10    TM1637_CK    0     0     0     0    ' ' 
 15  PB11  OP_SR_CLOCK    0    60     0     0    ' ' 
 16  NRST                 0     0     0     0    ' ' 
@@ -161,7 +172,7 @@ id  port   function     kbd  count input error fault
 18   GND                 0     0     0     0    ' ' 
 19   GND                 0     0     0     0    ' ' 
 20  PB12   IP_SR_DATA    0     0     0     0    ' ' 
-21  PB13   Scan In  0    0     0     0     0    ' ' 
+21  PB13   Scan In  0    0     0     0     0    ' '
 22  PB14   Scan In  1    0     1     0     0    ' ' 
 23  PB15   Scan In  2    0     2     0     0    ' ' 
 24  PA_8   Scan In  3    0     3     0     0    ' ' 
@@ -173,17 +184,15 @@ id  port   function     kbd  count input error fault
 30  PB_3   Scan In  7    0     7     0     0    ' ' 
 31  PB_4   Scan Out 4    0     4     0     0    ' ' 
 32  PB_5   Scan Out 5    0     5     0     0    ' ' 
-33  PB_6 LCD  I2C_SCL    0     0     0     0    ' ' 
-34  PB_7 ShareI2C_SDA    0     0     0     0    ' ' 
+33  PB_6 LCD  I2C_SCL    0     0     0     0    '!' 
+34  PB_7 ShareI2C_SDA    0     0     0     0    '!' 
 35  PB_8   Scan Out 6    0     6     0     0    ' ' 
 36  PB_9   Scan Out 7    0     7     0     0    ' ' 
 37   +5V                 0     0     0     0    ' ' 
 38   GND                 0     0     0     0    ' ' 
 39   3V3                 0     0     0     0    ' ' 
-40  PA13        SWDIO    0     0     0     0    ' ' 
-41  PA14        SWCLK    0     0     0     0    ' ' 
+40  PA13  WS2812 LEDs    0     0     0     0    ' ' 
+41  PA14  WS2812 LEDs    0     0     0     0    ' ' 
 42  PB_2        BOOT1    0     0     0     0    ' ' 
+
 ```
-
-
-

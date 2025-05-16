@@ -26,22 +26,22 @@ TM1637 SEG7; // 7 Segment display driver
 USBCompositeSerial CompositeSerial;
 myMidi midi;
 const char *VPOConsoleMsg[16]= {
-  "VPO Console Ch1",
-  "VPO Console Ch2",
-  "VPO Console Ch3",
-  "VPO Console Ch4",
-  "VPO Console Ch5",
-  "VPO Console Ch6",
-  "VPO Console Ch7",
-  "VPO Console Ch8",
-  "VPO Console Ch9",
-  "VPO Console Ch10",
-  "VPO Console Ch11",
-  "VPO Console Ch12",
-  "VPO Console Ch13",
-  "VPO Console Ch14",
-  "VPO Console Ch15",
-  "VPO Console Ch16",
+  "VPO Console Midi Ch1, 9",
+  "VPO Console Midi Ch2, 10",
+  "VPO Console Midi Ch3, 11",
+  "VPO Console Midi Ch4, 12",
+  "VPO Console Midi Ch5, 13",
+  "VPO Console Midi Ch6, 14",
+  "VPO Console Midi Ch7, 15",
+  "VPO Console Midi Ch8, 16",
+  "VPO Console Midi Ch9, 1",
+  "VPO Console Midi Ch10, 2",
+  "VPO Console Midi Ch11, 3",
+  "VPO Console Midi Ch12, 4",
+  "VPO Console Midi Ch13, 5",
+  "VPO Console Midi Ch14, 6",
+  "VPO Console Midi Ch15, 7",
+  "VPO Console Midi Ch16, 8",
 };
 
 void setup() {
