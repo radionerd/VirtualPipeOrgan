@@ -216,7 +216,7 @@ void USBSerialUI::MusicKeyboardScan( bool pedalboard ) {
             }
             buf[0]=0;
             int midi_channel = Cfg.Bits.midiChannelOffset ;
-            if ( ! pedalboard ) {
+            if ( Cfg.Bits.hasKeyVelocity ) {
               if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
                 if ( ( j & 1 ) == 0 ) { // lower contact?
                   midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
@@ -262,7 +262,7 @@ void USBSerialUI::CommandCharDecode( char c )
       case 'y' :
       case 's' :
         SaveConfigToFlash(c);
-        RestoreConfigFromFlash(); // Update LiveConfigs 
+        //RestoreConfigFromFlash(); // Update LiveConfigs 
         break;
       case 'r' :// restore config from flash
         RestoreConfigFromFlash();
@@ -449,6 +449,7 @@ void USBSerialUI::RestoreConfigFromFlash() {
     while ( FlashPage[++i] != 0xFFFF ) ;
     Cfg.Word = FlashPage[i - 1];
   }
+  Cfg.Bits.hasEventLog = 0; // Force off: To avoid lockup when terminal not emptying log buffer
   fillCfgPinData( Cfg.Word , &LiveConfigs[0] );
 }
 
@@ -482,7 +483,13 @@ void USBSerialUI::DisplayConfigurationMenu() {
   while ( ConfigItems[i].maxval != 0 ) {
     char valtext[20];
     if ( ConfigItems[i].maxval > 1 ) {
-      sprintf ( valtext, "%d", ConfigValue[i]);
+      int dvalue = ConfigValue[i];
+      if (  i == 2 ) { // Number of ADCs inputs?
+        if ( Cfg.Bits.hasPedalBoard == 0 ) { // Force display to zero while preserving value
+          dvalue = 0 ;
+        }
+      }
+      sprintf ( valtext, "%d", dvalue );
     } else {
       strncpy(valtext, "✓", 5);
       if ( ( ConfigValue[i] ) == 0 ) {

@@ -1,10 +1,12 @@
 Done ✓
-✓LCD 16 & 32 char display equivalence
-✓Metronome Tempo Display
-  Disable save of J[] monitor config to avoid startup issues
-  Configure Velocity Disable
+✓Disable save of J[] monitor config to avoid startup issues
+✓Display 0 ADCs when not in pedalboard mode
+✓Configure Velocity Disable independent from pedalboard
+✓Enhancement - Dim buttons when not fully lit for reading text in dark situations
   WS2812 Control on Lowest sharp when other notes silent for 5 seconds
   Build with makefile?
+  Enhancement - Simple scheduler so that keyboard, buttons, lcds avoid each other
+  Enhancement - Investigate whether LCD loading can be speeded up a lot
   Enhancement - Page Turn Inc,Dec,Home,End one button/2 button
   Enhancement - Chord display
   Update Readme / User Manual

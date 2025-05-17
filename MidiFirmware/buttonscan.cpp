@@ -77,6 +77,14 @@ uint32_t ButtonScan::Scan(uint32_t *sr_input_list,uint32_t*sr_outputs, bool LEDI
 	      *PB11_BB = 1; // Early rising clock to allow propogation delay to/from far away shift registers        *PB11_BB = 1; // Early rising clock to allow propogation delay to/from far away shift registers
 	    }
 	  }
+    // Experiment with baclighting for dark buttons
+    unsigned long time_now = micros();
+    *PB07_BB = 1; // Set all buttons on for 1ms
+    for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
+      *PB11_BB = 0;
+      *PB11_BB = 1;
+    }
+    while ( ( micros() - time_now ) < 1000 );
 	  // Load output LEDs
     if ( LEDInvert ) {
 	   for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
