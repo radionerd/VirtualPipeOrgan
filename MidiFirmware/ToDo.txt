@@ -1,9 +1,12 @@
 Done ✓
-  Kicad All Schematic
-  Page Turn Inc,Dec,Home,End one button/2 button
-  Chord display - Enhancement
+✓LCD 16 & 32 char display equivalence
+✓Metronome Tempo Display
+  Disable save of J[] monitor config to avoid startup issues
+  Configure Velocity Disable
+  WS2812 Control on Lowest sharp when other notes silent for 5 seconds
+  Build with makefile?
+  Enhancement - Page Turn Inc,Dec,Home,End one button/2 button
+  Enhancement - Chord display
   Update Readme / User Manual
-  LCD Display Monitor
-  Velocity Disable
-  WS2812 Control on Lowest sharp?
+  Kicad All Schematic
 
