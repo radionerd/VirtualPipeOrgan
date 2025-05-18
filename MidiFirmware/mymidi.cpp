@@ -3,11 +3,12 @@
 #include "led.h"
 #include "lcd.h"
 #include "mymidi.h"
+#include "profile.h"
 #include "TM1637.h"
 #include "USBSerialUI.h"
 
 extern TM1637 SEG7; // 7 Segment display driver
-
+extern PROFILE profile; // execution time profiler
 
 void myMidi::handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity) {
       //led.on();
@@ -50,7 +51,6 @@ Bytes 6-20: 16 ASCII (7-bit) character codes
 Byte 21: 0xF7 – EOX (end of system exclusive message) */
 
 void myMidi::handleSysExData(unsigned char ExData) {
-    char buff[100],c;
     if ( ExData == 0xF0 )
       sysexIndex=0;
     if ( sysexIndex < (sizeof( sysexBuf)+1) ) {
@@ -58,7 +58,9 @@ void myMidi::handleSysExData(unsigned char ExData) {
       sysexBuf[sysexIndex]=0;
     }
     if ( ExData == 0xF7 ) {
+      profile.PStart(PROFILE_SYSEX);
       handleSysExEnd();
+      profile.PEnd  (PROFILE_SYSEX);
     }
   }
   
@@ -67,7 +69,7 @@ void myMidi::handleSysExEnd(void) {
     const int SysExExperimentalID=0x7D;
     const int SysExLCD32MessageIdentifier=0x01;
     const int SysExLCD16MessageIdentifier=0x19;
-    int startIndex;
+    //int startIndex;
     unsigned long time_ref = last_time;
     last_time = micros();
     unsigned long interval;
@@ -76,9 +78,9 @@ void myMidi::handleSysExEnd(void) {
     if ( ( sysexBuf[ 0 ] == SysExStartFlag ) && ( sysexBuf[ 1 ] == SysExExperimentalID ) ) { 
       sysexBuf[sysexIndex-1] = 0; // Null terminate string
       int lcd_address = 0;
-      int lcd_colour = 0;
+      //int lcd_colour = 0;
       if (  sysexBuf[ 2 ] == SysExLCD32MessageIdentifier ) {
-        lcd_colour  = sysexBuf[ 3 ];
+        // lcd_colour  = sysexBuf[ 3 ]; // Unused feature
         lcd_address = sysexBuf[ 4 ];
         // lcd_address += sysexBuf[5]<<8;
         sysexIndex = 6; // Start of Text
@@ -111,7 +113,7 @@ void myMidi::handleSysExEnd(void) {
         }
       }
       if ( lcd_address ) {
-        if ( lcd_address == 0x20 ) {
+        if ( lcd_address == SEVEN_SEGMENT_ADDRESS ) {
           SEG7.displayPChar( sysexBuf + sysexIndex );         
         } else {
           LCD_N_C32 lcd((const char *)"");

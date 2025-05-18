@@ -8,24 +8,21 @@ This project was conceived to connect controls to Virtual Pipe Organ software su
 <img src="BlockDiagramTBG.png" style="height: 446px; width:580px;"/>
 
 ## Features
-- Hosted on the STM32 Blue Pill, a ~$2 US development board
+- Hosted on the Arm Cortex-M3 CPU STM32F103C8T6 Bluepill, a ~$2 US development board
 - USB Connection to host computer, LED blink on Midi activity
 - Multiple STM32 boards may be deployed to ease wiring
 - Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
 - 8 ADC inputs for expression pedals when scanning a pedalboard
 - 96 LED illuminated button inputs
-- USB HID (qwerty keyboard) messages for music page turning
-- Up to 8 16x2 Line LCD Display Modules
-- One 6 digit LED display
+- One 6 digit LED display (for combination setter & crescendo display)
+- Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per manufacturer type )
 - interface to WS2812 LED string for music stand or pedal illumination
+- USB HID (qwerty keyboard) messages for music page turning (Future)
 - Simulated serial interface over USB for saving configuration in Flash
-- Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 22.04 X86 & Arm Linux
-- Printed circuit boards to mount the Blue pill and shift register interfaces use off the shelf cables to interconnect
-
-## Midi Channel Assignment
-Midi channels for keyboard/pedalboard are configurable from 1-16 with the illuminated button channel offset by 8.
+- Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 24.04 X86 & Arm Linux
+- Printed circuit boards to mount the STM32 Bluepill and shift register interfaces use off the shelf cables to interconnect
 ## Programming the Blue Pill
-Downlad the file MidiFirmware.ino.bin from github
+Download the file MidiFirmware.ino.bin from github
 ### First Time
 New boards are programmed with a boot loader using the STLINK programmer or a clone.
 Take care connecting four wires from the programmer to the BluePill debug connector as they are usually not in order.
@@ -52,7 +49,7 @@ Once the midi software is loaded the BluePill green LED should breath gently at 
 - HID Music Page Turning
 - Chord Feature
 - Photos
- ## Thanks
+ ## Credits
 The code is based on the excellent examples from: 
  - https://github.com/arpruss/USBComposite_stm32f1/tree/master/examples
  - The Arduino and STM32 support teams

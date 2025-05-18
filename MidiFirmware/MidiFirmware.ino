@@ -49,7 +49,9 @@ void setup() {
   pinMode ( LED_BUILTIN, OUTPUT );
   SEG7.begin(PB10,PB7,6); // begin(uint8_t clockPin, uint8_t dataPin, uint8_t digits)
   SEG7.setBrightness(1);
-  SEG7.displayPChar((char *)"Add=32"); // Briefly Display sysex ID
+  char buf[80];
+  sprintf(buf,"Add=%-2d",SEVEN_SEGMENT_ADDRESS);
+  SEG7.displayPChar(buf); // Briefly Display sysex ID
   USBComposite.setProductId(0x0031);
   //USBComposite.setProductId(0x0003); // spoof DFU device
   USBComposite.setManufacturerString((const char *)"Richard Jones");

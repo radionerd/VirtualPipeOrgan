@@ -1,6 +1,35 @@
 # USB Midi HID User Manual
 
-This user manual uses Linux examples with Grandorgue. For other instruments and Operating Systems similar commands will exist.
+This user manual uses Linux examples with Grandorgue. For other instruments and Operating Systems similar commands will exist. 
+The manual assumes that you have programed the flash in the STM32 Bluepill using the instructions in README.md.
+
+## Features
+- Hosted on the Arm Cortex-M3 CPU STM32F103C8T6 Bluepill, a ~$2 US development board
+- USB Connection to host computer, LED blink on Midi activity
+- Multiple STM32 boards may be deployed to ease wiring
+- Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
+- 8 ADC inputs for expression pedals when scanning a pedalboard
+- 96 LED illuminated button inputs
+- One 6 digit LED display (for combination setter & crescendo display)
+- Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per IC type )
+- interface to WS2812 RGB LED string for music stand or pedal illumination
+- USB HID (qwerty keyboard) messages for music page turning (Future)
+- Simulated serial interface over USB for viewing/saving configuration in Flash
+- Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 24.04 X86 & Arm Linux
+- Printed circuit boards to mount the STM32 Bluepill and shift register interfaces use low cost plug in cables to interconnect
+
+## The USB Connection
+To discover whether the midi interface is successfully connected to the computer type 'lsusb' at the command prompt. The midi interfaces and the configured midi channel numbers for keyboard/pedalboard and illuminated buttons should show up in the response.
+```
+$ lsusb
+   ...
+   Bus 001 Device 094: ID 1eaf:0031 Leaflabs VPO Console Midi Ch1, 9
+   Bus 001 Device 095: ID 1eaf:0031 Leaflabs VPO Console Midi Ch2, 10
+   ...
+```
+
+## Midi Channel Assignment
+Midi channels for keyboard/pedalboard are configurable from 1-16 with the illuminated button channel offset by 8.
 
 ## Midi Messages
 
@@ -10,32 +39,57 @@ This user manual uses Linux examples with Grandorgue. For other instruments and 
 | Pedalboard | Midi Note 32-64 | To Comp   |
 | Buttons    | Midi Note 0-127 | To   Comp |  
 | Button LEDs| Midi Note 0-127 | From Comp |
-| Expression | Midi CC 32-40   | To   Comp |
-| LED 7Seg   | Midi Sysex 32   | From Comp |
-| LCD Display| Midi Sysex      | From Comp |
+| Expression | Midi CC   32-40 | To   Comp |
+| LED 7Seg   | Midi Sysex ID==1| From Comp |
+| LCD Display| Midi Sysex 32-63| From Comp |
 
+ID addresses are shown on the LCD and 7 LED displays at power up.
 
+The PCF8574 and PCF8574A ICs on LCD displays use two different address ranges.
 
+Unless you need more than 8 displays it does not matter which kind you buy.
 
-## The USB Connection
-To discover whether the midi interface is successfully connected to the computer type 'lsusb' at the command prompt. The midi interfaces and the configured midi channel numbers for keyboard/pedalboard and illuminated buttons should show up in the response.
-```
-$ lsusb
-   ...
-   Bus 001 Device 094: ID 1eaf:0031 Leaflabs VPO Console Midi Ch1, 9
-   Bus 001 Device 095: ID 1eaf:0031 Leaflabs VPO Console Midi Ch2, 10
-    ...
-```
+The adddresses configured in Grandorgue are Base 10.
+
+|  PCF8574   | Grandorgue | PCF8574A | Grandorgue | A2| A1| A0|
+|:----------:|:----------:|:--------:|:----------:|:-:|:-:|:-:|
+| 0x20       |      32    |   0x38   |      56    | 0 | 0 | 0 |
+| 0x21       |      33    |   0x39   |      57    | 0 | 0 | 1 |
+| 0x22       |      34    |   0x3a   |      58    | 0 | 1 | 0 |
+| 0x23       |      35    |   0x3b   |      59    | 0 | 1 | 1 |
+| 0x24       |      36    |   0x3c   |      60    | 1 | 0 | 0 |
+| 0x25       |      37    |   0x3d   |      61    | 1 | 0 | 1 |
+| 0x26       |      38    |   0x3e   |      62    | 1 | 1 | 0 |
+| 0x27       |      39    |   0x3f   |      63    | 1 | 1 | 1 |
+
+*User solder bridges A0-A2 are used to program zeros and are binary coded. So the default address is either 0x27 (39) or 0x3F (63) without any solder bridges.
+
 # Monitoring Midi Messages
-Use 'midisnoop' to monitor messages sent between the keyboard/pedalboard and the computer. Use Alsa unless you have Jack configured.
+Use 'midisnoop' to monitor messages sent between the keyboard/pedalboard and the computer. Select Alsa unless you have Jack configured.
+```
+$ midisnoop &
+```
+
 # Making Midi Connections
-Use 'qjackctl' graph function to view or connect midi outputs to midi inputs
-Connect grandorgue output to midisnoop input using the qjacktctl graph
+Use 'qjackctl' graph function to view or connect midi outputs to midi inputs.
+
+This works for ALSA and JACK.
+
+```
+$ qjackctl &
+```
+You may need to re-esatblish connections manually if you restart the STM32 Bluepill.
+
+Connect the Grandorgue output to VPO Console and midisnoop inputs using the qjacktctl graph feature and mouse.
+
+Connect the VPO Console output to Grandorgue and midisnoop inputs using the qjacktctl graph feature and mouse.
+
+<img src="MidiSnoopGOExample.png" />
 
 ## Configuring the Midi Interface
 A USB serial connection is used to communicate with the Midi Interface.
 Connect one STM32 BluePill to the computer using a USB cable.
-Install 'minicom' and configure it to connect to /dev/ttyACM0.
+Install 'minicom' and configure it to connect to /dev/ttyACM0 or /dev/ttyUSB0 depending on your OS.
 Once connected successfully expand the minicom window and press the spacebar.
 You should see a display that shows which pin functions are assigned.
 Select what you require using the A-J keys, then press 'S' to save.
@@ -95,7 +149,7 @@ S - Save New Configuration
 T - Test IO Pins
 R - Restore Configuration
 V - Version Info
-Z - Display Status
+Z - Pin Status
 ```
 ### 'K' Keyboard scan result.
 The MAudio Keystation 61 Mk3 music keyboard has two contacts per key to sense velocity. Keyboard scanning uses 8 outputs and 16 inputs. When pedalboard is selected the top 8 keyboard input lines are re-assigned to be used as expression pedal (ADC) inputs. The pedalboard scans 32 contacts using 8 outputs and 8 inputs. Alternate inputs are unused when there is no velocity sensing.

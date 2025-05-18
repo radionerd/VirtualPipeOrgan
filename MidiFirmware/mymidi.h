@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+const int SEVEN_SEGMENT_ADDRESS = 1;
 
 class myMidi : public USBMIDI {
   private:

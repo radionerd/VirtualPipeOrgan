@@ -7,7 +7,7 @@
 #include "led.h"
 #include "mymidi.h"
 #include "pin.h"
-//#include "profile.h"
+#include "profile.h"
 #include "buttonscan.h"
 #include "keyboardscan.h"
 #include "USBSerialUI.h"
@@ -15,6 +15,8 @@
 ButtonScan Button;
 
 KeyboardScan MusicKeyboard;
+
+PROFILE profile;
 
 uint32_t kb_input [NUM_KEYBOARD_INPUTS]; // 16 input bits per output line
 uint32_t kb_image [NUM_KEYBOARD_INPUTS];
@@ -29,12 +31,34 @@ USBSerialUI::USBSerialUI(void) {
   ADCBegin();
 }
 void USBSerialUI::poll(void) {
-  MusicKeyboardScan(Cfg.Bits.hasPedalBoard);
-  ButtonScan();
-  ADCScan();
-  //ColorWheel();
-  if ( Cfg.Bits.hasPB2PA13PA14Scan )
-    LEDStripCtrl( LED_STRIP_SERVICE );
+  static int pollCount;
+  static unsigned long last_time;
+  unsigned long time_now = micros();
+  if ( time_now - last_time < 2000 ) return;
+  if ( ++pollCount > 4 ) pollCount = 0;
+  switch ( pollCount  ) {
+      case PROFILE_KEYBOARD :
+         profile.PStart(PROFILE_KEYBOARD);
+         MusicKeyboardScan(Cfg.Bits.hasPedalBoard);
+         profile.PEnd  (PROFILE_KEYBOARD);
+      break;
+      case PROFILE_BUTTONS :
+         ButtonScan();
+      break;
+      case PROFILE_ADC :
+         profile.PStart(PROFILE_ADC);
+         ADCScan();
+         profile.PEnd  (PROFILE_ADC);
+      break;
+      case PROFILE_WS2812 :
+         if ( Cfg.Bits.hasPB2PA13PA14Scan ) {
+           profile.PStart(PROFILE_WS2812);
+           LEDStripCtrl( LED_STRIP_SERVICE );
+           profile.PEnd  (PROFILE_WS2812);
+         }
+    
+  }
+  
 //  char buff[80];
   while (CompositeSerial.available()) {
     char c = CompositeSerial.read();
@@ -87,8 +111,10 @@ void  USBSerialUI::handleControlChange( unsigned int midi_channel, unsigned int 
   char buf[80];
   if ( midi_channel == midiKeyboardChannel() ) {
     led.on(); // Turn on LED briefly to indicate addressed USB input
-    sprintf(buf,"Unhandled Control Change channel=%d controller=%d velocity=%d\r\n",midi_channel,controller,velocity);
-    CompositeSerial.write(buf);
+    if ( Cfg.Bits.hasEventLog) {
+      sprintf(buf,"Unhandled Control Change channel=%d controller=%d velocity=%d\r\n",midi_channel,controller,velocity);
+      CompositeSerial.write(buf);
+    }
     led.off();
   }
 }
@@ -99,6 +125,7 @@ void USBSerialUI::ButtonScan(void) {
   static unsigned long last_time=0;
   unsigned long time_now = micros();
   if ( time_now - last_time < 20000 ) return;
+  profile.PStart(PROFILE_BUTTONS);
   last_time += 20000; // 20ms 50 times per second update rate
   const int midi_velocity = 64;
   const unsigned long AUTO_REPEAT_DELAY_US = 2000000; // 2 seconds
@@ -174,6 +201,7 @@ void USBSerialUI::ButtonScan(void) {
       }
     }
   }
+  profile.PEnd  (PROFILE_BUTTONS);
 }
 
 void USBSerialUI::MusicKeyboardScan( bool pedalboard ) {
@@ -345,10 +373,13 @@ void USBSerialUI::CommandCharDecode( char c )
           CompositeSerial.write(buff);
         }
         break;
-      //case 'p' :
-      //  sprintf(buff,"Profile max duration=%ldus '%s'",profile.GetMaxDuration(),profile.GetMaxMessage() );
-      //  CompositeSerial.println(buff);
-      //  break;
+      case 'p' :
+        if ( c == 'P' )
+          profile.PReset();
+        profile.PStart(PROFILE_PPRINT);
+        profile.PPrint();
+        profile.PEnd  (PROFILE_PPRINT);
+        break;
       case 'z' :
         DisplayStatus();/*
         for ( int i = 0 ; i < 8 ; i++ ) {
@@ -744,7 +775,7 @@ void USBSerialUI::DisplayMenu(void) {
   CompositeSerial.write("T - Test IO Pins\r\n");
   CompositeSerial.write("R - Restore Configuration\r\n");
   CompositeSerial.write("V - Version Info\r\n");
-  CompositeSerial.write("Z - Display Status\r\n");
+  CompositeSerial.write("Z - Pin Status\r\n");
 }
 
 void USBSerialUI::DisplayShiftRegisterIO(void) {
