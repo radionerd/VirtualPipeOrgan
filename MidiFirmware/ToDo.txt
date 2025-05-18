@@ -1,9 +1,14 @@
 Done ✓
   WS2812 Control on Lowest sharp when other notes silent for 5 seconds
   Build with makefile?
-  Enhancement - Investigate whether LCD loading can be speeded up a lot
+  Enhancement - Investigate whether LCD loading can be achieved without button LED flicker
   Enhancement - Page Turn Inc,Dec,Home,End one button/2 button
   Enhancement - Chord display
   Update Readme / User Manual
   Kicad All Schematic
+
+0 No Buttons
+1 Normal Button
+2 Inverted Button LEDs
+3 Inverted Button LEDs with backlight
 

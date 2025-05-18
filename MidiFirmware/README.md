@@ -45,6 +45,10 @@ You may have to provide some additional path information to the command below de
 ```
 Once the midi software is loaded the BluePill green LED should breath gently at about 0.5Hz to show that all is well.
 
+## User Manual
+
+See [User Manual](https://github.com/radionerd/VirtualPipeOrgan/blob/main/MidiFirmware/UserManual.md)
+
 ## Enhancements
 - HID Music Page Turning
 - Chord Feature

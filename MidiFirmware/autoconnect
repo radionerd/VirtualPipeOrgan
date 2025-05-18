@@ -1,0 +1,12 @@
+#!/bin/bash
+# Remake midi connections.
+# Edit the midi port numbers for those on your system
+# Useful for keyboards that auto power off, 
+# or during software development when the app may appear and disappear.
+sleep 1
+while true
+do
+  aconnect  28 130 2> /dev/null # keyboard to Grandorgue
+  aconnect 131  28 2> /dev/null # Grandorgue to Keyboard
+  sleep 5
+done

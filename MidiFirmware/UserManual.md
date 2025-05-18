@@ -86,7 +86,9 @@ Connect the VPO Console output to Grandorgue and midisnoop inputs using the qjac
 
 <img src="MidiSnoopGOExample.png" />
 
-## Configuring the Midi Interface
+Alternatively edit and run the [autoconnect](https://github.com/radionerd/VirtualPipeOrgan/blob/main/MidiFirmware/autoconnect) script in background.
+
+## Configuring the Firmware
 A USB serial connection is used to communicate with the Midi Interface.
 Connect one STM32 BluePill to the computer using a USB cable.
 Install 'minicom' and configure it to connect to /dev/ttyACM0 or /dev/ttyUSB0 depending on your OS.
