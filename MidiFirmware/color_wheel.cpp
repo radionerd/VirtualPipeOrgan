@@ -3,11 +3,14 @@
 // Color Wheel display
 // Connect WS2812 LED string to pin PC13 (use level up-shifter)
 // https://github.com/FearlessNight/bluepill_ws2812/blob/master/bluepill_ws2812.cpp
+
 #include <Arduino.h>
 #include <USBComposite.h>
 #include "bluepill_ws2812.h"
 #include "color_wheel.h"
 #include "hsvtorgb.h"
+#include "profile.h"
+
 bluepill_neopixel PIX;       // a string of pixels
 #define NUM_PIXELS 120     //   number of pixels in the string
 pixel string[NUM_PIXELS]; //   rgb data buffer
@@ -172,7 +175,7 @@ void LEDStripCtrl(int event ) {
     255,214,180,152,128,107,90,76,64,54,45,38,32,
     27,23,19,16,13,11,9,8,7,6,5,4,3,3,2,2,1,1,1};
 
-  static unsigned long lastTime=0; // Last time this function was called
+  static unsigned long last_time=0; // Last time this function was called
   unsigned long time_now = micros();
   switch ( event ) {
     case LED_BUTTON_ON :
@@ -187,8 +190,13 @@ void LEDStripCtrl(int event ) {
       buttonState = event;
     break;
     case LED_STRIP_SERVICE :
-      if ( time_now-lastTime < 50000 ) return; // 50ms service interval
-      lastTime = time_now;
+    {
+      if ( time_now-last_time < 50000 ) return; // 50ms service interval
+      profile.PStart(PROFILE_WS2812);
+      if ( last_time == 0 ) {
+        last_time = PROFILE_WS2812*PID_TIME_OFFSET_US;
+      }
+      last_time = time_now;
       if ( ( time_now - buttonOnTime ) > 1000000 ) { // long interval since button pressed / released
         // long button on time?
         if ( buttonState == LED_BUTTON_ON )  {
@@ -229,8 +237,9 @@ void LEDStripCtrl(int event ) {
           //CompositeSerial.write(buff);
         }
       }        
-      if ( LEDStripState == LED_STRIP_WHEEL )
+      if ( LEDStripState == LED_STRIP_WHEEL ) {
           ColorWheel();
+      }
       if ( LEDStripUpdate ) {
         --LEDStripUpdate;
         pix.rgb.r=0;
@@ -262,6 +271,8 @@ void LEDStripCtrl(int event ) {
         PIX.begin(string_port, string_pin); // set pin to output
         PIX.paint( string[0].bytes, NUM_PIXELS, string_port, string_pin );
       }
+      profile.PEnd(PROFILE_WS2812);
+    }
     break;
   }
 }

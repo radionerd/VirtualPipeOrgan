@@ -43,8 +43,8 @@ class USBSerialUI {
       { MAX_1, (const char *)"Keyboard Velocity Reporting"} ,//D     
       { MAX_1, (const char *)"PCF8574 I2C LCDs 16x2" }, //E
       { MAX_1, (const char *)"TM1637 7 segment, 6 digit display" }, // F
-      { MAX_1, (const char *)"74HC164 Shift register LED buttons"}, // G
-      { MAX_1, (const char *)"74HC164 Shift register LED invert", },  // H
+      { MAX_1, (const char *)"74HC164 Button LED backlight enabled"}, // G
+      { MAX_1, (const char *)"74HC164 Button LED inverted", },  // H
       { MAX_1, (const char *)"Use Debug Connector for WS2812 RGB LEDs PA13,PA14"}, // I
       { MAX_1, (const char *)"Event Log to USB Serial (may slow response time)"}, // J
       {     0, (const char *)"" }
@@ -80,17 +80,6 @@ class USBSerialUI {
       "WS2812 LEDs"
     };
 
-    typedef struct GPIOPinConfig {
-      int function;
-      int keyboard;
-      int count;
-      int input;
-      int error;
-      char fault;
-    } GPIOPinConfig;
-
-    GPIOPinConfig MenuConfigs [NUM_GPIO_PINS];
-    GPIOPinConfig LiveConfigs [NUM_GPIO_PINS];
     enum  { DEV_UNKNOWN,DEV_PEDALBOARD,DEV_KEYBOARD,DEV_BUTTON,DEV_LED } devices;
     const char * device_names[5] = {"Unknown", "Pedalboard","Keyboard","Button","LED"};
   const char *note_name[12] = {
@@ -100,7 +89,19 @@ class USBSerialUI {
 
 
   public:
-      typedef union {
+    typedef struct /*GPIOPinConfig*/ {
+      int function;
+      int keyboard;
+      int count;
+      int input;
+      int error;
+      char fault;
+    } GPIOPinConfig;
+    GPIOPinConfig MenuConfigs [NUM_GPIO_PINS];
+    GPIOPinConfig LiveConfigs [NUM_GPIO_PINS];
+    //PROFILE profile;
+
+    typedef union {
       unsigned Word;
 
       struct {
@@ -110,13 +111,12 @@ class USBSerialUI {
         unsigned hasKeyVelocity: 1;     // D 10
         unsigned hasI2C: 1;             // E 11
         unsigned hasTM1637 : 1;         // F 12
-        unsigned hasShiftRegs: 1;       // G 13
-        unsigned hasShiftRegLEDInvert:1;// H 14
+        unsigned hasButtonLEDBacklit: 1;// G 13
+        unsigned hasButtonLEDInvert:1;  // H 14
         unsigned hasPB2PA13PA14Scan: 1; // I 15
         unsigned hasEventLog: 1;        // J 16
       } Bits;
     } Config;
-
     Config Cfg;
 
     USBSerialUI(void);
@@ -128,6 +128,7 @@ class USBSerialUI {
     int  hasLCD(void){ return Cfg.Bits.hasTM1637; };
     unsigned int  midiKeyboardChannel(void);
     unsigned int  midiButtonChannel(void);
+    void RequestDisplayUpdate(void) { DisplayUpdate = 1; } 
     
 
   private:
@@ -155,7 +156,6 @@ class USBSerialUI {
     void monitorNoteOff( unsigned int channel, unsigned int note, unsigned int velocity, unsigned int device );
     void MusicKeyboardScan(bool pedalboard);
     void RestoreConfigFromFlash();
-    void RequestDisplayUpdate(void) { DisplayUpdate = 1; } 
     void SaveConfigToFlash( char c );
     void TestIO(void);
 };

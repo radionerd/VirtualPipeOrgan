@@ -58,6 +58,7 @@ void myMidi::handleSysExData(unsigned char ExData) {
       sysexBuf[sysexIndex]=0;
     }
     if ( ExData == 0xF7 ) {
+      profile.PEnd(PROFILE_MIDI_OUT_TO_SYSEX_IN);
       profile.PStart(PROFILE_SYSEX);
       handleSysExEnd();
       profile.PEnd  (PROFILE_SYSEX);

@@ -2,6 +2,7 @@
 #include <USBComposite.h>
 #include <flash_stm32.h>
 #include <stdio.h>
+#include "adc.h"
 #include "color_wheel.h"
 #include "lcd.h"
 #include "led.h"
@@ -12,11 +13,11 @@
 #include "keyboardscan.h"
 #include "USBSerialUI.h"
 // Copyright (C)2023 Richard Jones. MIT License applies
-ButtonScan Button;
 
-KeyboardScan MusicKeyboard;
-
-PROFILE profile;
+    ButtonScan Button;
+    KeyboardScan MusicKeyboard;
+    ADC adc;
+    PROFILE profile;
 
 uint32_t kb_input [NUM_KEYBOARD_INPUTS]; // 16 input bits per output line
 uint32_t kb_image [NUM_KEYBOARD_INPUTS];
@@ -28,33 +29,28 @@ uint32_t sr_outputs   [NUM_SHIFT_REG_OUTPUTS+1];
 USBSerialUI::USBSerialUI(void) {
   RestoreConfigFromFlash();
   TestIO();
-  ADCBegin();
+  adc.Begin();
 }
 void USBSerialUI::poll(void) {
   static int pollCount;
   static unsigned long last_time;
   unsigned long time_now = micros();
-  if ( time_now - last_time < 2000 ) return;
+  if ( time_now - last_time < PID_TIME_OFFSET_US ) return;
+  profile.PStart( PROFILE_LOOP );
   if ( ++pollCount > 4 ) pollCount = 0;
   switch ( pollCount  ) {
       case PROFILE_KEYBOARD :
-         profile.PStart(PROFILE_KEYBOARD);
          MusicKeyboardScan(Cfg.Bits.hasPedalBoard);
-         profile.PEnd  (PROFILE_KEYBOARD);
       break;
       case PROFILE_BUTTONS :
          ButtonScan();
       break;
       case PROFILE_ADC :
-         profile.PStart(PROFILE_ADC);
-         ADCScan();
-         profile.PEnd  (PROFILE_ADC);
+         adc.Scan();
       break;
       case PROFILE_WS2812 :
          if ( Cfg.Bits.hasPB2PA13PA14Scan ) {
-           profile.PStart(PROFILE_WS2812);
            LEDStripCtrl( LED_STRIP_SERVICE );
-           profile.PEnd  (PROFILE_WS2812);
          }
     
   }
@@ -75,6 +71,7 @@ void USBSerialUI::poll(void) {
       break;
     }
   }
+  profile.PEnd( PROFILE_LOOP );
 }
 unsigned int USBSerialUI::midiButtonChannel(void) {
   const int MIDI_BUTTON_OFFSET = 8;
@@ -132,7 +129,7 @@ void USBSerialUI::ButtonScan(void) {
   const unsigned long AUTO_REPEAT_PERIOD_US = 333000; // 0.333 seconds
 
   static int active_buttons=0;
-  int result = Button.Scan( sr_input_list,sr_outputs , Cfg.Bits.hasShiftRegLEDInvert );
+  int result = Button.Scan( sr_input_list,sr_outputs );
   // NB The strange sr_input_list interface yields a fast inactive scan result
   if ( ( active_buttons != result ) || active_buttons ) { 
     active_buttons = result;
@@ -151,6 +148,7 @@ void USBSerialUI::ButtonScan(void) {
               midi_note += NUM_SHIFT_REG_OUTPUTS ;
           }
           int midi_channel = midiButtonChannel() ;
+          profile.PStart(PROFILE_MIDI_OUT_TO_SYSEX_IN);
           midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
           monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_BUTTON  );
           RequestDisplayUpdate();
@@ -211,6 +209,7 @@ void USBSerialUI::MusicKeyboardScan( bool pedalboard ) {
 //  };
 //  const int OCTAVE = 12;
 //  int note_id=-1;
+  profile.PStart(PROFILE_KEYBOARD);
   int change = MusicKeyboard.Scan(kb_input,kb_image, pedalboard );
   if ( change ) {
     // process MusicKeyboard changes
@@ -279,6 +278,7 @@ void USBSerialUI::MusicKeyboardScan( bool pedalboard ) {
       kb_image[i] = kb_input[i]; // inform driver
     }
   }
+  profile.PEnd(PROFILE_KEYBOARD);
 }
 
 
@@ -318,8 +318,8 @@ void USBSerialUI::CommandCharDecode( char c )
           ConfigValue [3] = Cfg.Bits.hasKeyVelocity  ;
           ConfigValue [4] = Cfg.Bits.hasI2C       ;
           ConfigValue [5] = Cfg.Bits.hasTM1637    ;
-          ConfigValue [6] = Cfg.Bits.hasShiftRegs ;
-          ConfigValue [7] = Cfg.Bits.hasShiftRegLEDInvert;
+          ConfigValue [6] = Cfg.Bits.hasButtonLEDBacklit ;
+          ConfigValue [7] = Cfg.Bits.hasButtonLEDInvert;
           ConfigValue [8] = Cfg.Bits.hasPB2PA13PA14Scan;
           ConfigValue [9] = Cfg.Bits.hasEventLog  ; // K
           int i = 0;
@@ -341,8 +341,8 @@ void USBSerialUI::CommandCharDecode( char c )
             Cfg.Bits.hasKeyVelocity    = ConfigValue [3];
             Cfg.Bits.hasI2C            = ConfigValue [4];
             Cfg.Bits.hasTM1637         = ConfigValue [5];
-            Cfg.Bits.hasShiftRegs      = ConfigValue [6];
-            Cfg.Bits.hasShiftRegLEDInvert = ConfigValue[7];
+            Cfg.Bits.hasButtonLEDBacklit=ConfigValue [6];
+            Cfg.Bits.hasButtonLEDInvert= ConfigValue [7];
             Cfg.Bits.hasPB2PA13PA14Scan= ConfigValue [8]; // I
             Cfg.Bits.hasEventLog       = ConfigValue [9]; // J
           }
@@ -504,8 +504,8 @@ void USBSerialUI::DisplayConfigurationMenu() {
   ConfigValue [3] = Cfg.Bits.hasKeyVelocity  ;
   ConfigValue [4] = Cfg.Bits.hasI2C       ;
   ConfigValue [5] = Cfg.Bits.hasTM1637    ;
-  ConfigValue [6] = Cfg.Bits.hasShiftRegs ;
-  ConfigValue [7] = Cfg.Bits.hasShiftRegLEDInvert;
+  ConfigValue [6] = Cfg.Bits.hasButtonLEDBacklit ;
+  ConfigValue [7] = Cfg.Bits.hasButtonLEDInvert;
   ConfigValue [8] = Cfg.Bits.hasPB2PA13PA14Scan;
   ConfigValue [9] = Cfg.Bits.hasEventLog  ; // K
 
@@ -703,7 +703,7 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
         break;
       case I2C_SDA :
       case COMMON_DATA :
-        if ( ( Cfg.Bits.hasI2C | Cfg.Bits.hasTM1637 | Cfg.Bits.hasShiftRegs ) == 0 ) {
+        if ( ( Cfg.Bits.hasI2C | Cfg.Bits.hasTM1637 ) == 0 ) {
           newCfgs[gpio_index].function = IO_SPARE;
         }
         break;
@@ -1053,64 +1053,4 @@ void USBSerialUI::monitorNoteOff( unsigned int channel, unsigned int note, unsig
     CompositeSerial.write(buff);
   }
   RequestDisplayUpdate();
-}
-
-void USBSerialUI::ADCBegin(void) {
-  // Read current potentiometer input to avoid a message stream at startup
-   for ( int gpioId = 0 ; gpioId < NUM_GPIO_PINS ; gpioId++ ) {
-     switch ( LiveConfigs[gpioId].function ) {
-      case IP_ADC :
-      {
-        pinMode (  pinCfg[gpioId].portPin, INPUT);
-        LiveConfigs[gpioId].input = analogRead( pinCfg[gpioId].portPin ); // a value between 0-4095
-      }
-     }
-   }
-}
-void USBSerialUI::ADCScan(void) {
-   static unsigned long last_time=0;
-
-   // scan at 40ms intervals for consistant performance
-   // multiples of mains cycle period eg 20,40,60ms etc
-   // balance between response time and message flood
-   unsigned long time_now = micros();
-   if ( time_now - last_time < 40000 ) return;
-   last_time += 40000;
-   for ( int gpioId = 0 ; gpioId < NUM_GPIO_PINS ; gpioId++ ) {
-     switch ( LiveConfigs[gpioId].function ) {
-      case IP_ADC :
-      {
-        pinMode (  pinCfg[gpioId].portPin, INPUT);
-        int ain = analogRead( pinCfg[gpioId].portPin ); // a value between 0-4095
-        // Filter the adc input to get a stable result
-        int prevInput = LiveConfigs[gpioId].input;
-        const int FILTER_SAMPLES = 4;
-        LiveConfigs[gpioId].input = ( prevInput * ( FILTER_SAMPLES - 1 ) + ain ) / FILTER_SAMPLES; // Moving average
-        const int SCALE_0_TO_127 = 32;  // Range 0-127. May need adjustment depending on swell pedal shoe geometry
-        int prev_result = prevInput / SCALE_0_TO_127; // scale 0-4095 to 0-127 for midi cc command
-        int new_result  = LiveConfigs[gpioId].input / SCALE_0_TO_127; // scale 0-4095 to 0-127 for midi cc command
-        int error = abs( LiveConfigs[gpioId].error - LiveConfigs[gpioId].input);
-        // Avoid hunting between adjacent numbers while allowing min and max scale
-        if( new_result != prev_result ) {
-           if ( ( error >= ( SCALE_0_TO_127/2 ) ) || ( new_result == 0 ) || ( new_result == 127 ) ) {
-            if ( error > SCALE_0_TO_127 * 3 )
-              LiveConfigs[gpioId].input = ain;
-            LiveConfigs[gpioId].error = LiveConfigs[gpioId].input;
-            int midi_channel      = Cfg.Bits.midiChannelOffset;
-            int cc_command_number = LiveConfigs[gpioId].count + 0x20; // FIXME Midi CC command range
-            digitalWrite(LED_BUILTIN, true ); // Indicate USB signalling PCB LED
-            midi.sendControlChange(midi_channel,cc_command_number, new_result );
-            if ( Cfg.Bits.hasEventLog ) {
-                char buff[80];
-                sprintf(buff,"MidiControl Ch=%-2d  Cont=%d  Val=%d  ADC\r\n",midi_channel+1,cc_command_number, new_result );
-                CompositeSerial.write(buff);
-                RequestDisplayUpdate();
-            }
-            digitalWrite(LED_BUILTIN, false );
-          }
-        }
-      }
-      break;
-     }
-   }
 }

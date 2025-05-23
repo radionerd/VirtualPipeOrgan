@@ -1,4 +1,25 @@
 Done ✓
+✓Buttons always on. Config LEDs dim/off, LEDs normal/invert
+✓check 100kHz vs 400KHz etc i2c lcd load timing 8.4ms vs 2.2ms
+✓Check button profile when midi not running vs running-Slow when GO not connected
+✓Create ADC class, moved code out of SerialUI
+✓Installed microsecond profiling to kbd,buttons,adc,WS2812,midi out to sysex,lcd,loop
+  Partially implimented timing offset by profile ID
+  Move print feature to objects that own them
+  Simple multi display example
+  Submit lcd pull request if possible
+  Adopt multi lcd code avoiding redundant writes down to character level
+  Offset object scheduling by pid
+  Profile Midi out to midi in /Sysex response
+  Offset CC command by 8 x midi channel + n adc
+  Add ADC view to adc object
+  Extend configuration beyond 16 bits for volatile controls eg logging, scope monitor
+  Add scope monitor pin to profile PA13 or PA14
+  Add to UserManual
+    G [✓] 74HC164 Button LED Backlight enabled
+    H [ ] 74HC164 Button LED inverted
+
+  Explain real time & timing in user manual
   WS2812 Control on Lowest sharp when other notes silent for 5 seconds
   Build with makefile?
   Enhancement - Investigate whether LCD loading can be achieved without button LED flicker
@@ -7,8 +28,21 @@ Done ✓
   Update Readme / User Manual
   Kicad All Schematic
 
-0 No Buttons
-1 Normal Button
+0 Normal Button LEDs
+1 Normal Button LEDs with backlight
 2 Inverted Button LEDs
 3 Inverted Button LEDs with backlight
+
+Count period Mean   Max  Feature                                                       
+    0   5000    3    77  Keyboard                                                     
+  752  10000 1024  1032  Button Scan                                              
+  752  10000 1024  1032  Button Service
+    0  50000   17    17  ADC                                                          
+    0 100000    2   693  WS2812 LED Strip                                             
+    0 999999    0     0  Midi round trip via PC
+    1      0    0     0  Profile Print!                                            
+    0      0    0     0  Loop
+    0      0    0     0  Spare
+Time in microseconds
+
 

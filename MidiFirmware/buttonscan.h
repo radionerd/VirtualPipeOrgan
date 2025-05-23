@@ -14,8 +14,6 @@ const int NUM_SHIFT_REGS = 5;
 const int SHIFT_REG_SIZE = 8;
 const int NUM_SHIFT_REG_OUTPUTS = NUM_SHIFT_REGS * SHIFT_REG_SIZE;
 
-
-
 class ButtonScan {
 private:
 	void ShiftRegN8ClockBB( int count );
@@ -28,7 +26,7 @@ private:
   volatile uint32_t* PB12_BB = (volatile uint32_t*) (0x42000000 + (0x10c08<<5) + (12<<2) ); // BB Port B IDR bit 12
 public:
   ButtonScan(void);
-	uint32_t Scan(uint32_t *sr_input_list,uint32_t*sr_outputs, bool LEDInvert );
+	uint32_t Scan(uint32_t *sr_input_list,uint32_t*sr_outputs );
 };
 
 #ifdef __cplusplus
