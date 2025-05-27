@@ -2,7 +2,7 @@
 #include <USBComposite.h> // https://github.com/arpruss/USBComposite_stm32f1 Arduino version does not include Sysex support
 #include <flash_stm32.h>
 #include "led.h"
-#include "lcd.h"
+#include "multilcd.h"
 #include "mymidi.h"
 #include "pin.h"
 //#include "profile.h"
@@ -25,6 +25,8 @@ TM1637 SEG7; // 7 Segment display driver
 //HIDKeyboard Keyboard(HID);
 USBCompositeSerial CompositeSerial;
 myMidi midi;
+MultiLCD mlcd;
+
 const char *VPOConsoleMsg[16]= {
   "VPO Console Midi Ch1, 9",
   "VPO Console Midi Ch2, 10",
@@ -50,8 +52,10 @@ void setup() {
   SEG7.begin(PB10,PB7,6); // begin(uint8_t clockPin, uint8_t dataPin, uint8_t digits)
   SEG7.setBrightness(1);
   char buf[80];
-  sprintf(buf,"Add=%-2d",SEVEN_SEGMENT_ADDRESS);
+  sprintf(buf,"PC ???");
+//  sprintf(buf,"Add=%-2d",SEVEN_SEGMENT_ADDRESS);
   SEG7.displayPChar(buf); // Briefly Display sysex ID
+  mlcd.Begin((char *)""); // Search for and connected LCDs
   USBComposite.setProductId(0x0031);
   //USBComposite.setProductId(0x0003); // spoof DFU device
   USBComposite.setManufacturerString((const char *)"Richard Jones");
@@ -77,11 +81,12 @@ void setup() {
   }
   while (!USBComposite) digitalWrite(LED_BUILTIN, ++i & 1); // Super fast flash while waiting for USB to register
   delay(2000); // for reliable CompositeSerial.write()
-  LCD_N_C32 lcd; // Scan i2c bus to discover any displays & initialise them
-  SEG7.displayPChar( (char *) "ready ");
-  if ( SUI.Cfg.Bits.hasEventLog ) {
-    CompositeSerial.println( VPOConsoleMsg[ SUI.midiKeyboardChannel() ] );
-  }
+  //mlcd.Begin((char *)""); // initialised before USB Serial
+  sprintf(buf,"Add=%-2d",SEVEN_SEGMENT_ADDRESS);
+  SEG7.displayPChar(buf); // Display sysex ID
+  //if ( SUI.Cfg.Bits.hasEventLog ) {
+  //  CompositeSerial.println( VPOConsoleMsg[ SUI.midiKeyboardChannel() ] );
+  // }
 }
 
 

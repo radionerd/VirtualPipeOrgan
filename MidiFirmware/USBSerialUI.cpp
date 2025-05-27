@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "adc.h"
 #include "color_wheel.h"
-#include "lcd.h"
+#include "multilcd.h"
 #include "led.h"
 #include "mymidi.h"
 #include "pin.h"
@@ -18,7 +18,7 @@
     KeyboardScan MusicKeyboard;
     ADC adc;
     PROFILE profile;
-
+    extern MultiLCD mlcd;
 uint32_t kb_input [NUM_KEYBOARD_INPUTS]; // 16 input bits per output line
 uint32_t kb_image [NUM_KEYBOARD_INPUTS];
 unsigned long kb_time[NUM_KEYBOARD_INPUTS*NUM_KEYBOARD_OUTPUTS]; // For velocity measurment
@@ -287,19 +287,6 @@ void USBSerialUI::CommandCharDecode( char c )
 {
     CompositeSerial.write("\r\n");
     switch ( tolower(c) ) {
-      case 'y' :
-      case 's' :
-        SaveConfigToFlash(c);
-        //RestoreConfigFromFlash(); // Update LiveConfigs 
-        break;
-      case 'r' :// restore config from flash
-        RestoreConfigFromFlash();
-        DisplayFunctionPinOut();
-        DisplayConfigurationMenu();
-        break;
-      case 't' :
-        TestIO();
-        break;  
       case 'a' :
       case 'b' :
       case 'c' : // Configuration
@@ -353,8 +340,10 @@ void USBSerialUI::CommandCharDecode( char c )
       case 'k' :
         DisplayKeyboardContacts() ;
         break;
-      case 'l' : // LCD test
-        LCDTest();
+      case 'l' : // LCD
+        if ( c =='L' )
+          mlcd.Test();
+        mlcd.Print();
         break;
       case 'm' :
         DisplayFlashSummary() ;
@@ -380,6 +369,23 @@ void USBSerialUI::CommandCharDecode( char c )
         profile.PPrint();
         profile.PEnd  (PROFILE_PPRINT);
         break;
+      case 'r' :// restore config from flash
+        if ( c == 'R' ) {
+          nvic_sys_reset();
+        } else {
+          RestoreConfigFromFlash();
+          DisplayFunctionPinOut();
+          DisplayConfigurationMenu();
+          CompositeSerial.println("Press 'R' to restart");        
+        }
+        break;
+      case 's' :
+        SaveConfigToFlash(c);
+        //RestoreConfigFromFlash(); // Update LiveConfigs 
+        break;
+      case 't' :
+        TestIO();
+        break;  
       case 'z' :
         DisplayStatus();/*
         for ( int i = 0 ; i < 8 ; i++ ) {
@@ -799,19 +805,6 @@ void USBSerialUI::DisplayShiftRegisterIO(void) {
   CompositeSerial.write("\r\n\ni = input on, o = output on");
 }
 
-void USBSerialUI::LCDTest()
-{
-  char buff[80];
-  static int test_count = 0;
-  sprintf(buff, "LCD Check %6d    \r\n", test_count++);
-  CompositeSerial.write(buff);
-  //delay(1000);
-  //LCD_N_C32 lcd(""); // Scan i2c bus to discover any displays & write to them
-  //               "0123456789abcdef0123456789abcdef
-  //lcd.write(0x3f,"Address0x3FLine1Line2 NoScanTest" );
-  LCD_N_C32 lcd1(buff); // Scan i2c bus to discover any displays & write to them
-  //CompositeSerial.write("LCD Check Return\r\n");
-}
 
 void USBSerialUI::TestIO()
 {

@@ -1,12 +1,14 @@
 #include <Arduino.h>
 #include <USBComposite.h> // https://github.com/arpruss/USBComposite_stm32f1 Arduino version does not include Sysex support
 #include "led.h"
-#include "lcd.h"
+#include "multilcd.h"
 #include "mymidi.h"
+#include "pin.h"
 #include "profile.h"
 #include "TM1637.h"
 #include "USBSerialUI.h"
 
+extern MultiLCD mlcd;
 extern TM1637 SEG7; // 7 Segment display driver
 extern PROFILE profile; // execution time profiler
 
@@ -117,8 +119,8 @@ void myMidi::handleSysExEnd(void) {
         if ( lcd_address == SEVEN_SEGMENT_ADDRESS ) {
           SEG7.displayPChar( sysexBuf + sysexIndex );         
         } else {
-          LCD_N_C32 lcd((const char *)"");
-          lcd.write(lcd_address, sysexBuf + sysexIndex );
+          //MultiLCD mlcd();
+          mlcd.Write(lcd_address, sysexBuf + sysexIndex );
         }
       }
       if ( SUI.Cfg.Bits.hasEventLog ) {

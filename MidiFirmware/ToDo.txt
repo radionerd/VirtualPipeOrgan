@@ -4,8 +4,8 @@ Done ✓
 ✓Check button profile when midi not running vs running-Slow when GO not connected
 ✓Create ADC class, moved code out of SerialUI
 ✓Installed microsecond profiling to kbd,buttons,adc,WS2812,midi out to sysex,lcd,loop
-  Partially implimented timing offset by profile ID
-  Move print feature to objects that own them
+  Scheduler and timing offset by profile ID
+  Partially Move print feature to objects that own them
   Simple multi display example
   Submit lcd pull request if possible
   Adopt multi lcd code avoiding redundant writes down to character level
@@ -21,6 +21,7 @@ Done ✓
 
   Explain real time & timing in user manual
   WS2812 Control on Lowest sharp when other notes silent for 5 seconds
+  Make start sequence more informative and responsive
   Build with makefile?
   Enhancement - Investigate whether LCD loading can be achieved without button LED flicker
   Enhancement - Page Turn Inc,Dec,Home,End one button/2 button
@@ -33,16 +34,16 @@ Done ✓
 2 Inverted Button LEDs
 3 Inverted Button LEDs with backlight
 
-Count period Mean   Max  Feature                                                       
-    0   5000    3    77  Keyboard                                                     
-  752  10000 1024  1032  Button Scan                                              
-  752  10000 1024  1032  Button Service
-    0  50000   17    17  ADC                                                          
-    0 100000    2   693  WS2812 LED Strip                                             
-    0 999999    0     0  Midi round trip via PC
-    1      0    0     0  Profile Print!                                            
-    0      0    0     0  Loop
-    0      0    0     0  Spare
-Time in microseconds
+Execution Times in microseconds
 
+   Count Interval AvgTime MaxTime  Feature
+  867573       50       3      80  Keyboard
+    2654    20031    1030    1085  Buttons
+    1327    39978      14      26  ADC
+     997    50017       2    1690  WS2812 LED Strip
+       8  2579758     882    1360  Midi Out to SysEx In
+      16    44578   44511   44514  SysEx LCD or 7 Seg
+ 4337869       10       5    1714  Loop
+      12  2089357    1590    1622  Print!
+       0        0       0       0  Spare
 

@@ -43,7 +43,7 @@ class LCD_N_C32 {
         //CompositeSerial.println(buff);              
         if ( error == 0 ) {
           char buff[80];
-          sprintf ( buff , "TextToOverwrite i2cAddress%2d x%02X",i,i);
+          sprintf ( buff , "TextToOverwrite i2cAddr=%2d, 0x%02X",i,i);
           if ( msg16 != NULL ) strncpy(buff,msg16,16);
           write(i,buff);
         }

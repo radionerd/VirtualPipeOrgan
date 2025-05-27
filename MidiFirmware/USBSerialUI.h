@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+#include "pin.h"
+
 const char VT100_CLEAR[] = "\x1B[2J";
 const char VT100_ERASE_DOWN[] = "\x1B[J";
 const char VT100_CLR_EOL[] = "\x1B[0K";
@@ -89,7 +91,8 @@ class USBSerialUI {
 
 
   public:
-    typedef struct /*GPIOPinConfig*/ {
+    typedef struct // GPIOPinConfig 
+    {
       int function;
       int keyboard;
       int count;
@@ -161,6 +164,8 @@ class USBSerialUI {
 };
 
 extern USBSerialUI SUI;
+//extern GPIOPinConfig LiveConfigs [NUM_GPIO_PINS];
+
 
 #ifdef __cplusplus
 }

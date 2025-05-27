@@ -13,7 +13,7 @@ This project was conceived to connect controls to Virtual Pipe Organ software su
 - Multiple STM32 boards may be deployed to ease wiring
 - Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
 - 8 ADC inputs for expression pedals when scanning a pedalboard
-- 96 LED illuminated button inputs
+- 96 LED illuminated button inputs using external 74HC164 shift registers
 - One 6 digit LED display (for combination setter & crescendo display)
 - Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per manufacturer type )
 - interface to WS2812 LED string for music stand or pedal illumination

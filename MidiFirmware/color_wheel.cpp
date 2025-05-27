@@ -158,13 +158,13 @@ void ColorWheel(void)
 int bsh[3]={120,120,0}; // not too bright white (hue:0-255,sat:0-255,brightness:0-255)
 
 void LEDStripCtrl(int event ) {
-  const int LED_STRIP_RESET = 0;
+//  const int LED_STRIP_RESET = 0;
   const int LED_STRIP_OFF = 0 ;
   const int LED_STRIP_ON  = 1 ;
   const int LED_STRIP_WHEEL = 2 ;
   static int LEDStripState=LED_STRIP_OFF; // OFF / ON / WHEEL
   static unsigned long buttonOnTime=0; // Time when button was pressed/Released
-  static unsigned long buttonOffTime=0; // Time when button was pressed/Released
+  //static unsigned long buttonOffTime=0; // Time when button was pressed/Released
   static int buttonState=LED_BUTTON_INVALID;// or LED_STRIP_ON
   static int buttonCount=2; // Wraps to zero on first button press
   pixel pix;  
@@ -186,7 +186,7 @@ void LEDStripCtrl(int event ) {
       //CompositeSerial.write(buff);
     break;
     case LED_BUTTON_OFF:
-      buttonOffTime = time_now;
+      //buttonOffTime = time_now;
       buttonState = event;
     break;
     case LED_STRIP_SERVICE :

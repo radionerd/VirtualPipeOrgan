@@ -17,7 +17,7 @@
   void PROFILE::PPrint ( void ) 
   { 
     char buf[80];
-    sprintf(buf,"\nExecution Times in microseconds\r\n\n   Count Interval AvgTime MaxTime  Feature\r\n");
+    sprintf(buf,"\nTimes in microseconds\r\n\n   Count Interval AvgTime MaxTime  Feature\r\n");
     //                                                  123456781234567891234567812345678
     CompositeSerial.write(buf);
     for ( int i = 0 ; i <= PROFILE_SPARE ; i++ ) {
@@ -41,7 +41,7 @@
   void PROFILE::PEnd ( int index ) { // Require a new start. GO may send multiple sysex
    if ( times[index].pstart ) {
     unsigned long time_now = micros();
-    long duration = time_now - times[index].pstart;
+    unsigned long duration = time_now - times[index].pstart;
     if ( times[index].paverage == 0 ) {
          //times[index].pperiod = times[index].pend; ; // seed interval time
          times[index].paverage = duration ; // seed average time
@@ -54,7 +54,7 @@
     times[index].pperiod  = period; // Instantaneous values seem to give a better idea of what is going on
     times[index].paverage = duration;
     if ( times[index].ppeak < duration ) {
-        times[index].ppeak = duration;
+         times[index].ppeak = duration;
     }
     times[index].pend = time_now;
     times[index].pstart = 0; 

@@ -1,7 +1,8 @@
 # USB Midi HID User Manual
 
-This user manual uses Linux examples with Grandorgue. For other instruments and Operating Systems similar commands will exist. 
-The manual assumes that you have programed the flash in the STM32 Bluepill using the instructions in README.md.
+This user manual uses Linux OS examples with Grandorgue. For other Operating Systems and Applications similar commands will exist. 
+
+The user manual assumes that you have programed the flash in the STM32 Bluepill using the instructions in [README.md](https://github.com/radionerd/VirtualPipeOrgan/blob/main/MidiFirmware/README.md)
 
 ## Features
 - Hosted on the Arm Cortex-M3 CPU STM32F103C8T6 Bluepill, a ~$2 US development board
@@ -9,7 +10,7 @@ The manual assumes that you have programed the flash in the STM32 Bluepill using
 - Multiple STM32 boards may be deployed to ease wiring
 - Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
 - 8 ADC inputs for expression pedals when scanning a pedalboard
-- 96 LED illuminated button inputs
+- 96 LED illuminated button inputs using external 74HC164 shift registers
 - One 6 digit LED display (for combination setter & crescendo display)
 - Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per IC type )
 - interface to WS2812 RGB LED string for music stand or pedal illumination
@@ -19,7 +20,7 @@ The manual assumes that you have programed the flash in the STM32 Bluepill using
 - Printed circuit boards to mount the STM32 Bluepill and shift register interfaces use low cost plug in cables to interconnect
 
 ## The USB Connection
-To discover whether the midi interface is successfully connected to the computer type 'lsusb' at the command prompt. The midi interfaces and the configured midi channel numbers for keyboard/pedalboard and illuminated buttons should show up in the response.
+To discover whether the midi interface is successfully connected to the computer type 'lsusb' at the command prompt. The midi interfaces and the configured midi channel numbers for keyboard/pedalboard, and the illuminated buttons should show up in the response.
 ```
 $ lsusb
    ...
@@ -37,7 +38,7 @@ Midi channels for keyboard/pedalboard are configurable from 1-16 with the illumi
 |:----------:|:---------------:|:---------:|
 | Keyboard   | Midi Note 32-96 | To Comp   |
 | Pedalboard | Midi Note 32-64 | To Comp   |
-| Buttons    | Midi Note 0-127 | To   Comp |  
+| Buttons    | Midi Note 0-127 | To   Comp |
 | Button LEDs| Midi Note 0-127 | From Comp |
 | Expression | Midi CC   32-40 | To   Comp |
 | LED 7Seg   | Midi Sysex ID==1| From Comp |
