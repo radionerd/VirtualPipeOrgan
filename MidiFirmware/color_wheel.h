@@ -9,9 +9,9 @@ extern "C" {
 
 void ColorWheel(void);
 void LEDStripCtrl(int event );
-const int LED_BUTTON_INVALID = -1;
-const int LED_BUTTON_OFF = 0;
-const int LED_BUTTON_ON  = 1;
+const int LED_STRIP_BUTTON_INVALID = -1;
+const int LED_STRIP_BUTTON_OFF = 0;
+const int LED_STRIP_BUTTON_ON  = 1;
 const int LED_STRIP_SERVICE = 2;
 //extern USBCompositeSerial CompositeSerial;
 

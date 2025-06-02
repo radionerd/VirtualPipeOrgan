@@ -5,14 +5,14 @@
 extern "C" {
 #endif
 
-const int SEVEN_SEGMENT_ADDRESS = 1;
-
 class myMidi : public USBMIDI {
   private:
     char sysexBuf[80];
     unsigned int sysexIndex=0;
     unsigned long last_time=0;    
   public:
+    unsigned int getKeyboardChannel(void);
+    unsigned int getButtonChannel(void);
     virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity) ;
     virtual void handleNoteOn( unsigned int channel, unsigned int note, unsigned int velocity ) ;
     virtual void handleControlChange( unsigned int channel, unsigned int controller, unsigned int velocity ); 

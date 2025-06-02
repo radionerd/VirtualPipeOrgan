@@ -10,7 +10,6 @@ extern "C" {
  * Call KEYBOARD scan with ptrs to input and output array,
  * returns number of active KEYBOARD inputs
  */
-
 const int NUM_KEYBOARD_OUTPUTS = 8;
 const int NUM_KEYBOARD_INPUTS = 16;
 
@@ -36,7 +35,9 @@ void activePulldown(bool pedalboard);
   volatile uint32_t* PB12_BB = (volatile uint32_t*) (0x42000000 + (0x10c08<<5) + (12<<2) ); // BB Port B IDR bit 12
 public:
   KeyboardScan();
-  uint32_t Scan(uint32_t *kb_input,uint32_t*kb_image, bool pedalboard );
+  uint32_t FastHWScan(uint32_t *kb_input,uint32_t*kb_image, bool pedalboard );
+  void MusicKeyboardScan( bool pedalboard );
+  void Print(void);
 };
 
 #ifdef __cplusplus

@@ -15,17 +15,10 @@
 // Copyright (C)2023 Richard Jones. MIT License applies
 
     ButtonScan Button;
-    KeyboardScan MusicKeyboard;
+    KeyboardScan kbd;
     ADC adc;
     PROFILE profile;
     extern MultiLCD mlcd;
-uint32_t kb_input [NUM_KEYBOARD_INPUTS]; // 16 input bits per output line
-uint32_t kb_image [NUM_KEYBOARD_INPUTS];
-unsigned long kb_time[NUM_KEYBOARD_INPUTS*NUM_KEYBOARD_OUTPUTS]; // For velocity measurment
-
-uint32_t sr_input_list[NUM_SHIFT_REG_OUTPUTS+1];
-uint32_t sr_outputs   [NUM_SHIFT_REG_OUTPUTS+1];
-
 USBSerialUI::USBSerialUI(void) {
   RestoreConfigFromFlash();
   TestIO();
@@ -40,10 +33,10 @@ void USBSerialUI::poll(void) {
   if ( ++pollCount > 4 ) pollCount = 0;
   switch ( pollCount  ) {
       case PROFILE_KEYBOARD :
-         MusicKeyboardScan(Cfg.Bits.hasPedalBoard);
+         kbd.MusicKeyboardScan(Cfg.Bits.hasPedalBoard);
       break;
       case PROFILE_BUTTONS :
-         ButtonScan();
+         Button.Scan();
       break;
       case PROFILE_ADC :
          adc.Scan();
@@ -66,6 +59,7 @@ void USBSerialUI::poll(void) {
     switch ( tolower(LastCommand) ) {
       case 'k' :
       case 'o' :
+      case 'x' :
       case 'z' :
         CommandCharDecode(LastCommand);
       break;
@@ -73,214 +67,43 @@ void USBSerialUI::poll(void) {
   }
   profile.PEnd( PROFILE_LOOP );
 }
-unsigned int USBSerialUI::midiButtonChannel(void) {
-  const int MIDI_BUTTON_OFFSET = 8;
-  return ( (Cfg.Bits.midiChannelOffset + MIDI_BUTTON_OFFSET) & 0xF );
-}
-unsigned int USBSerialUI::midiKeyboardChannel(void) {
-  return Cfg.Bits.midiChannelOffset;
-}
 
 void USBSerialUI::handleNoteOn( unsigned int midi_channel, unsigned int midi_note, unsigned int midi_velocity ) {
-  if ( midi_channel == midiButtonChannel() ) {
+  if ( midi_channel == midi.getButtonChannel() ) {
     led.on(); // Turn on LED briefly to indicate addressed USB input
     monitorNoteOn   ( midi_channel, midi_note, midi_velocity , DEV_LED );
-    if ( midi_note < NUM_SHIFT_REG_OUTPUTS ) {
-      sr_outputs[midi_note] = 1;
-    }
-    led.off();
+    Button.SetLED(midi_note,TRUE);
+    //if ( midi_note < NUM_SHIFT_REG_OUTPUTS ) {
+    //  sr_outputs[midi_note] = 1;
+    //}
+    //led.off();
   }
   AppOnlineTime = micros();
 }
 void USBSerialUI::handleNoteOff( unsigned int midi_channel, unsigned int midi_note, unsigned int midi_velocity ) {
-  if ( midi_channel == midiButtonChannel() ) {
-    led.on(); // Turn on LED briefly to indicate addressed USB input
+  if ( midi_channel == midi.getButtonChannel() ) {
+    led.off(); // Turn off LED briefly to indicate addressed USB input
     monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_LED );
-    if ( midi_note < NUM_SHIFT_REG_OUTPUTS ) {
-      sr_outputs[midi_note] = 0;
-    }
-    led.on(); // Turn on LED briefly to indicate addressed USB input
+    Button.SetLED(midi_note,FALSE);
+    //if ( midi_note < NUM_SHIFT_REG_OUTPUTS ) {
+    //  sr_outputs[midi_note] = 0;
+    //}
+    //led.off(); // Turn on LED briefly to indicate addressed USB input
   }
   AppOnlineTime = micros();
 }
 
 void  USBSerialUI::handleControlChange( unsigned int midi_channel, unsigned int controller, unsigned int velocity ) {
   char buf[80];
-  if ( midi_channel == midiKeyboardChannel() ) {
+  if ( midi_channel == midi.getKeyboardChannel() ) {
     led.on(); // Turn on LED briefly to indicate addressed USB input
     if ( Cfg.Bits.hasEventLog) {
-      sprintf(buf,"Unhandled Control Change channel=%d controller=%d velocity=%d\r\n",midi_channel,controller,velocity);
+      sprintf(buf,"Unhandled Control Change channel=%d controller=%d velocity=%d\r\n",midi_channel+1,controller,velocity);
       CompositeSerial.write(buf);
     }
-    led.off();
+    //led.off();
   }
 }
-
-
-void USBSerialUI::ButtonScan(void) {
-
-  static unsigned long last_time=0;
-  unsigned long time_now = micros();
-  if ( time_now - last_time < 20000 ) return;
-  profile.PStart(PROFILE_BUTTONS);
-  last_time += 20000; // 20ms 50 times per second update rate
-  const int midi_velocity = 64;
-  const unsigned long AUTO_REPEAT_DELAY_US = 2000000; // 2 seconds
-  const unsigned long AUTO_REPEAT_PERIOD_US = 333000; // 0.333 seconds
-
-  static int active_buttons=0;
-  int result = Button.Scan( sr_input_list,sr_outputs );
-  // NB The strange sr_input_list interface yields a fast inactive scan result
-  if ( ( active_buttons != result ) || active_buttons ) { 
-    active_buttons = result;
-//    if ( active_buttons ) { // removed for auto repeat
-      for ( int j = 0 ; j < active_buttons ; j++ ) {
-        // Flag all new active buttons
-        if ( ShiftRegImage[sr_input_list[j] ].Input == 0 ) {
-          ShiftRegImage[ sr_input_list[j] ].Input = 2; // Flag just becoming active
-          ShiftRegImage[ sr_input_list[j] ].Time = time_now; // record time for auto repeat
-          if ( AppOnlineTime == 0 ) {
-            sr_outputs[  sr_input_list[j] ] = 1; // Button test when not online
-          }
-          //ShiftRegImage[ sr_input_list[j] ].Output = ! ShiftRegImage[ sr_input_list[j] ].Output; // DEBUG Toggle outputs
-          int midi_note = sr_input_list[j];
-          if( ShiftRegImage[ 0 ].Input && ( midi_note != 0 ) ) { // Shifted key?
-              midi_note += NUM_SHIFT_REG_OUTPUTS ;
-          }
-          int midi_channel = midiButtonChannel() ;
-          profile.PStart(PROFILE_MIDI_OUT_TO_SYSEX_IN);
-          midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
-          monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_BUTTON  );
-          RequestDisplayUpdate();
-          if ( midi_note==0 )
-            if ( Cfg.Bits.hasPB2PA13PA14Scan )
-               LEDStripCtrl( LED_BUTTON_ON ); 
-        } else {
-          ShiftRegImage[ sr_input_list[j] ].Input = 2; // Flag is active
-//          unsigned long elapsed_time_us = time_now - ShiftRegImage[ sr_input_list[j] ].Time;
-          //char buf[80];
-          //sprintf(buf,"Tnow=%lu Telapsed=%lu\r\n",time_now,elapsed_time_us);
-          //CompositeSerial.write(buf);
-          if ( (sr_input_list[j]!=0 ) && ( ( time_now - ShiftRegImage[ sr_input_list[j] ].Time ) > AUTO_REPEAT_DELAY_US ) ) {
-            ShiftRegImage[ sr_input_list[j] ].Time += AUTO_REPEAT_PERIOD_US;
-            //ShiftRegImage[ sr_input_list[j] ].Output = ! ShiftRegImage[ sr_input_list[j] ].Output; // DEBUG Toggle outputs
-            int midi_note = sr_input_list[j];
-            if( ShiftRegImage[ 0 ].Input && ( midi_note != 0 ) ) { // Shifted key?
-              midi_note += NUM_SHIFT_REG_OUTPUTS ;
-            }
-            int midi_channel = midiButtonChannel() ;
-            midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
-            monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_BUTTON  );
-            RequestDisplayUpdate();
-          }
-        }
-        // sr_outputs[sr_input_list[j]] = ShiftRegImage[sr_input_list[j]].Output; // DEBUG without GrandOrgue Update LED displays
-      }
-//    }
-    for ( int i = 0 ; i < NUM_SHIFT_REG_OUTPUTS ; i++ ) {
-      if ( ShiftRegImage[ i ].Input ) {
-        if ( -- ShiftRegImage[ i ].Input == 0 ) { // Detect just going inactive
-          // Send OFF to MIDI
-          int midi_channel = midiButtonChannel() ;
-          int midi_note = i ;
-          if ( AppOnlineTime == 0 ) {
-            sr_outputs[ midi_note ] = 0; // Button test when not online
-          }
-          if( ShiftRegImage[ 0 ].Input && ( midi_note != 0 ) ) { // Shifted key?
-              midi_note += NUM_SHIFT_REG_OUTPUTS ;
-          }
-          midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
-          monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_BUTTON  );
-          RequestDisplayUpdate();
-          if ( midi_note==0 )
-            if ( Cfg.Bits.hasPB2PA13PA14Scan )
-              LEDStripCtrl( LED_BUTTON_OFF ); 
-        }
-      }
-    }
-  }
-  profile.PEnd  (PROFILE_BUTTONS);
-}
-
-void USBSerialUI::MusicKeyboardScan( bool pedalboard ) {
-  char buf[120];
-//  const char *note_name[12] = {
-//    "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
-//  };
-//  const int OCTAVE = 12;
-//  int note_id=-1;
-  profile.PStart(PROFILE_KEYBOARD);
-  int change = MusicKeyboard.Scan(kb_input,kb_image, pedalboard );
-  if ( change ) {
-    // process MusicKeyboard changes
-    //sprintf(buf,"Keyboard change = %d\r\n",change);
-    //CompositeSerial.write(buf);    
-    for ( int i = 0 ; i < NUM_KEYBOARD_OUTPUTS ; i++ ) {
-      int difference = kb_input [i] ^ kb_image[i];
-      //if ( pedalboard) difference &= 0x55 ; //  ignore top 8 and first contact inputs on pedalboard
-      if ( difference ) {
-        RequestDisplayUpdate();
-        int inputs = NUM_KEYBOARD_INPUTS;
-        if ( pedalboard ) inputs-=8;
-        for ( int j = 0 ; j < inputs; j++ ) {
-          if ( difference & ( 1 << j ) ) {
-            int index = i*NUM_KEYBOARD_INPUTS + j ;
-            long int key_travel_time;
-            kb_time[index] = micros();
-            if (  j & 1 ) { // top of key travel?
-              key_travel_time = kb_time[index] - kb_time[index-1];
-            } else {
-              key_travel_time = kb_time[index] - kb_time[index+1];              
-            }
-            //sprintf(buf,"Key travel time = %ldus\r\n",key_travel_time);
-            //CompositeSerial.write(buf);
-            // Send to midi
-            int midi_note = 36 + i + ( (j>>1) * 8 );
-           
-            int midi_velocity = 1 ;
-            if ( key_travel_time < 100000 ) {
-              midi_velocity = (100000-key_travel_time)/787;
-            }
-            buf[0]=0;
-            int midi_channel = Cfg.Bits.midiChannelOffset ;
-            if ( Cfg.Bits.hasKeyVelocity ) {
-              if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
-                if ( ( j & 1 ) == 0 ) { // lower contact?
-                  midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
-                  monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_KEYBOARD  );
-                }
-              } else { // contact just opened
-                if ( j & 1 ) { // upper contact?
-                  midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
-                  monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_KEYBOARD  );
-                }
-              }
-            } else {
-              midi_velocity = 64; // single contact set medium velocity
-              if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
-                if ( ( j & 1 ) == 0 ) { // lower contact closing?
-                  midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
-                  monitorNoteOn   ( midi_channel, midi_note, midi_velocity, DEV_PEDALBOARD  );
-                }
-              } else {
-                if ( ( j & 1 ) == 0 ) { // lower contact opening
-                  midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
-                  monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_PEDALBOARD  );
-                }
-              }             
-            }
-            if ( buf[0]) {
-              CompositeSerial.write(buf);    
-            }
-          }
-        }
-      }
-      kb_image[i] = kb_input[i]; // inform driver
-    }
-  }
-  profile.PEnd(PROFILE_KEYBOARD);
-}
-
 
 
 void USBSerialUI::CommandCharDecode( char c )
@@ -299,7 +122,7 @@ void USBSerialUI::CommandCharDecode( char c )
       case 'j' :
       case ' ' :
         {
-          ConfigValue [0] = Cfg.Bits.midiChannelOffset;
+          ConfigValue [0] = Cfg.Bits.midiChannel;
           ConfigValue [1] = Cfg.Bits.hasPedalBoard;
           ConfigValue [2] = Cfg.Bits.numberADCInputs;
           ConfigValue [3] = Cfg.Bits.hasKeyVelocity  ;
@@ -322,7 +145,7 @@ void USBSerialUI::CommandCharDecode( char c )
               if (ConfigValue[i] < 0 )
                 ConfigValue[i] = ConfigItems[i].maxval;
             }
-            Cfg.Bits.midiChannelOffset = ConfigValue [0];
+            Cfg.Bits.midiChannel       = ConfigValue [0];
             Cfg.Bits.hasPedalBoard     = ConfigValue [1];
             Cfg.Bits.numberADCInputs   = ConfigValue [2];
             Cfg.Bits.hasKeyVelocity    = ConfigValue [3];
@@ -338,7 +161,7 @@ void USBSerialUI::CommandCharDecode( char c )
         }
         break;
       case 'k' :
-        DisplayKeyboardContacts() ;
+        kbd.Print() ;
         break;
       case 'l' : // LCD
         if ( c =='L' )
@@ -349,18 +172,7 @@ void USBSerialUI::CommandCharDecode( char c )
         DisplayFlashSummary() ;
         break;
       case 'o' :
-        DisplayShiftRegisterIO();
-        break;
-      case 'v' :
-        {
-          char buff[80];
-          int i = strlen(__FILE__);
-          while ( --i ) {
-            if ( __FILE__[i - 1] == '/' ) break; // strip lengthy file path
-          }
-          sprintf ( buff , "%s %s %s %s\r\n", &__FILE__[i] , "V1.0.0" , __DATE__, __TIME__);
-          CompositeSerial.write(buff);
-        }
+        Button.Print();
         break;
       case 'p' :
         if ( c == 'P' )
@@ -371,6 +183,7 @@ void USBSerialUI::CommandCharDecode( char c )
         break;
       case 'r' :// restore config from flash
         if ( c == 'R' ) {
+          CompositeSerial.println("Restart...");        
           nvic_sys_reset();
         } else {
           RestoreConfigFromFlash();
@@ -379,20 +192,31 @@ void USBSerialUI::CommandCharDecode( char c )
           CompositeSerial.println("Press 'R' to restart");        
         }
         break;
+      case 'y' :
       case 's' :
         SaveConfigToFlash(c);
         //RestoreConfigFromFlash(); // Update LiveConfigs 
         break;
       case 't' :
         TestIO();
-        break;  
-      case 'z' :
-        DisplayStatus();/*
-        for ( int i = 0 ; i < 8 ; i++ ) {
-          sprintf(buff, "ADC[%d] = 0x%03X\r\n", i, analogRead( PA0 + i ) ); // DEBUG Fix for up to ten inputs, read Port pin from GPIO array
-          CompositeSerial.write(buff);
-        }*/
         break;
+      case 'v' :
+        {
+          char buff[80];
+          int i = strlen(__FILE__);
+          while ( --i ) {
+            if ( __FILE__[i - 1] == '/' ) break; // strip lengthy file path
+          }
+          sprintf ( buff , "%s %s %s\r\n","V1.0.0" , __DATE__, __TIME__);
+          CompositeSerial.write(buff);
+        }
+        break;
+      case 'x' :
+        adc.Print();
+        break;
+      case 'z' :
+        DisplayStatus();
+      break;
 
       default:
         DisplayMenu();
@@ -504,7 +328,7 @@ void USBSerialUI::DisplayConfigurationMenu() {
   int i;
   char buff[80];
 
-  ConfigValue [0] = Cfg.Bits.midiChannelOffset;
+  ConfigValue [0] = Cfg.Bits.midiChannel;
   ConfigValue [1] = Cfg.Bits.hasPedalBoard;
   ConfigValue [2] = Cfg.Bits.numberADCInputs;
   ConfigValue [3] = Cfg.Bits.hasKeyVelocity  ;
@@ -535,7 +359,7 @@ void USBSerialUI::DisplayConfigurationMenu() {
       }
     }
     if ( i == 0 )
-      sprintf(buff, "%c [%d] %s, Button channel=%d%s\r\n", 'A' + i,midiKeyboardChannel() + 1, ConfigItems[i].text,midiButtonChannel() + 1, VT100_CLR_EOL );
+      sprintf(buff, "%c [%d] %s, Button channel=%d%s\r\n", 'A' + i, midi.getKeyboardChannel()+1, ConfigItems[i].text, midi.getButtonChannel()+1, VT100_CLR_EOL );
     else
       sprintf(buff, "%c [%s] %s%s\r\n", 'A' + i, valtext, ConfigItems[i].text, VT100_CLR_EOL );    
     CompositeSerial.write(buff);
@@ -703,9 +527,9 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
         break;
       case IP_SR_DATA :
       case OP_SR_CLOCK :
-        if ( tcfg.Bits.hasShiftRegs == 0 ) {
-          newCfgs[gpio_index].function = IO_SPARE;
-        }
+        //if ( tcfg.Bits.hasShiftRegs == 0 ) {
+        //  newCfgs[gpio_index].function = IO_SPARE;
+        //}
         break;
       case I2C_SDA :
       case COMMON_DATA :
@@ -726,84 +550,23 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
 }
 
 
-const char *NoteNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-void USBSerialUI::DisplayKeyboardContacts() {
-  char buf[80];
-  const char * op_names[] = {
-    "CN13 PIN4",
-    "CN13 PIN3",
-    "CN13 PIN2",
-    "CN13 PIN1",
-    "CN14 PIN4",
-    "CN14 PIN3",
-    "CN14 PIN2",
-    "CN14 PIN1"
-  };
- // char *note_name[] = {
- //   "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
- // };
-  int note_id=-1;
-  //CompositeSerial.write(VT100_CLEAR);
-  sprintf(buf, "Keyboard Scan Result Midi Channel %d\r\n", 1 + (Cfg.Bits.midiChannelOffset & 0xF) );
-  DisplayTitle( buf );
-
-  for ( int i = 0 ; i < NUM_KEYBOARD_OUTPUTS ; i++ ) {
-    for ( int j = 0 ; j < NUM_KEYBOARD_INPUTS; j++ ) {
-      buf[NUM_KEYBOARD_INPUTS-1-j] = '0';
-      if ( kb_input[i] & ( 1 << j ) ) {
-        buf[NUM_KEYBOARD_INPUTS-1-j] = '1';
-        // display lowest note
-        int new_note  = (((j/2)*8 )+i);
-        if ( note_id == -1 ) {
-          note_id = new_note;
-        }
-        if ( note_id > new_note ) {
-          note_id = new_note;
-        }
-      }
-    }
-    sprintf(buf+NUM_KEYBOARD_INPUTS," OP%d  %s\r\n",i,op_names[i]);
-    CompositeSerial.write(buf);
-  }
-  CompositeSerial.write("........******** IP *=CN13 input pins 5-6,7=nc,8-13\r\n");
-  CompositeSerial.write("********........ IP *=CN14 input pins 5-12\r\n");
-}
 void USBSerialUI::DisplayMenu(void) {
   CompositeSerial.write(VT100_CLEAR);
   DisplayTitle("Midi Interface Menu" );
   CompositeSerial.write("A-J Adjust config value\r\n");
   CompositeSerial.write("K - Keyboard Contacts\r\n");
-  CompositeSerial.write("L - LCD check\r\n");
+  CompositeSerial.write("L - LCD 'l'=view, 'L'=load\r\n");
   CompositeSerial.write("M - Flash memory summary\r\n");
   CompositeSerial.write("O - Shift Register IO\r\n");
   CompositeSerial.write("P - Profile\r\n"); // show max execution time
+  CompositeSerial.write("R - Restore Configuration\r\n");
   CompositeSerial.write("S - Save New Configuration\r\n");
   CompositeSerial.write("T - Test IO Pins\r\n");
-  CompositeSerial.write("R - Restore Configuration\r\n");
   CompositeSerial.write("V - Version Info\r\n");
+  CompositeSerial.write("X - eXpression Pedal / ADC results\r\n");
   CompositeSerial.write("Z - Pin Status\r\n");
 }
 
-void USBSerialUI::DisplayShiftRegisterIO(void) {
-  char buff[80];
-  
-  CompositeSerial.write(VT100_CLEAR);
-  sprintf(buff, "Shift Register Midi Channel %d Note Numbers", 1+midiButtonChannel() );
-  DisplayTitle( buff );
-  for ( int sr = 0 ; sr < NUM_SHIFT_REGS ; sr++ ) {
-    sprintf(buff, "\r\nSR%2d  ", 1 + sr );
-    for ( int i = 0 ; i < SHIFT_REG_SIZE ; i++ ) {
-      char ip = ' ';
-      char op = ' ';
-      if ( ShiftRegImage[sr*8+i].Input ) ip='i';
-      // if ( ShiftRegImage[sr*8+i].Output) op='o';
-      if ( sr_outputs[sr*8+i] ) op='o';
-      sprintf(buff + strlen(buff), "%c%02d%c ", ip, sr * 8 + i, op );
-    }
-    CompositeSerial.write(buff);
-  }
-  CompositeSerial.write("\r\n\ni = input on, o = output on");
-}
 
 
 void USBSerialUI::TestIO()
@@ -1033,7 +796,11 @@ void USBSerialUI::monitorNoteOn ( unsigned int channel, unsigned int note, unsig
   char buff[80];
 
   if ( Cfg.Bits.hasEventLog ) {
-    sprintf(buff,"MidiNoteOn  Ch=%-2d  note=%-3d vel=%-3d %2s%d  %s\r\n",channel+1,note,velocity,note_name[note%OCTAVE],note/OCTAVE, device_names[device&3]);
+      if ( device > DEV_LED )
+        device = DEV_UNKNOWN;
+    if ( ( device==DEV_KEYBOARD ) && ( Cfg.Bits.hasPedalBoard ) )
+      device = DEV_PEDALBOARD;
+    sprintf(buff,"%10luus MidiNoteOn  Ch=%-2d  note=%-2d/%2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],note/OCTAVE, velocity, device_names[device]);
     CompositeSerial.write(buff);
   }
   RequestDisplayUpdate();
@@ -1042,7 +809,11 @@ void USBSerialUI::monitorNoteOn ( unsigned int channel, unsigned int note, unsig
 void USBSerialUI::monitorNoteOff( unsigned int channel, unsigned int note, unsigned int velocity , unsigned int device ){
   char buff[80];
   if ( Cfg.Bits.hasEventLog ) {
-    sprintf(buff,"MidiNoteOff Ch=%-2d  note=%-3d vel=%-3d %2s%d  %s\r\n",channel+1,note,velocity,note_name[note%OCTAVE],note/OCTAVE,device_names[device&3]);
+    if ( device > DEV_LED )
+      device = DEV_UNKNOWN;
+    if ( ( device==DEV_KEYBOARD ) && ( Cfg.Bits.hasPedalBoard ) )
+      device = DEV_PEDALBOARD;
+    sprintf(buff,"%10luus MidiNoteOff Ch=%-2d  note=%-2d/%2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],note/OCTAVE,velocity,device_names[device]);
     CompositeSerial.write(buff);
   }
   RequestDisplayUpdate();

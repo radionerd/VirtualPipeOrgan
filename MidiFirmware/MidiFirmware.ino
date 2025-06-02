@@ -53,14 +53,13 @@ void setup() {
   SEG7.setBrightness(1);
   char buf[80];
   sprintf(buf,"PC ???");
-//  sprintf(buf,"Add=%-2d",SEVEN_SEGMENT_ADDRESS);
-  SEG7.displayPChar(buf); // Briefly Display sysex ID
-  mlcd.Begin((char *)""); // Search for and connected LCDs
+  SEG7.displayPChar(buf); // Display ??? until we get PC response
+  mlcd.Begin((char *)"PC/USB Comms ???"); // Search for and connected LCDs
   USBComposite.setProductId(0x0031);
   //USBComposite.setProductId(0x0003); // spoof DFU device
-  USBComposite.setManufacturerString((const char *)"Richard Jones");
+  USBComposite.setManufacturerString((const char *)"New Zealand");
   // USBComposite.setProductString((const char *)"VPOrgan-Midi+HID+Serial");
-  USBComposite.setProductString( VPOConsoleMsg[ SUI.midiKeyboardChannel() ] );
+  USBComposite.setProductString( VPOConsoleMsg[ midi.getKeyboardChannel() ] );
   USBComposite.setSerialString((const char *) "00001");
 // Trim USBComposite Buffer to below 320 byte limit
 //  int buf_size = 32;
@@ -80,11 +79,11 @@ void setup() {
     }
   }
   while (!USBComposite) digitalWrite(LED_BUILTIN, ++i & 1); // Super fast flash while waiting for USB to register
-  delay(2000); // for reliable CompositeSerial.write()
-  //mlcd.Begin((char *)""); // initialised before USB Serial
-  sprintf(buf,"Add=%-2d",SEVEN_SEGMENT_ADDRESS);
+  sprintf(buf,"Add=%-2d",midi.getKeyboardChannel()+1 );
   SEG7.displayPChar(buf); // Display sysex ID
-  //if ( SUI.Cfg.Bits.hasEventLog ) {
+  mlcd.Begin((char *)""); // Display VPO & ADDr Info
+  delay(2000); // for reliable CompositeSerial.write()
+//if ( SUI.Cfg.Bits.hasEventLog ) {
   //  CompositeSerial.println( VPOConsoleMsg[ SUI.midiKeyboardChannel() ] );
   // }
 }

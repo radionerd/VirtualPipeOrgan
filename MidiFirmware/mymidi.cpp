@@ -73,14 +73,14 @@ void myMidi::handleSysExEnd(void) {
     const int SysExLCD32MessageIdentifier=0x01;
     const int SysExLCD16MessageIdentifier=0x19;
     //int startIndex;
-    unsigned long time_ref = last_time;
-    last_time = micros();
-    unsigned long interval;
-    interval = last_time - (unsigned long)time_ref ;
+    // unsigned long time_ref = last_time;
+    // last_time = micros();
+    //unsigned long interval;
+    // interval = last_time - (unsigned long)time_ref ;
     // Accept GrandOrgue 16 or 32 char display messages
     if ( ( sysexBuf[ 0 ] == SysExStartFlag ) && ( sysexBuf[ 1 ] == SysExExperimentalID ) ) { 
       sysexBuf[sysexIndex-1] = 0; // Null terminate string
-      int lcd_address = 0;
+      unsigned int lcd_address = 0;
       //int lcd_colour = 0;
       if (  sysexBuf[ 2 ] == SysExLCD32MessageIdentifier ) {
         // lcd_colour  = sysexBuf[ 3 ]; // Unused feature
@@ -116,7 +116,7 @@ void myMidi::handleSysExEnd(void) {
         }
       }
       if ( lcd_address ) {
-        if ( lcd_address == SEVEN_SEGMENT_ADDRESS ) {
+        if ( lcd_address == midi.getKeyboardChannel()+1 ) { // Unlike midi channels Sysex does not have a display offset of 1
           SEG7.displayPChar( sysexBuf + sysexIndex );         
         } else {
           //MultiLCD mlcd();
@@ -125,10 +125,22 @@ void myMidi::handleSysExEnd(void) {
       }
       if ( SUI.Cfg.Bits.hasEventLog ) {
         char buff[80];
-        sprintf(buff,"%lu %5lu LCD[%d]='%s'\r\n",last_time,interval,lcd_address,sysexBuf + sysexIndex);
+        sprintf(buff,"%10luus MidiSysex   LCD[%d]='%s'\r\n",micros() ,lcd_address,sysexBuf + sysexIndex);
         CompositeSerial.write( buff ) ;
       }
     }
     sysexIndex=0;
     sysexBuf[sysexIndex]=0;
 } // handleSysExEnd
+
+
+// Midi channel numbers in the library range from 0x0-0xf
+// We pass them around as 0x00 to 0xF and add 1 for display view only
+unsigned int myMidi::getButtonChannel(void) {
+  const int MIDI_BUTTON_OFFSET = 8;
+  return ( (SUI.Cfg.Bits.midiChannel + MIDI_BUTTON_OFFSET) & 0xF );
+}
+
+unsigned int myMidi::getKeyboardChannel(void) {
+  return SUI.Cfg.Bits.midiChannel;
+}

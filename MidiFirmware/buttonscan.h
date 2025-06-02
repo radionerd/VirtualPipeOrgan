@@ -24,9 +24,23 @@ private:
   volatile uint32_t* PB07_BB = (volatile uint32_t*) (0x42000000 + (0x10c0C<<5) + ( 7<<2) ); // BB Port B ODR bit  7
   volatile uint32_t* PB11_BB = (volatile uint32_t*) (0x42000000 + (0x10c0C<<5) + (11<<2) ); // BB Port B ODR bit 11
   volatile uint32_t* PB12_BB = (volatile uint32_t*) (0x42000000 + (0x10c08<<5) + (12<<2) ); // BB Port B IDR bit 12
+
+  uint32_t sr_input_list[NUM_SHIFT_REG_OUTPUTS+1];
+  uint32_t sr_outputs   [NUM_SHIFT_REG_OUTPUTS+1];
+  struct Image {
+      int Input;
+      unsigned long Time;
+      int Output;
+      int Error;
+  };
+  Image ShiftRegImage[128];
+
 public:
   ButtonScan(void);
-	uint32_t Scan(uint32_t *sr_input_list,uint32_t*sr_outputs );
+  void Scan(void);
+	uint32_t ScanSR( uint32_t *sr_input_list, uint32_t *sr_outputs );
+  void SetLED(int output, int value );
+  void Print(void);
 };
 
 #ifdef __cplusplus

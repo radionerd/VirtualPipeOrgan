@@ -9,11 +9,12 @@ The user manual assumes that you have programed the flash in the STM32 Bluepill 
 - USB Connection to host computer, LED blink on Midi activity
 - Multiple STM32 boards may be deployed to ease wiring
 - Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
-- 8 ADC inputs for expression pedals when scanning a pedalboard
-- 96 LED illuminated button inputs using external 74HC164 shift registers
-- One 6 digit LED display (for combination setter & crescendo display)
+- Up to 8 ADC inputs for expression pedals when scanning a pedalboard
+- Up to 4 ADC inputs when configured for a keyboard without velocity sensing
+- 40 LED illuminated button inputs using external 74HC164 shift registers
+- One 6 digit LED display per midi controller (for combination setter & crescendo display)
 - Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per IC type )
-- interface to WS2812 RGB LED string for music stand or pedal illumination
+- Interface to WS2812 RGB LED string for music stand or pedal illumination
 - USB HID (qwerty keyboard) messages for music page turning (Future)
 - Simulated serial interface over USB for viewing/saving configuration in Flash
 - Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 24.04 X86 & Arm Linux
@@ -24,33 +25,38 @@ To discover whether the midi interface is successfully connected to the computer
 ```
 $ lsusb
    ...
-   Bus 001 Device 094: ID 1eaf:0031 Leaflabs VPO Console Midi Ch1, 9
-   Bus 001 Device 095: ID 1eaf:0031 Leaflabs VPO Console Midi Ch2, 10
+   Bus 001 Device 094: ID 1eaf:0031 Leaflabs VPO Console Midi Ch3, 11
+   Bus 001 Device 095: ID 1eaf:0031 Leaflabs VPO Console Midi Ch4, 12
    ...
 ```
 
 ## Midi Channel Assignment
+
 Midi channels for keyboard/pedalboard are configurable from 1-16 with the illuminated button channel offset by 8.
 
 ## Midi Messages
 
-|  Control   |   Midi Message  | Direction |
-|:----------:|:---------------:|:---------:|
-| Keyboard   | Midi Note 32-96 | To Comp   |
-| Pedalboard | Midi Note 32-64 | To Comp   |
-| Buttons    | Midi Note 0-127 | To   Comp |
-| Button LEDs| Midi Note 0-127 | From Comp |
-| Expression | Midi CC   32-40 | To   Comp |
-| LED 7Seg   | Midi Sysex ID==1| From Comp |
-| LCD Display| Midi Sysex 32-63| From Comp |
+|  Control   |Chan|   Midi Message  | Direction |
+|:----------:|:--:|:---------------:|:---------:|
+| Keyboard   |1-16| Midi Note 32-96 | To Comp   |
+| Pedalboard |1-16| Midi Note 32-64 | To Comp   |
+| Buttons    |1-16| Midi Note 0-127 | To   Comp |
+| Button LEDs|1-16| Midi Note 0-127 | From Comp |
+| Expression |1-16| Midi CC   20-27 | To   Comp |
+| LED 7Seg   |N/A | Sysex ID as Chan| From Comp |
+| LCD Display|N/A | Midi Sysex 32-63| From Comp |
 
-ID addresses are shown on the LCD and 7 LED displays at power up.
+ID addresses are shown on the LCD and 7 LED displays after power up.
+
+## Liquid Crystal Displays
+
+The LCDs use PCF8574 based I2C to parallel adapters.
 
 The PCF8574 and PCF8574A ICs on LCD displays use two different address ranges.
 
-Unless you need more than 8 displays it does not matter which kind you buy.
+Unless you need more than 8 displays it does not matter which kind you buy or whether they are mixed.
 
-The adddresses configured in Grandorgue are Base 10.
+The ID adddresses configured in GrandOrgue are Base 10.
 
 |  PCF8574   | Grandorgue | PCF8574A | Grandorgue | A2| A1| A0|
 |:----------:|:----------:|:--------:|:----------:|:-:|:-:|:-:|
@@ -63,7 +69,7 @@ The adddresses configured in Grandorgue are Base 10.
 | 0x26       |      38    |   0x3e   |      62    | 1 | 1 | 0 |
 | 0x27       |      39    |   0x3f   |      63    | 1 | 1 | 1 |
 
-*User solder bridges A0-A2 are used to program zeros and are binary coded. So the default address is either 0x27 (39) or 0x3F (63) without any solder bridges.
+*User solder bridges A0-A2 are used to program zeros and are binary coded. So the default address without any solder bridges is is either 0x27 (39) or 0x3F (63).
 
 # Monitoring Midi Messages
 Use 'midisnoop' to monitor messages sent between the keyboard/pedalboard and the computer. Select Alsa unless you have Jack configured.
@@ -79,6 +85,8 @@ This works for ALSA and JACK.
 ```
 $ qjackctl &
 ```
+At startup GrandOrgue makes its required midi connections to the midi keyboards.
+
 You may need to re-esatblish connections manually if you restart the STM32 Bluepill.
 
 Connect the Grandorgue output to VPO Console and midisnoop inputs using the qjacktctl graph feature and mouse.
@@ -90,12 +98,22 @@ Connect the VPO Console output to Grandorgue and midisnoop inputs using the qjac
 Alternatively edit and run the [autoconnect](https://github.com/radionerd/VirtualPipeOrgan/blob/main/MidiFirmware/autoconnect) script in background.
 
 ## Configuring the Firmware
-A USB serial connection is used to communicate with the Midi Interface.
+A simulated USB serial connection is used to communicate with the Midi Interface.
 Connect one STM32 BluePill to the computer using a USB cable.
 Install 'minicom' and configure it to connect to /dev/ttyACM0 or /dev/ttyUSB0 depending on your OS.
+To confirm that you have the expected midi channel and tty device run the command:
+```
+ $ ll /dev/serial/by-id/
+total 0
+drwxr-xr-x 2 root root 80 Jun  1 13:53 ./
+drwxr-xr-x 4 root root 80 Jun  1 13:53 ../
+lrwxrwxrwx 1 root root 13 Jun  1 13:53 usb-New_Zealand_VPO_Console_Midi_Ch3__11_00001-if02 -> ../../ttyACM1
+lrwxrwxrwx 1 root root 13 Jun  1 13:53 usb-New_Zealand_VPO_Console_Midi_Ch4__12_00001-if02 -> ../../ttyACM0
+
+```
 Once connected successfully expand the minicom window and press the spacebar.
 You should see a display that shows which pin functions are assigned.
-Select what you require using the A-J keys, then press 'S' to save.
+Configure what you require using the A-J keys, then press 'S' to save.
 ```
 STM32 Blue Pill Assigned Pin Functions
 IP_SR_DATA    PB12   USB   GND    
@@ -136,7 +154,7 @@ J [ ] Event Log to USB Serial (may slow response time)
 Cfg.Word=3E02
 Enter A-L,a-l To adjust cfg value, S to Save, ? - Menu:
 ```
-The event log is usefule to monitor midi messages being sent to the computer. However
+The event log is useful to monitor midi messages being sent to the computer. However
 using the event log may slow down performance and so should not be enabled during normal use.
 # Hardware Interface Menu
 To monitor activity on attached devices type '?' to view the hardware interface menu.
@@ -202,6 +220,22 @@ SR 5   32   33   34   35   36   37   38   39
 
 i = input on, o = output on
 ```
+
+### ADC & Expression Pedals
+
+Up to 8 ADC inputs may be configured for Expression Pedals.
+On GrandOrgue right click on the expression pedal input. 
+
+Click 'Event' and select Bx Controller
+
+Click 'Channel' select your configured midi channel
+
+Click 'Detect Complex MIDI Setup', move the Expression Pedal control as directed.
+Note: On my setup Controller-No 32 does not eem to work.
+
+Click 'OK' and remember to save the organ settings
+
+ 
 
 ### 'Z' Pin Status
 This screen may be useful for viewing the 12 bit ADC results before filtering and conversion to 7 bit midi values.

@@ -17,8 +17,9 @@ class LED {
   private:
     const int ON  = 0;
     const int OFF = 1;
-    const unsigned long HOLDOFF_US = 10000000L;
+    const unsigned long HOLDOFF_US = 5000000L;
     int ledpin;
+    int led_state;
     unsigned long holdoff;
   public:
    LED ( int pin = LED_BUILTIN ) {
@@ -27,11 +28,11 @@ class LED {
      holdoff = micros();
    }
    
-   void on ( void )   { digitalWrite( ledpin , ON ); holdoff = micros() + HOLDOFF_US; }
+   void on ( void )   { digitalWrite( ledpin , ON ); led_state =  ON; holdoff = micros() + HOLDOFF_US; }
    
-   void off( void )   { digitalWrite( ledpin , OFF); }
+   void off( void )   { digitalWrite( ledpin , OFF); led_state = OFF; holdoff = micros() + HOLDOFF_US; }
    
-   void toggle (void) { digitalWrite( ledpin , ! digitalRead(ledpin) ); holdoff = micros() + HOLDOFF_US; }
+   void toggle (void) { digitalWrite( ledpin , (++led_state)&1 ); holdoff = micros() + HOLDOFF_US; }
    
    void service(void) {
      unsigned long time = micros();
@@ -41,7 +42,7 @@ class LED {
        if ( pulse_width > 16383 )
          pulse_width = 32768 - pulse_width;
        int led_state = HIGH;
-       // DEBUG See if breathing LEd can co-exist with WS2812 driver
+       // DEBUG See if breathing LED can co-exist with WS2812 driver
        if ( pulse_width > 15383)
          pulse_width = 15383;
        if ( pulse_width < 1000 )

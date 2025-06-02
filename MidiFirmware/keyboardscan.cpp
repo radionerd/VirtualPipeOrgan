@@ -1,6 +1,15 @@
 #include <Arduino.h>
 #include <USBComposite.h>
 #include "keyboardscan.h"
+#include "led.h"
+#include "mymidi.h"
+#include "profile.h"
+#include "USBSerialUI.h"
+
+extern myMidi midi;
+uint32_t kb_input [NUM_KEYBOARD_INPUTS]; // 16 input bits per output line
+uint32_t kb_image [NUM_KEYBOARD_INPUTS];
+unsigned long kb_time[NUM_KEYBOARD_INPUTS*NUM_KEYBOARD_OUTPUTS]; // For velocity measurment
 
 KeyboardScan::KeyboardScan(){
 
@@ -88,7 +97,7 @@ uint32_t KeyboardScan::get_input(bool pedalboard) {
 // ~17us inactive inputs
 // ~+24us to scan all inputs with active pull down
 // Each scan line active for 1.84us
-uint32_t KeyboardScan::Scan(uint32_t *kb_input,uint32_t*kb_image, bool pedalboard )
+uint32_t KeyboardScan::FastHWScan(uint32_t *kb_input,uint32_t*kb_image, bool pedalboard )
 {
   static unsigned long lastTime=0;
   unsigned long time_now = micros();
@@ -245,7 +254,6 @@ void KeyboardScan::activePulldown(bool pedalboard ) {
       GPIOB->regs->CRL ^= 0x0000b0bb ;
       GPIOB->regs->CRH ^= 0xbbb00000 ;
     }
-
     /* Alternative time out for input line discharge
     int count = 0;
     while ( ( ++count < 10 ) && input ) { // wait for active inputs to decay to inactive
@@ -256,4 +264,129 @@ void KeyboardScan::activePulldown(bool pedalboard ) {
       input = get_input(pedalboard);
     } if ( pedalboard == 0 ) 
     */
+}
+
+void KeyboardScan::Print( void ) {
+// const char *NoteNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+  char buf[80];
+  const char * op_names[] = {
+    "CN13 PIN4",
+    "CN13 PIN3",
+    "CN13 PIN2",
+    "CN13 PIN1",
+    "CN14 PIN4",
+    "CN14 PIN3",
+    "CN14 PIN2",
+    "CN14 PIN1"
+  };
+ // char *note_name[] = {
+ //   "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
+ // };
+  int note_id=-1;
+  //CompositeSerial.write(VT100_CLEAR);
+  sprintf(buf, "Keyboard Scan Result Midi Channel %d\r\n", midi.getKeyboardChannel()+1 );
+  SUI.DisplayTitle( buf );
+
+  for ( int i = 0 ; i < NUM_KEYBOARD_OUTPUTS ; i++ ) {
+    for ( int j = 0 ; j < NUM_KEYBOARD_INPUTS; j++ ) {
+      buf[NUM_KEYBOARD_INPUTS-1-j] = '0';
+      if ( kb_input[i] & ( 1 << j ) ) {
+        buf[NUM_KEYBOARD_INPUTS-1-j] = '1';
+        // display lowest note
+        int new_note  = (((j/2)*8 )+i);
+        if ( note_id == -1 ) {
+          note_id = new_note;
+        }
+        if ( note_id > new_note ) {
+          note_id = new_note;
+        }
+      }
+    }
+    sprintf(buf+NUM_KEYBOARD_INPUTS," OP%d  %s\r\n",i,op_names[i]);
+    CompositeSerial.write(buf);
+  }
+  CompositeSerial.write("........******** IP *=CN13 input pins 5-6,7=nc,8-13\r\n");
+  CompositeSerial.write("********........ IP *=CN14 input pins 5-12\r\n");
+}
+void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
+  char buf[120];
+//  const char *note_name[12] = {
+//    "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
+//  };
+//  const int OCTAVE = 12;
+//  int note_id=-1;
+  profile.PStart(PROFILE_KEYBOARD);
+  int change = FastHWScan(kb_input,kb_image, pedalboard );
+  if ( change ) {
+    // process MusicKeyboard changes
+    //sprintf(buf,"Keyboard change = %d\r\n",change);
+    //CompositeSerial.write(buf);    
+    for ( int i = 0 ; i < NUM_KEYBOARD_OUTPUTS ; i++ ) {
+      int difference = kb_input [i] ^ kb_image[i];
+      //if ( pedalboard) difference &= 0x55 ; //  ignore top 8 and first contact inputs on pedalboard
+      if ( difference ) {
+        SUI.RequestDisplayUpdate();
+        int inputs = NUM_KEYBOARD_INPUTS;
+        if ( pedalboard ) inputs-=8;
+        for ( int j = 0 ; j < inputs; j++ ) {
+          if ( difference & ( 1 << j ) ) {
+            int index = i*NUM_KEYBOARD_INPUTS + j ;
+            long int key_travel_time;
+            kb_time[index] = micros();
+            if (  j & 1 ) { // top of key travel?
+              key_travel_time = kb_time[index] - kb_time[index-1];
+            } else {
+              key_travel_time = kb_time[index] - kb_time[index+1];              
+            }
+            //sprintf(buf,"Key travel time = %ldus\r\n",key_travel_time);
+            //CompositeSerial.write(buf);
+            // Send to midi
+            int midi_note = 36 + i + ( (j>>1) * 8 );
+           
+            int midi_velocity = 1 ;
+            if ( key_travel_time < 100000 ) {
+              midi_velocity = (100000-key_travel_time)/787;
+            }
+            buf[0]=0;
+            int midi_channel = midi.getKeyboardChannel() ;
+            if ( SUI.Cfg.Bits.hasKeyVelocity ) {
+              if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
+                if ( ( j & 1 ) == 0 ) { // lower contact?
+                  led.on();
+                  midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
+                  SUI.monitorNoteOn   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
+                }
+              } else { // contact just opened
+                if ( j & 1 ) { // upper contact?
+                  led.off();
+                  midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
+                  SUI.monitorNoteOff   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
+                }
+              }
+            } else {
+              midi_velocity = 64; // single contact set medium velocity
+              if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
+                if ( ( j & 1 ) == 0 ) { // lower contact closing?
+                 led.on();
+                  midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
+                  SUI.monitorNoteOn   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
+                }
+              } else {
+                if ( ( j & 1 ) == 0 ) { // lower contact opening
+                  led.off();
+                  midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
+                  SUI.monitorNoteOff   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
+                }
+              }             
+            }
+            if ( buf[0]) {
+              CompositeSerial.write(buf);    
+            }
+          }
+        }
+      }
+      kb_image[i] = kb_input[i]; // inform driver
+    }
+  }
+  profile.PEnd(PROFILE_KEYBOARD);
 }

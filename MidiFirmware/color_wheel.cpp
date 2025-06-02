@@ -165,7 +165,7 @@ void LEDStripCtrl(int event ) {
   static int LEDStripState=LED_STRIP_OFF; // OFF / ON / WHEEL
   static unsigned long buttonOnTime=0; // Time when button was pressed/Released
   //static unsigned long buttonOffTime=0; // Time when button was pressed/Released
-  static int buttonState=LED_BUTTON_INVALID;// or LED_STRIP_ON
+  static int buttonState=LED_STRIP_BUTTON_INVALID;// or LED_STRIP_ON
   static int buttonCount=2; // Wraps to zero on first button press
   pixel pix;  
   static int LEDStripUpdate=2; // Update twice at startup to avoid residual led being lit
@@ -178,14 +178,14 @@ void LEDStripCtrl(int event ) {
   static unsigned long last_time=0; // Last time this function was called
   unsigned long time_now = micros();
   switch ( event ) {
-    case LED_BUTTON_ON :
+    case LED_STRIP_BUTTON_ON :
       buttonOnTime = time_now;
       buttonState = event;
       ++buttonCount;
       //sprintf(buff,"LED_BUTTON_ON Exit buttonCount=%d\r\n",buttonCount);
       //CompositeSerial.write(buff);
     break;
-    case LED_BUTTON_OFF:
+    case LED_STRIP_BUTTON_OFF:
       //buttonOffTime = time_now;
       buttonState = event;
     break;
@@ -199,7 +199,7 @@ void LEDStripCtrl(int event ) {
       last_time = time_now;
       if ( ( time_now - buttonOnTime ) > 1000000 ) { // long interval since button pressed / released
         // long button on time?
-        if ( buttonState == LED_BUTTON_ON )  {
+        if ( buttonState == LED_STRIP_BUTTON_ON )  {
           if ( --buttonCount > 2 )
             buttonCount = 2;
           //sprintf(buff,"LongTime BUTTON_ON Start bsh[%d]=%d\r\n", buttonCount,bsh[buttonCount]);
@@ -214,7 +214,7 @@ void LEDStripCtrl(int event ) {
           //CompositeSerial.write(buff);
           ++buttonCount;
         }
-        if ( buttonState == LED_BUTTON_OFF ) {
+        if ( buttonState == LED_STRIP_BUTTON_OFF ) {
           //sprintf(buff,"Long time: LED_BUTTON_OFF Start LED StripState=%d buttonState=%d buttonCount=%d\r\n",LEDStripState,buttonState,buttonCount );
           //CompositeSerial.write(buff);
           switch ( --buttonCount ) {
@@ -231,7 +231,7 @@ void LEDStripCtrl(int event ) {
           }
           if ( ( time_now - buttonOnTime ) > 1500000 ) 
             LEDStripState = LED_STRIP_ON;
-          buttonState = LED_BUTTON_INVALID; // Inhibit timer calling again for OFF
+          buttonState = LED_STRIP_BUTTON_INVALID; // Inhibit timer calling again for OFF
           buttonCount=0;  
           //sprintf(buff,"Long time: LED_BUTTON_OFF Exit LED  StripState=%d buttonState=%d buttonCount=%d\r\n",LEDStripState,buttonState,buttonCount );
           //CompositeSerial.write(buff);
