@@ -20,7 +20,7 @@ class USBSerialUI {
     int ConfigValue[20];
     int DisplayUpdate;
     char LastCommand;
-    const int Octave = 12; // half steps
+//    const unsigned int Octave = 12; // half steps
     const int MAX_15 = 15;
     const int MAX_8  =  8;
     const int MAX_1  =  1;
@@ -79,7 +79,7 @@ class USBSerialUI {
   const char *note_name[12] = {
     "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
   };
-  const int OCTAVE = 12;
+  const unsigned int OCTAVE = 12;
 
 
   public:
@@ -93,7 +93,8 @@ class USBSerialUI {
       int error;
       char fault;
     } GPIOPinConfig;
-    GPIOPinConfig MenuConfigs [NUM_GPIO_PINS];
+#define MenuConfigs LiveConfigs
+    //GPIOPinConfig MenuConfigs [NUM_GPIO_PINS];
     GPIOPinConfig LiveConfigs [NUM_GPIO_PINS];
     //PROFILE profile;
 
@@ -123,7 +124,7 @@ class USBSerialUI {
     void handleNoteOn ( unsigned int channel, unsigned int note, unsigned int velocity );
     void handleControlChange( unsigned int channel, unsigned int controller, unsigned int velocity );
     int  hasLCD(void){ return Cfg.Bits.hasTM1637; };
-    void RequestDisplayUpdate(void) { DisplayUpdate = 1; }
+    void RequestDisplayUpdate(void) ;
     void monitorNoteOn ( unsigned int channel, unsigned int note, unsigned int velocity, unsigned int device );
     void monitorNoteOff( unsigned int channel, unsigned int note, unsigned int velocity, unsigned int device );
     void DisplayTitle( const char *title );

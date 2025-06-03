@@ -43,7 +43,7 @@ KeyboardScan::KeyboardScan(){
   pinMode(PC15,OUTPUT);
   pinMode(PC14,OUTPUT); */ 
 }
-uint32_t KeyboardScan::get_input(bool pedalboard) {
+uint32_t KeyboardScan::get_input(bool pedalboard, bool hasKeyVelocity ) {
   const volatile uint32_t* IN_0X0001 = (uint32_t*) (BB + ( (PORTB+IDR)<<5 ) + ((uint32_t) 13 << 2 ));
   const volatile uint32_t* IN_0X0002 = (uint32_t*) (BB + ( (PORTB+IDR)<<5 ) + ((uint32_t) 14 << 2 ));
   const volatile uint32_t* IN_0X0004 = (uint32_t*) (BB + ( (PORTB+IDR)<<5 ) + ((uint32_t) 15 << 2 ));
@@ -65,23 +65,43 @@ uint32_t KeyboardScan::get_input(bool pedalboard) {
   const volatile uint32_t* IN_0X8000 = (uint32_t*) (BB + ( (PORTA+IDR)<<5 ) + ((uint32_t)  2 << 2 ));
 
   if ( ! pedalboard ) {
-    return ((*IN_0X0001) <<  0 ) +
-           ((*IN_0X0002) <<  1 ) +
-           ((*IN_0X0004) <<  2 ) +
-           ((*IN_0X0008) <<  3 ) +
-           ((*IN_0X0010) <<  4 ) +
-           ((*IN_0X0020) <<  5 ) +
-           ((*IN_0X0040) <<  6 ) +
-           ((*IN_0X0080) <<  7 ) +
-           ((*IN_0X0100) <<  8 ) +
-           ((*IN_0X0200) <<  9 ) +
-           ((*IN_0X0400) << 10 ) +
-           ((*IN_0X0800) << 11 ) +
-           ((*IN_0X1000) << 12 ) +
-           ((*IN_0X2000) << 13 ) +
-           ((*IN_0X4000) << 14 ) +
-           ((*IN_0X8000) << 15 );
+    if ( hasKeyVelocity ) {
+      return ((*IN_0X0001) <<  0 ) +
+             ((*IN_0X0002) <<  1 ) +
+             ((*IN_0X0004) <<  2 ) +
+             ((*IN_0X0008) <<  3 ) +
+             ((*IN_0X0010) <<  4 ) +
+             ((*IN_0X0020) <<  5 ) +
+             ((*IN_0X0040) <<  6 ) +
+             ((*IN_0X0080) <<  7 ) +
+             ((*IN_0X0100) <<  8 ) +
+             ((*IN_0X0200) <<  9 ) +
+             ((*IN_0X0400) << 10 ) +
+             ((*IN_0X0800) << 11 ) +
+             ((*IN_0X1000) << 12 ) +
+             ((*IN_0X2000) << 13 ) +
+             ((*IN_0X4000) << 14 ) +
+             ((*IN_0X8000) << 15 );
+    } else {
+      return ((*IN_0X0001) <<  0 ) +
+            // ((*IN_0X0002) <<  1 ) +
+             ((*IN_0X0004) <<  2 ) +
+            // ((*IN_0X0008) <<  3 ) +
+             ((*IN_0X0010) <<  4 ) +
+            // ((*IN_0X0020) <<  5 ) +
+             ((*IN_0X0040) <<  6 ) +
+            // ((*IN_0X0080) <<  7 ) +
+             ((*IN_0X0100) <<  8 ) +
+            // ((*IN_0X0200) <<  9 ) +
+             ((*IN_0X0400) << 10 ) +
+            // ((*IN_0X0800) << 11 ) +
+             ((*IN_0X1000) << 12 ) +
+            // ((*IN_0X2000) << 13 ) +
+             ((*IN_0X4000) << 14 ) ;
+            // ((*IN_0X8000) << 15 );           
+    }
   } else {
+    if ( hasKeyVelocity ) {
     return ((*IN_0X0001) <<  0 ) +
            ((*IN_0X0002) <<  1 ) +
            ((*IN_0X0004) <<  2 ) +
@@ -90,6 +110,17 @@ uint32_t KeyboardScan::get_input(bool pedalboard) {
            ((*IN_0X0020) <<  5 ) +
            ((*IN_0X0040) <<  6 ) +
            ((*IN_0X0080) <<  7 ) ;
+    } else {
+    return ((*IN_0X0001) <<  0 ) +
+           //((*IN_0X0002) <<  1 ) +
+           ((*IN_0X0004) <<  2 ) +
+           //((*IN_0X0008) <<  3 ) +
+           ((*IN_0X0010) <<  4 ) +
+           //((*IN_0X0020) <<  5 ) +
+           ((*IN_0X0040) <<  6 ) ;
+           //((*IN_0X0080) <<  7 ) 
+      
+    }
   }
 }
 
@@ -130,14 +161,16 @@ uint32_t KeyboardScan::FastHWScan(uint32_t *kb_input,uint32_t*kb_image, bool ped
 
     if ( ! pedalboard ) {
       pinMode(PB1 ,INPUT_PULLDOWN); // data in 0x0100
-      pinMode(PB0 ,INPUT_PULLDOWN); // data in 0x0200
       pinMode(PA7 ,INPUT_PULLDOWN); // data in 0x0400
-      pinMode(PA6 ,INPUT_PULLDOWN); // data in 0x0800
 
       pinMode(PA5 ,INPUT_PULLDOWN); // data in 0x1000
-      pinMode(PA4 ,INPUT_PULLDOWN); // data in 0x2000
       pinMode(PA3 ,INPUT_PULLDOWN); // data in 0x4000
-      pinMode(PA2 ,INPUT_PULLDOWN); // data in 0x8000
+     if ( SUI.Cfg.Bits.hasKeyVelocity ) {
+       pinMode(PB0 ,INPUT_PULLDOWN); // data in 0x0200
+       pinMode(PA6 ,INPUT_PULLDOWN); // data in 0x0800
+       pinMode(PA4 ,INPUT_PULLDOWN); // data in 0x2000
+       pinMode(PA2 ,INPUT_PULLDOWN); // data in 0x8000
+     }
     }
 
     pinMode(PB4 ,OUTPUT);
@@ -151,82 +184,147 @@ uint32_t KeyboardScan::FastHWScan(uint32_t *kb_input,uint32_t*kb_image, bool ped
     pinMode(PC14,OUTPUT);  
    
   }
+  bool hasKeyVelocity = SUI.Cfg.Bits.hasKeyVelocity;
   for ( int scan_line = 0 ; scan_line < NUM_KEYBOARD_OUTPUTS ; scan_line++ ) {
     *Outputn[scan_line] = 1; // raise output scan line
-    volatile uint32_t input = get_input(pedalboard); // read 16 input lines
+    volatile uint32_t input = get_input(pedalboard,hasKeyVelocity); // read 16 input lines
     *Outputn[scan_line] = 0 ; // lower output scan line
     kb_input[scan_line] = input;
     if ( kb_input[scan_line] != kb_image[scan_line] ) {
       change++;
     }
     if ( input ) {
-      activePulldown(pedalboard);
+      activePulldown(pedalboard,hasKeyVelocity); // Pull down all used inputs
+      activePulldown(pedalboard,hasKeyVelocity); // Restore all used inputs
     }
   }
   return change;
 }
 
-    /* Code generator for fast discharge of active input cables
+// Code generator for fast discharge of active input wires
+void generateOption(bool hasPedalBoard,bool hasKeyVelocity)
+{
       char buff[120];      
-      sprintf(buff,"pedalboard=%d\r\n",pedalboard);
-      CompositeSerial.write(buff);
-      sprintf(buff,"&GPIOA->regs->CRL = %08x \r\n", &GPIOA->regs->CRL);
-      CompositeSerial.write(buff);
-      sprintf(buff," GPIOA->regs->CRL = %08x \r\n", GPIOA->regs->CRL);
-      CompositeSerial.write(buff);
-      sprintf(buff,"&GPIOA->regs->CRH = %08x \r\n", &GPIOA->regs->CRH);
-      CompositeSerial.write(buff);
-      sprintf(buff," GPIOA->regs->CRH = %08x \r\n", GPIOA->regs->CRH);
-      CompositeSerial.write(buff);
-      sprintf(buff,"&GPIOB->regs->CRL = %08x \r\n", &GPIOB->regs->CRL);
-      CompositeSerial.write(buff);
-      sprintf(buff," GPIOB->regs->CRL = %08x \r\n", GPIOB->regs->CRL);
-      CompositeSerial.write(buff);
-      sprintf(buff,"&GPIOB->regs->CRH = %08x \r\n", &GPIOB->regs->CRH);
-      CompositeSerial.write(buff);
-      sprintf(buff," GPIOB->regs->CRH = %08x \r\n\n", GPIOB->regs->CRH);
-      CompositeSerial.write(buff);
+      //bool hasPedalBoard  = SUI.Cfg.Bits.hasPedalBoard;
+      //bool hasKeyVelocity = SUI.Cfg.Bits.hasKeyVelocity;
 
+      int info = 0;
       const int input_pin [] ={PB13,PB14,PB15,PA8,PA9,PA10,PA15,PB3,PB1,PB0,PA7,PA6,PA5,PA4,PA3,PA2 };
+      //                          0    1    2   3   4    5    6   7   8   9   a   b   c   d   e   f
       int nip = 16 ;
-      if ( pedalboard ) nip = 8 ;
+      if ( hasPedalBoard ) nip = 8 ;
       for (int ip = 0 ; ip < nip ; ip++ ) {
-        pinMode( input_pin[ip],OUTPUT);
-      }
-      int acrl,acrh,bcrl,bcrh;
-      sprintf(buff,"&GPIOA->regs->CRL = %08x \r\n", &GPIOA->regs->CRL);
-      CompositeSerial.write(buff);
-      sprintf(buff," GPIOA->regs->CRL = %08x \r\n", acrl=GPIOA->regs->CRL);
-      CompositeSerial.write(buff);
-      sprintf(buff,"&GPIOA->regs->CRH = %08x \r\n", &GPIOA->regs->CRH);
-      CompositeSerial.write(buff);
-      sprintf(buff," GPIOA->regs->CRH = %08x \r\n", acrh=GPIOA->regs->CRH);
-      CompositeSerial.write(buff);
-      sprintf(buff,"&GPIOB->regs->CRL = %08x \r\n", &GPIOB->regs->CRL);
-      CompositeSerial.write(buff);
-      sprintf(buff," GPIOB->regs->CRL = %08x \r\n", bcrl=GPIOB->regs->CRL);
-      CompositeSerial.write(buff);
-      sprintf(buff,"&GPIOB->regs->CRH = %08x \r\n", &GPIOB->regs->CRH);
-      CompositeSerial.write(buff);
-      sprintf(buff," GPIOB->regs->CRH = %08x \r\n\n", bcrh=GPIOB->regs->CRH);
-      CompositeSerial.write(buff);
-      for (int ip = 0 ; ip < nip ; ip++ ) {
+        if ( ( hasKeyVelocity == 1 ) || ( (ip&1)==0 ) )
         pinMode( input_pin[ip],INPUT_PULLDOWN);
       }
-      // Code generator
-      sprintf(buff," if ( pedalboard == %d ) \r\n { \r\n", pedalboard);
-      CompositeSerial.write(buff);
-      sprintf(buff,"   GPIOA->regs->CRL ^= %08x ;\r\n", GPIOA->regs->CRL^acrl);
-      CompositeSerial.write(buff);
-      sprintf(buff,"   GPIOA->regs->CRH ^= %08x ;\r\n", GPIOA->regs->CRH^acrh);
-      CompositeSerial.write(buff);
-      sprintf(buff,"   GPIOB->regs->CRL ^= %08x ;\r\n", GPIOB->regs->CRL^bcrl);
-      CompositeSerial.write(buff);
-      sprintf(buff,"   GPIOB->regs->CRH ^= %08x ;\r\n }\r\n", GPIOB->regs->CRH^bcrh);
-      CompositeSerial.write(buff);
-    } */
+      if ( info ) {
+        sprintf(buff,"Code Generator for fast active input line pull down\r\n(Saves pull down resistors and time\r\n"); 
+        CompositeSerial.write(buff);      
+        //sprintf(buff,"pedalboard=%d\r\n",hasPedalBoard);
+        //CompositeSerial.write(buff);
+        sprintf(buff,"&GPIOA->regs->CRL = %08lx \r\n", (unsigned long)&GPIOA->regs->CRL);
+        CompositeSerial.write(buff);
+        sprintf(buff," GPIOA->regs->CRL = %08lx \r\n", GPIOA->regs->CRL);
+        CompositeSerial.write(buff);
+        sprintf(buff,"&GPIOA->regs->CRH = %08lx \r\n", (unsigned long)&GPIOA->regs->CRH);
+        CompositeSerial.write(buff);
+        sprintf(buff," GPIOA->regs->CRH = %08lx \r\n", GPIOA->regs->CRH);
+        CompositeSerial.write(buff);
+        sprintf(buff,"&GPIOB->regs->CRL = %08lx \r\n", (unsigned long)&GPIOB->regs->CRL);
+        CompositeSerial.write(buff);
+        sprintf(buff," GPIOB->regs->CRL = %08lx \r\n", GPIOB->regs->CRL);
+        CompositeSerial.write(buff);
+        sprintf(buff,"&GPIOB->regs->CRH = %08lx \r\n", (unsigned long)&GPIOB->regs->CRH);
+        CompositeSerial.write(buff);
+        sprintf(buff," GPIOB->regs->CRH = %08lx \r\n\n", GPIOB->regs->CRH);
+        CompositeSerial.write(buff);
+      }
 
-void KeyboardScan::activePulldown(bool pedalboard ) {
+      for (int ip = 0 ; ip < nip ; ip++ ) {
+        if ( ( hasKeyVelocity == 1 ) || ( (ip&1)==0 ) )
+        pinMode( input_pin[ip],OUTPUT);
+      }
+      unsigned long acrl = GPIOA->regs->CRL;
+      unsigned long acrh = GPIOA->regs->CRH;
+      unsigned long bcrl = GPIOB->regs->CRL;
+      unsigned long bcrh = GPIOB->regs->CRH;
+      if ( info ) {
+        sprintf(buff,"&GPIOA->regs->CRL = %08lx \r\n", (unsigned long)&GPIOA->regs->CRL);
+        CompositeSerial.write(buff);
+        sprintf(buff," GPIOA->regs->CRL = %08lx \r\n", acrl=GPIOA->regs->CRL);
+        CompositeSerial.write(buff);
+        sprintf(buff,"&GPIOA->regs->CRH = %08lx \r\n", (unsigned long)&GPIOA->regs->CRH);
+        CompositeSerial.write(buff);
+        sprintf(buff," GPIOA->regs->CRH = %08lx \r\n", acrh=GPIOA->regs->CRH);
+        CompositeSerial.write(buff);
+        sprintf(buff,"&GPIOB->regs->CRL = %08lx \r\n", (unsigned long)&GPIOB->regs->CRL);
+        CompositeSerial.write(buff);
+        sprintf(buff," GPIOB->regs->CRL = %08lx \r\n", bcrl=GPIOB->regs->CRL);
+        CompositeSerial.write(buff);
+        sprintf(buff,"&GPIOB->regs->CRH = %08lx \r\n", (unsigned long)&GPIOB->regs->CRH);
+        CompositeSerial.write(buff);
+        sprintf(buff," GPIOB->regs->CRH = %08lx \r\n\n", bcrh=GPIOB->regs->CRH);
+        CompositeSerial.write(buff);
+      }
+      for (int ip = 0 ; ip < nip ; ip++ ) {
+        if ( ( hasKeyVelocity == 1 ) || ( (ip&1)==0 ) )
+          pinMode( input_pin[ip],INPUT_PULLDOWN);
+      }
+      // Code generator
+      sprintf(buff,"  if ( ( hasPedalBoard == %d ) && ( hasKeyVelocity == %d ) )\r\n  { \r\n", hasPedalBoard,hasKeyVelocity);
+      CompositeSerial.write(buff);
+      sprintf(buff,"    GPIOA->regs->CRL ^= 0x%08lx ;\r\n", (unsigned long)(GPIOA->regs->CRL^acrl) );
+      CompositeSerial.write(buff);
+      sprintf(buff,"    GPIOA->regs->CRH ^= 0x%08lx ;\r\n", (unsigned long)GPIOA->regs->CRH^acrh);
+      CompositeSerial.write(buff);
+      sprintf(buff,"    GPIOB->regs->CRL ^= 0x%08lx ;\r\n", (unsigned long)GPIOB->regs->CRL^bcrl);
+      CompositeSerial.write(buff);
+      sprintf(buff,"    GPIOB->regs->CRH ^= 0x%08lx ;\r\n  }\r\n", (unsigned long)GPIOB->regs->CRH^bcrh);
+      CompositeSerial.write(buff);
+   
+}
+// Code generator for fast discharge of active input wires
+void KeyboardScan::PCodeGenerator(void)
+{      
+      char buff[120];      
+      sprintf(buff,"Code Generator for fast active input line pull down\r\nWhich saves pull down resistors and execution time\r\n"); 
+      CompositeSerial.write(buff);      
+
+      generateOption(0,0);
+      generateOption(0,1);
+      generateOption(1,0);
+      generateOption(1,1);
+}
+
+// Call this method twice to pull down and release active input scan lines
+void KeyboardScan::activePulldown(bool hasPedalBoard, bool hasKeyVelocity ) {
+  if ( ( hasPedalBoard == 0 ) && ( hasKeyVelocity == 0 ) ) { 
+    GPIOA->regs->CRL ^= 0xb0b0b000 ;
+    GPIOA->regs->CRH ^= 0xb00000b0 ;
+    GPIOB->regs->CRL ^= 0x000000b0 ;
+    GPIOB->regs->CRH ^= 0xb0b00000 ;
+  }
+  if ( ( hasPedalBoard == 0 ) && ( hasKeyVelocity == 1 ) ) { 
+    GPIOA->regs->CRL ^= 0xbbbbbb00 ;
+    GPIOA->regs->CRH ^= 0xb0000bbb ;
+    GPIOB->regs->CRL ^= 0x0000b0bb ;
+    GPIOB->regs->CRH ^= 0xbbb00000 ;
+  }
+  if ( ( hasPedalBoard == 1 ) && ( hasKeyVelocity == 0 ) ) { 
+    GPIOA->regs->CRL ^= 0x00000000 ;
+    GPIOA->regs->CRH ^= 0xb00000b0 ;
+    GPIOB->regs->CRL ^= 0x00000000 ;
+    GPIOB->regs->CRH ^= 0xb0b00000 ;
+  }
+  if ( ( hasPedalBoard == 1 ) && ( hasKeyVelocity == 1 ) ) { 
+    GPIOA->regs->CRL ^= 0x00000000 ;
+    GPIOA->regs->CRH ^= 0xb0000bbb ;
+    GPIOB->regs->CRL ^= 0x0000b000 ;
+    GPIOB->regs->CRH ^= 0xbbb00000 ;
+  }
+}
+/*
+void KeyboardScan::originalactivePulldown(bool pedalboard ) {
     // To avoid long discharge times use pull down resistors 4k7 or less
     // OR active pull down by setting input pin briefly to output low
     // Tested with 330pF loading on input lines
@@ -254,17 +352,17 @@ void KeyboardScan::activePulldown(bool pedalboard ) {
       GPIOB->regs->CRL ^= 0x0000b0bb ;
       GPIOB->regs->CRH ^= 0xbbb00000 ;
     }
-    /* Alternative time out for input line discharge
-    int count = 0;
-    while ( ( ++count < 10 ) && input ) { // wait for active inputs to decay to inactive
-      input = get_input(pedalboard);
-    }
-    count *= 2 ; // wait for about double the same time again to guard against noise
-    while ( --count > 0 ) { 
-      input = get_input(pedalboard);
-    } if ( pedalboard == 0 ) 
-    */
-}
+    // Alternative time out for input line discharge
+    //int count = 0;
+    //while ( ( ++count < 10 ) && input ) { // wait for active inputs to decay to inactive
+    //  input = get_input(pedalboard);
+    //}
+    //count *= 2 ; // wait for about double the same time again to guard against noise
+    //while ( --count > 0 ) { 
+    //  input = get_input(pedalboard);
+    //} if ( pedalboard == 0 ) 
+    
+}*/
 
 void KeyboardScan::Print( void ) {
 // const char *NoteNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };

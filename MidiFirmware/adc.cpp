@@ -84,12 +84,11 @@ void ADC::Begin(void) {
 void ADC::Print(void) {
    char buff[80];
    
-   CompositeSerial.write(VT100_CLEAR);
+   //CompositeSerial.write(VT100_CLEAR);
    sprintf(buff,"Expression Pedal/ADC Results\r\n    ADC   AVG   REP MidiCh CCommand\r\n");
    //SUI.DisplayTitle(buff);
    CompositeSerial.write(buff);   
    for ( int gpioId = MIN_ADC_GPIOID ; gpioId <= MAX_ADC_GPIOID ; gpioId++ ) {
-//   for ( int gpioId = 0 ; gpioId < NUM_GPIO_PINS ; gpioId++ ) {
      switch ( SUI.LiveConfigs[gpioId].function ) {
       case IP_ADC :
       {
@@ -102,19 +101,8 @@ void ADC::Print(void) {
           SUI.LiveConfigs[gpioId].input / SCALE_0_TO_127,
           midi_channel+1,
           cc_command_number ); // a value between 0-4095
-        CompositeSerial.write(buff);
+          CompositeSerial.write(buff);
       }
      }
    }   
-   //SUI.RequestDisplayUpdate();
-/*   for ( int gpioId = 0 ; gpioId < NUM_GPIO_PINS ; gpioId++ ) {
-     switch ( SUI.LiveConfigs[gpioId].function ) {
-       case IP_ADC :
-       {
-         pinMode (  pinCfg[gpioId].portPin, INPUT);
-         sprintf( buff,"     %d   %4d  %d \r\n", analogRead( pinCfg[gpioId].portPin ), midi_channel,midi_cc_command_number ); // a value between 0-4095
-         CompositeSerial.write(buff);
-       }
-     }
-   } */
 } 

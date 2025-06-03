@@ -211,9 +211,9 @@ void ButtonScan::Print(void) {
     for ( int i = 0 ; i < SHIFT_REG_SIZE ; i++ ) {
       char ip = ' ';
       char op = ' ';
-      if ( ShiftRegImage[sr*8+i].Input ) ip='i';
+      if ( ShiftRegImage[sr*SHIFT_REG_SIZE+i].Input ) ip='i';
       // if ( ShiftRegImage[sr*8+i].Output) op='o';
-      if ( sr_outputs[sr*8+i] ) op='o';
+      if ( sr_outputs[sr*SHIFT_REG_SIZE+i] ) op='o';
       sprintf(buff + strlen(buff), "%c%02d%c ", ip, sr * 8 + i, op );
     }
     CompositeSerial.write(buff);

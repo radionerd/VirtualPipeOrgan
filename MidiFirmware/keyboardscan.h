@@ -15,8 +15,8 @@ const int NUM_KEYBOARD_INPUTS = 16;
 
 class KeyboardScan {
 private:
-uint32_t get_input(bool pedalboard);
-void activePulldown(bool pedalboard);
+uint32_t get_input(bool pedalboard, bool hasKeyVelocity );
+void activePulldown(bool pedalboard,bool hasKeyVelocity );
   // STM32F103 Cortex M3 Memory Mapped hardware register addresses Ref: RM0008-STM32F1... Sec3.3 P51
   const uint32_t IDR =   0x00000008; // RM0008-STM32F1... Table 59 P194
   const uint32_t ODR   = 0x0000000C;
@@ -38,6 +38,7 @@ public:
   uint32_t FastHWScan(uint32_t *kb_input,uint32_t*kb_image, bool pedalboard );
   void MusicKeyboardScan( bool pedalboard );
   void Print(void);
+  void PCodeGenerator(void);
 };
 
 #ifdef __cplusplus

@@ -10,7 +10,7 @@ extern "C" {
  * Call button scan with ptrs to input and output array,
  * returns number of active button inputs
  */
-const int NUM_SHIFT_REGS = 5;
+const int NUM_SHIFT_REGS = 8;
 const int SHIFT_REG_SIZE = 8;
 const int NUM_SHIFT_REG_OUTPUTS = NUM_SHIFT_REGS * SHIFT_REG_SIZE;
 
@@ -33,7 +33,7 @@ private:
       int Output;
       int Error;
   };
-  Image ShiftRegImage[128];
+  Image ShiftRegImage[NUM_SHIFT_REG_OUTPUTS];
 
 public:
   ButtonScan(void);

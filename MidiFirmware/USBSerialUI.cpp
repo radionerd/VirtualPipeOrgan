@@ -55,8 +55,7 @@ void USBSerialUI::poll(void) {
     LastCommand = c;
   }
   if ( DisplayUpdate ) { // Refresh monitoring screens
-    DisplayUpdate -- ;
-    switch ( tolower(LastCommand) ) {
+    switch ( LastCommand ) {
       case 'k' :
       case 'o' :
       case 'x' :
@@ -64,6 +63,7 @@ void USBSerialUI::poll(void) {
         CommandCharDecode(LastCommand);
       break;
     }
+    DisplayUpdate = 0 ;
   }
   profile.PEnd( PROFILE_LOOP );
 }
@@ -136,7 +136,7 @@ void USBSerialUI::CommandCharDecode( char c )
           if ( c != ' ' ) {
             // Adjust configured value by index for display
             i = ( ( c - 'a' ) & 0xf ) ;
-            if ( c == tolower(c) ) {
+            if ( c == tolower(c) ) { // increase or decrease count?
               ConfigValue[i] ++ ;
               if ( ConfigValue[i] > ConfigItems[i].maxval )
                 ConfigValue[i] = 0;
@@ -161,6 +161,9 @@ void USBSerialUI::CommandCharDecode( char c )
         }
         break;
       case 'k' :
+       if ( c =='K' )
+        kbd.PCodeGenerator();
+       else
         kbd.Print() ;
         break;
       case 'l' : // LCD
@@ -347,7 +350,14 @@ void USBSerialUI::DisplayConfigurationMenu() {
       int dvalue = ConfigValue[i];
       if (  i == 2 ) { // Number of ADCs inputs?
         if ( Cfg.Bits.hasPedalBoard == 0 ) { // Force display to zero while preserving value
-          dvalue = 0 ;
+          if ( Cfg.Bits.hasKeyVelocity ) {
+            dvalue = 0 ;
+          } else {
+           // if ( dvalue > 4 ) {
+           //   dvalue = 4;
+              Cfg.Bits.numberADCInputs = dvalue;
+           // }
+          }
         }
       }
       sprintf ( valtext, "%d", dvalue );
@@ -429,49 +439,10 @@ char * USBSerialUI::getFunctionText(GPIOPinConfig *pinCfg, char *buff, int n ) {
 }
 
 void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs ) {
-//  const int maxopcount[5] = { 3,5,5,5,5 } ; // max number of scan outputs per pedalboard or keyboard
-//  int adc_count = 1; // Offset by 1 for display
   int op_count  = 0;
-//  int ip_count  = 0;
   int keyboard  = 0;
 
-  /*
-  typedef union {
-    unsigned Word;
-
-    struct {
-      unsigned midiChannelOffset : 4; // A  4
-      unsigned numberADCInputs : 4;   // B  8
-      unsigned hasPedalBoard : 1;     // C  9
-      unsigned hasI2C: 1;             // D 10
-      unsigned hasTM1637 : 1;         // E 11
-      unsigned hasShiftRegs: 1;       // F 12
-      unsigned hasShiftRegLEDInvert: 1; // G 13
-      unsigned hasPC13Scan: 1;        // H 14
-      unsigned hasPB2PA13PA14Scan: 1; // I 15
-      unsigned hasEventLog: 1;        // J 16
-    } Bits;
-  } Config1; // Redefined here to work around 'not declared in this scope' error */
-
-   typedef union {
-      unsigned Word;
-
-      struct {
-        unsigned midiChannelOffset : 4; // A  4
-        unsigned hasPedalBoard : 1;     // B  5
-        unsigned numberADCInputs : 4;   // C  9
-        unsigned hasWS2812: 1;          // D 10
-        unsigned hasI2C: 1;             // E 11
-        unsigned hasTM1637 : 1;         // F 12
-        unsigned hasShiftRegs: 1;       // G 13
-        unsigned hasShiftRegLEDInvert:1;// H 14
-        unsigned hasPB2PA13PA14Scan: 1; // I 15
-        unsigned hasEventLog: 1;        // J 16
-      } Bits;
-    } Config1; // Redefined here to work around 'not declared in this scope' error
-
-  
-  Config1 tcfg;
+  Config tcfg;
   tcfg.Word = ConfigWord;
   for ( int gpio_index = 0 ; gpio_index < NUM_GPIO_PINS ; gpio_index ++ ) {
     newCfgs[gpio_index].function = pinCfg[gpio_index].function;
@@ -484,11 +455,6 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
       break;
       case OP_SCAN :
         newCfgs[gpio_index].function = OP_SCAN;
-        //if ( ( keyboard == 0 ) && ( op_count == 0 ) ) { // Adjust count for pedalboard ( or not)
-        //  if (tcfg.Bits.hasPedalBoard == 0 ) {
-        //    op_count = 2; // skip first two pedalboard octaves, use final part octave for top note of each keyboard
-        //  }
-        //}
         newCfgs[gpio_index].count    = op_count++;
         newCfgs[gpio_index].keyboard = keyboard;            
       break;
@@ -503,6 +469,22 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
             }          
             //if ( tcfg.Bits.hasWS2812 && ( newCfgs[gpio_index].count == 7 ) )
             //  newCfgs[gpio_index].function = IO_WS2812 ;
+          }
+        } else {
+          // Keyboard without velocity sense may have up to four adc's on unused scan inputs
+          if ( tcfg.Bits.hasKeyVelocity == 0 ) {
+            int count = newCfgs[gpio_index].count;
+            if ( count > 7 ) {
+              if ( count & 1 ) { 
+                count = 15-newCfgs[gpio_index].count; // Adjust count to ADC
+                newCfgs[gpio_index].count = count;
+                if ( newCfgs[gpio_index].count >= tcfg.Bits.numberADCInputs ) {
+                   newCfgs[gpio_index].function = IO_SPARE ;
+                } else {
+                   newCfgs[gpio_index].function = IP_ADC ;
+                }
+              }
+            }
           }
         }
       break;
@@ -800,7 +782,10 @@ void USBSerialUI::monitorNoteOn ( unsigned int channel, unsigned int note, unsig
         device = DEV_UNKNOWN;
     if ( ( device==DEV_KEYBOARD ) && ( Cfg.Bits.hasPedalBoard ) )
       device = DEV_PEDALBOARD;
-    sprintf(buff,"%10luus MidiNoteOn  Ch=%-2d  note=%-2d/%2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],note/OCTAVE, velocity, device_names[device]);
+    // C(60) == C4 is debateable but agrees with MidiSnoop
+    unsigned int octave = ( note - OCTAVE ) / OCTAVE; // C(60) == C4 is debateable but agrees with MidiSnoop
+    if ( note < OCTAVE ) octave=0;
+    sprintf(buff,"%10luus MidiNoteOn  Ch=%-2d  note=%-2d/%-2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],octave, velocity, device_names[device]);
     CompositeSerial.write(buff);
   }
   RequestDisplayUpdate();
@@ -813,8 +798,15 @@ void USBSerialUI::monitorNoteOff( unsigned int channel, unsigned int note, unsig
       device = DEV_UNKNOWN;
     if ( ( device==DEV_KEYBOARD ) && ( Cfg.Bits.hasPedalBoard ) )
       device = DEV_PEDALBOARD;
-    sprintf(buff,"%10luus MidiNoteOff Ch=%-2d  note=%-2d/%2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],note/OCTAVE,velocity,device_names[device]);
+    unsigned octave = ( note - OCTAVE ) / OCTAVE; // C(60) == C4 is debateable but agrees with MidiSnoop
+    if ( note < OCTAVE ) octave=0;
+    sprintf(buff,"%10luus MidiNoteOff Ch=%-2d  note=%-2d/%-2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],octave,velocity,device_names[device]);
     CompositeSerial.write(buff);
   }
   RequestDisplayUpdate();
+}
+
+void USBSerialUI::RequestDisplayUpdate(void) 
+{ 
+  DisplayUpdate = 1; 
 }

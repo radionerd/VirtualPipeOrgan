@@ -1,4 +1,4 @@
-# USB Midi HID User Manual
+# USB Midi Interface User Manual
 
 This user manual uses Linux OS examples with Grandorgue. For other Operating Systems and Applications similar commands will exist. 
 
@@ -33,6 +33,8 @@ $ lsusb
 ## Midi Channel Assignment
 
 Midi channels for keyboard/pedalboard are configurable from 1-16 with the illuminated button channel offset by 8.
+
+e.g. If the keyboard midi channel is set to 4, then the Button midi channel will be 4 + 8 = 12.
 
 ## Midi Messages
 
@@ -76,6 +78,8 @@ Use 'midisnoop' to monitor messages sent between the keyboard/pedalboard and the
 ```
 $ midisnoop &
 ```
+Midi messages may also be monitored within the Midi Interface using the 'J' command (see below).
+
 
 # Making Midi Connections
 Use 'qjackctl' graph function to view or connect midi outputs to midi inputs.
@@ -208,7 +212,21 @@ Flash Memory Summary
 0801F830 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF
 ...
 ```
+### LED Illuminated Push Buttons
 
+LED lluminated push buttons are connected via 74HC164 shift registers.
+
+When the Midi interface powers up all LEDs light briefly as a lamp test feature.
+
+Until the Midi Interface connects to GrandOrgue each button will illuminate when pressed for testing the button and LED operation.
+
+Buttons generate midi note messages on the configured midi channel plus 8.
+
+The first button (00) in the series acts as a shift key. When button 00 is held in, any other button pressed generates is midi note +64. The shifty feature may be used to save console buttons. For example a '+1' button may be configured to act as '-1' when shift is pressed.
+
+When a button is held for longer than 4 seconds its midi note is set to auto repeat at 0.5 second intevals. Auto repeat may be useful for adjusting the metronome tempo.
+
+The status of the connected shift registers may be seen with the 'O' command.
 ```
 Shift Register Midi Channel 11 Note Numbers
 
@@ -220,10 +238,22 @@ SR 5   32   33   34   35   36   37   38   39
 
 i = input on, o = output on
 ```
+###Keyboard and Pedalboards
+
+The MAudio Keystation 61 note keyboard connectors are accomodated directly on the PCBs.
+The keyboard provides two contacts per note for velocity sensing between the time that the first and second contact operates or releases.
+When Velocity sensing is not required, four unused inputs become available for ADC/Expression inputs if required.
+When pedalboard operation is selected the same pin assignments are used, so the MAudio Keystation may be used to emulate a pedalboard.
 
 ### ADC & Expression Pedals
 
-Up to 8 ADC inputs may be configured for Expression Pedals.
+Up to 8 ADC inputs may be configured for Expression Pedals when the Pedalboard option is selected.
+
+Up to 4 ADC inputs may be configured for Expression Pedals when the Keyboard option is selected without velocity sensing.
+Select the number of ADC convertors to use using the 'C' command.
+Note. ADC inputs are connected to potentiometers wired between 0v and 3.3V with a 470R resistor connected to the wiper. 
+Enabling A->D conversion without any connected input may generate large amounts of meaningless midi CC messages slowing down the sysem.
+
 On GrandOrgue right click on the expression pedal input. 
 
 Click 'Event' and select Bx Controller
@@ -231,7 +261,7 @@ Click 'Event' and select Bx Controller
 Click 'Channel' select your configured midi channel
 
 Click 'Detect Complex MIDI Setup', move the Expression Pedal control as directed.
-Note: On my setup Controller-No 32 does not eem to work.
+Note: The midi interface generates CC messages in the range 20-27
 
 Click 'OK' and remember to save the organ settings
 
