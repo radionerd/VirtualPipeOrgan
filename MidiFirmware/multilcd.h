@@ -13,7 +13,7 @@ class MultiLCD {
   static const int LCD_SIZE = 32;
   static const int NUM_LCD = 16;
   struct LCD_INFO { uint8_t responding; uint8_t i2cAddr; char dmesg[LCD_SIZE+1]; } ;
-  LCD_INFO lcdData[NUM_LCD];
+  LCD_INFO lcdData[NUM_LCD*2];
   int getLCDIndex( unsigned int lcd_address ) ;
   public:
   MultiLCD( void );
@@ -21,7 +21,8 @@ class MultiLCD {
   int I2cCheck( void ) ;
   void Test(void);
   void Print( void ) ;
-  int Write(uint8_t lcd_address, char *buffer ) ;
+  void saveDisplayText( int lcd_address, char *buff);
+  int Write(uint8_t lcd_address, char *buff ) ;
 };
 
 #ifdef __cplusplus

@@ -79,8 +79,11 @@ void setup() {
     }
   }
   while (!USBComposite) digitalWrite(LED_BUILTIN, ++i & 1); // Super fast flash while waiting for USB to register
-  sprintf(buf,"Add=%-2d",midi.getKeyboardChannel()+1 );
+  int midi_display_channel = midi.getKeyboardChannel()+1;
+  sprintf(buf,"Add=%-2d",midi_display_channel );
   SEG7.displayPChar(buf); // Display sysex ID
+  mlcd.saveDisplayText( midi_display_channel,buf );
+
   mlcd.Begin((char *)""); // Display VPO & ADDr Info
   delay(2000); // for reliable CompositeSerial.write()
 //if ( SUI.Cfg.Bits.hasEventLog ) {

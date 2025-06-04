@@ -145,6 +145,9 @@ void USBSerialUI::CommandCharDecode( char c )
               if (ConfigValue[i] < 0 )
                 ConfigValue[i] = ConfigItems[i].maxval;
             }
+            // Special case for > 4 ADC with Keyboard
+            if ( ( Cfg.Bits.hasPedalBoard==0 ) && ( Cfg.Bits.hasKeyVelocity==0 ) && ( ConfigValue[2] > 4 ) )
+               ConfigValue[2]=0 ;
             Cfg.Bits.midiChannel       = ConfigValue [0];
             Cfg.Bits.hasPedalBoard     = ConfigValue [1];
             Cfg.Bits.numberADCInputs   = ConfigValue [2];
@@ -353,10 +356,10 @@ void USBSerialUI::DisplayConfigurationMenu() {
           if ( Cfg.Bits.hasKeyVelocity ) {
             dvalue = 0 ;
           } else {
-           // if ( dvalue > 4 ) {
-           //   dvalue = 4;
+           if ( dvalue > 4 ) {
+              dvalue = 0;
               Cfg.Bits.numberADCInputs = dvalue;
-           // }
+           }
           }
         }
       }
@@ -474,11 +477,11 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
           // Keyboard without velocity sense may have up to four adc's on unused scan inputs
           if ( tcfg.Bits.hasKeyVelocity == 0 ) {
             int count = newCfgs[gpio_index].count;
-            if ( count > 7 ) {
-              if ( count & 1 ) { 
+            if ( count > 7 ) { // unused input range
+              if ( count & 1 ) { // only odd inputs unused
                 count = 15-newCfgs[gpio_index].count; // Adjust count to ADC
                 newCfgs[gpio_index].count = count;
-                if ( newCfgs[gpio_index].count >= tcfg.Bits.numberADCInputs ) {
+                if ( newCfgs[gpio_index].count/2 >= tcfg.Bits.numberADCInputs ) {
                    newCfgs[gpio_index].function = IO_SPARE ;
                 } else {
                    newCfgs[gpio_index].function = IP_ADC ;

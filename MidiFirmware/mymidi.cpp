@@ -115,13 +115,12 @@ void myMidi::handleSysExEnd(void) {
            }
         }
       }
-      if ( lcd_address ) {
-        if ( lcd_address == midi.getKeyboardChannel()+1 ) { // Unlike midi channels Sysex does not have a display offset of 1
+      if ( lcd_address == midi.getKeyboardChannel()+1 ) { // Unlike midi channels Sysex does not have a display offset of 1
           SEG7.displayPChar( sysexBuf + sysexIndex );         
-        } else {
+          mlcd.saveDisplayText( lcd_address,sysexBuf + sysexIndex );
+      } else {
           //MultiLCD mlcd();
           mlcd.Write(lcd_address, sysexBuf + sysexIndex );
-        }
       }
       if ( SUI.Cfg.Bits.hasEventLog ) {
         char buff[80];

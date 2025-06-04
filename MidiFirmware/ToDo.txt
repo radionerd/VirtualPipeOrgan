@@ -1,7 +1,4 @@
 Done ✓
-✓Monitor Note to show middle C note 60 Octave 4, agree with midisnoop
-✓Activate up to 4 ADC inputs when Keyboard Velocity disabled
-✓Increase number of shift registers to 8
   Fix LCD Booting with & without LCDs/pullups with message store
   Add 7 seg display to LCD Print?
   Ensure prompt boot with no LCD / Pullups
@@ -19,7 +16,7 @@ Done ✓
     H [ ] 74HC164 Button LED inverted
   Explain real time & timing in user manual
   WS2812 Control on Lowest sharp when other notes silent for 5 seconds
-  Add HID reporting on 3 spar keyboard contacts 97,98,99
+  Add HID reporting on 3 spare keyboard contacts 97,98,99
   Build with makefile?
   Enhancement - Investigate whether LCD loading can be achieved without button LED flicker
   Enhancement - Page Turn Inc,Dec,Home,End one button/2 button

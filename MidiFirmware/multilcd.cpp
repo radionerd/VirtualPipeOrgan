@@ -9,12 +9,8 @@
 LiquidCrystal_PCF8574 lcd(0x27);  // Address specified later
 
   int MultiLCD::getLCDIndex( unsigned int lcd_address ) {
-    int index = -1;
-    if ( lcd_address >= 0x20 && lcd_address <= 0x27 )
-      index = lcd_address & 7;
-    if ( lcd_address >= 0x38 && lcd_address <= 0x3f )
-      index = lcd_address & 0xf;
-    return index;
+    if ( lcd_address < 16 ) return lcd_address;
+    return 16+(lcd_address&0xf); // 0x20-0x27 -> 0-7, 0x38-0x3f -> 7-15
   }
 
  
@@ -54,9 +50,8 @@ LiquidCrystal_PCF8574 lcd(0x27);  // Address specified later
 int MultiLCD::Write(uint8_t lcd_address, char *buffer )
 {
    int error = -1;
+   int lcd_index = getLCDIndex(lcd_address);
    if ( SUI.Cfg.Bits.hasI2C ) {
-    int lcd_index = getLCDIndex(lcd_address);
-    if ( lcd_index >= 0 ) {
       Wire.begin(1);      
       Wire.setClock(400000); // fast speed
       Wire.beginTransmission(lcd_address);
@@ -106,14 +101,19 @@ int MultiLCD::Write(uint8_t lcd_address, char *buffer )
           lcd.print( line1+x1 );
         }
         lcdData[lcd_index].responding = TRUE;
-    }
-    strncpy( &lcdData[lcd_index].dmesg[0] , buffer , LCD_SIZE ); // Record for print method
-    lcdData[lcd_index].i2cAddr=lcd_address;
-   }
+      }
   }
+  saveDisplayText( lcd_address, buffer );
+  //strncpy( &lcdData[lcd_index].dmesg[0] , buffer , LCD_SIZE ); // Record for print method
+  //lcdData[lcd_index].i2cAddr=lcd_address;
   return error;
 }
-
+void MultiLCD::saveDisplayText( int lcd_address , char *text )
+{
+  int lcd_index = getLCDIndex( lcd_address );
+  strncpy( &lcdData[lcd_index].dmesg[0] , text , LCD_SIZE ); // Record for print method
+  lcdData[lcd_index].i2cAddr=lcd_address;
+}
 
   // Return non-zero if i2c bus has slow rise time eg No pullup resistors
   int MultiLCD::I2cCheck( void ) {
@@ -150,12 +150,11 @@ int MultiLCD::Write(uint8_t lcd_address, char *buffer )
     char buff[80];
     sprintf(buff,"LCD Display List\r\nDec  Hex Text\r\n");
     CompositeSerial.write(buff);
-    if ( SUI.Cfg.Bits.hasI2C ) {
-     for ( int index=0 ; index < NUM_LCD ; index++ ) {
+    for ( int index=0 ; index < NUM_LCD*2 ; index++ ) {
       if ( lcdData[index].dmesg[0] ) {
         uint8_t i2cAddr = lcdData[index].i2cAddr;
         char *active = (char *)"Not Responding";
-        if ( lcdData[index].responding )
+        if ( lcdData[index].responding || (i2cAddr<=16))
           active = (char *) "";
         char line0[20];
         strncpy ( line0 , lcdData[index].dmesg, 16 );
@@ -163,9 +162,9 @@ int MultiLCD::Write(uint8_t lcd_address, char *buffer )
         sprintf ( buff," %02d 0x%02X [%s][%s] %s\r\n",i2cAddr,i2cAddr,line0,lcdData[index].dmesg+16,active);
         CompositeSerial.write(buff);
       }
-     }
-    } else {
-       sprintf(buff,"\nLCD Not Enabled\r\n");
+    }
+    if ( ! SUI.Cfg.Bits.hasI2C ) {
+       sprintf(buff,"\nI2C/LCD Not Enabled\r\n");
        CompositeSerial.write(buff);
     }
   }

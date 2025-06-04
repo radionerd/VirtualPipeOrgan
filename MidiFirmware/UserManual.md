@@ -50,6 +50,22 @@ e.g. If the keyboard midi channel is set to 4, then the Button midi channel will
 
 ID addresses are shown on the LCD and 7 LED displays after power up.
 
+### Power Up
+
+At power up the midi interface loads the 7 Segment display, LCDs and LED push buttons with the 'PC Comms' message and lights the Push Button LEDs until PC communication is established over the USB. Then Displays are loaded with their configured addresses. The 7 Segment Display configured address is the same as the Midi channel number. 
+
+|  State   | 7 Segment  | LCDs           | LED Push Buttons  |Built In LED  |
+|:--------:|:----------:|:--------------:|:-----------------:|:------------:|
+|Power On  |   PC ???   | PC Comms ???   |     All Lit       |   Flash      |
+|PC Success|  Add= 3    |VirtualPipeOrgan| Light When Pressed|Breathing .5Hz|
+|          |            |i2cAddr=37  0x25|                   | ADC Toggle   |
+|GrandOrgue|    GO      |       GO       |        GO         | Note: On/Off |
+
+
+The built in LED will flash during initialisation. When communication with the PC is established the LED will slowly get brigter and dimmer at approx 0.5Hz to show that all is well. Connected LCDs will show their configured addresses and the 7 sec
+
+When Keyboard or Push button are pressed or released the builtin LED will turn on of off in sync, and resume 0.5Hz breathing after 5 seconds of inactivity. The Builtin LED also toggles on or off when Midi CC messages are sent by the ADC.
+
 ## Liquid Crystal Displays
 
 The LCDs use PCF8574 based I2C to parallel adapters.
