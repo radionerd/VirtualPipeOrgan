@@ -1,10 +1,5 @@
 Done ✓
-  Fix LCD Booting with & without LCDs/pullups with message store
-  Add 7 seg display to LCD Print?
-  Ensure prompt boot with no LCD / Pullups
-  Test GPIO pin display with all options
   Clean up commented out code
-  Scheduler and timing offset by profile ID
   Move all print features to objects that own them
   Simple multi display example
   Submit lcd pull request if possible

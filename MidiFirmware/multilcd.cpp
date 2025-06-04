@@ -20,7 +20,8 @@ LiquidCrystal_PCF8574 lcd(0x27);  // Address specified later
   void MultiLCD::Begin ( char * mesg ) 
   {
    if ( SUI.Cfg.Bits.hasI2C ) {
-    for ( uint8_t i2cAddr = MIN_LCD_ADDR ; i2cAddr <= MAX_LCD_ADDR ; i2cAddr++ ) {
+    if (  I2cCheck() == 0 ) {
+     for ( uint8_t i2cAddr = MIN_LCD_ADDR ; i2cAddr <= MAX_LCD_ADDR ; i2cAddr++ ) {
       if ( i2cAddr == 0x28 )
         i2cAddr = 0x38;
       Wire.begin(1);
@@ -42,6 +43,7 @@ LiquidCrystal_PCF8574 lcd(0x27);  // Address specified later
         buff[ LCD_SIZE ] = 0;
         Write( i2cAddr,buff);
       } 
+     }
     } 
    }
   }
@@ -146,6 +148,7 @@ void MultiLCD::saveDisplayText( int lcd_address , char *text )
     }
     return error;
   }
+  
   void MultiLCD::Print( void ) {
     char buff[80];
     sprintf(buff,"LCD Display List\r\nDec  Hex Text\r\n");
@@ -174,7 +177,7 @@ void MultiLCD::saveDisplayText( int lcd_address , char *text )
   char buff[80];
 
   if ( I2cCheck() )
-    sprintf(buff,"I2C bus FAIL. Needs 4k7 pullups?\r\n" );
+    sprintf(buff,"I2C bus FAIL. %sNeeds 4k7 pullups?%s\r\n",VT100_BLINK,VT100_NO_BLINK );
   else
     sprintf(buff,"I2C Bus PASS\r\n");
   CompositeSerial.write(buff);

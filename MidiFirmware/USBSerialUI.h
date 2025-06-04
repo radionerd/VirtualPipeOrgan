@@ -14,6 +14,9 @@ const char VT100_CLR_EOL[] = "\x1B[0K";
 const char VT100_CURSOR_00[] = "\x1B[0;0H";
 const char VT100_UNDERLINE[] = "\x1B[4m";
 const char VT100_NO_UNDERLINE[] = "\x1B[0m";
+const char VT100_BLINK[] = "\x1B[5m";
+const char VT100_NO_BLINK[] = "\x1B[0m";
+
 
 class USBSerialUI {
     unsigned long AppOnlineTime=0;

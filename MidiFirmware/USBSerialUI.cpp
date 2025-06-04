@@ -3,52 +3,34 @@
 #include <flash_stm32.h>
 #include <stdio.h>
 #include "adc.h"
+#include "buttonscan.h"
 #include "color_wheel.h"
-#include "multilcd.h"
+#include "keyboardscan.h"
 #include "led.h"
+#include "multilcd.h"
 #include "mymidi.h"
 #include "pin.h"
 #include "profile.h"
-#include "buttonscan.h"
-#include "keyboardscan.h"
+#include "TM1637.h"
 #include "USBSerialUI.h"
 // Copyright (C)2023 Richard Jones. MIT License applies
+extern ButtonScan Button;
+extern KeyboardScan kbd;
+extern LED led; // or led(PC13); choose your own LED gpio pin
+extern TM1637 SEG7; // 7 Segment display driver
+//USBHID HID;
+//HIDKeyboard Keyboard(HID);
+//extern USBCompositeSerial CompositeSerial;
+extern ADC adc;
+extern MultiLCD mlcd;
 
-    ButtonScan Button;
-    KeyboardScan kbd;
-    ADC adc;
-    PROFILE profile;
-    extern MultiLCD mlcd;
 USBSerialUI::USBSerialUI(void) {
   RestoreConfigFromFlash();
   TestIO();
   adc.Begin();
 }
 void USBSerialUI::poll(void) {
-  static int pollCount;
-  static unsigned long last_time;
-  unsigned long time_now = micros();
-  if ( time_now - last_time < PID_TIME_OFFSET_US ) return;
-  profile.PStart( PROFILE_LOOP );
-  if ( ++pollCount > 4 ) pollCount = 0;
-  switch ( pollCount  ) {
-      case PROFILE_KEYBOARD :
-         kbd.MusicKeyboardScan(Cfg.Bits.hasPedalBoard);
-      break;
-      case PROFILE_BUTTONS :
-         Button.Scan();
-      break;
-      case PROFILE_ADC :
-         adc.Scan();
-      break;
-      case PROFILE_WS2812 :
-         if ( Cfg.Bits.hasPB2PA13PA14Scan ) {
-           LEDStripCtrl( LED_STRIP_SERVICE );
-         }
-    
-  }
   
-//  char buff[80];
   while (CompositeSerial.available()) {
     char c = CompositeSerial.read();
     CommandCharDecode(c);
@@ -65,7 +47,6 @@ void USBSerialUI::poll(void) {
     }
     DisplayUpdate = 0 ;
   }
-  profile.PEnd( PROFILE_LOOP );
 }
 
 void USBSerialUI::handleNoteOn( unsigned int midi_channel, unsigned int midi_note, unsigned int midi_velocity ) {
@@ -73,10 +54,6 @@ void USBSerialUI::handleNoteOn( unsigned int midi_channel, unsigned int midi_not
     led.on(); // Turn on LED briefly to indicate addressed USB input
     monitorNoteOn   ( midi_channel, midi_note, midi_velocity , DEV_LED );
     Button.SetLED(midi_note,TRUE);
-    //if ( midi_note < NUM_SHIFT_REG_OUTPUTS ) {
-    //  sr_outputs[midi_note] = 1;
-    //}
-    //led.off();
   }
   AppOnlineTime = micros();
 }
@@ -85,10 +62,6 @@ void USBSerialUI::handleNoteOff( unsigned int midi_channel, unsigned int midi_no
     led.off(); // Turn off LED briefly to indicate addressed USB input
     monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_LED );
     Button.SetLED(midi_note,FALSE);
-    //if ( midi_note < NUM_SHIFT_REG_OUTPUTS ) {
-    //  sr_outputs[midi_note] = 0;
-    //}
-    //led.off(); // Turn on LED briefly to indicate addressed USB input
   }
   AppOnlineTime = micros();
 }
@@ -96,12 +69,11 @@ void USBSerialUI::handleNoteOff( unsigned int midi_channel, unsigned int midi_no
 void  USBSerialUI::handleControlChange( unsigned int midi_channel, unsigned int controller, unsigned int velocity ) {
   char buf[80];
   if ( midi_channel == midi.getKeyboardChannel() ) {
-    led.on(); // Turn on LED briefly to indicate addressed USB input
+    led.toggle(); // Flash LED briefly to indicate addressed USB input
     if ( Cfg.Bits.hasEventLog) {
       sprintf(buf,"Unhandled Control Change channel=%d controller=%d velocity=%d\r\n",midi_channel+1,controller,velocity);
       CompositeSerial.write(buf);
     }
-    //led.off();
   }
 }
 
@@ -385,23 +357,26 @@ void USBSerialUI::DisplayConfigurationMenu() {
 
 void USBSerialUI::DisplayFunctionPinOut(void) {
   int i;
-  char buff[80];
+  char buff[120];
 
   fillCfgPinData( Cfg.Word , &MenuConfigs[0] );
+  if ( Cfg.Bits.hasI2C )
+    mlcd.I2cCheck();
   sprintf(buff, "%s%sSTM32 Blue Pill Assigned Pin Functions%s%s\r\n", VT100_CURSOR_00, VT100_UNDERLINE, VT100_NO_UNDERLINE, VT100_CLR_EOL );
   CompositeSerial.write( buff ); // VT100 Cursor position 0,0
-  char function_text1[40];
-  char function_text2[40];
+  char function_text1[80];
+  char function_text2[80];
 
   for ( i = 0 ; i < 20 ; i++ )
   {
     getFunctionText( &MenuConfigs[ i + 20], &function_text1[0], 20 );
     getFunctionText( &MenuConfigs[19 -  i], &function_text2[0], 20 );
-    sprintf(buff, "%-13s%c%4s         %-4s%c  %-s%s\r\n", function_text1, LiveConfigs[i+20].fault, pinCfg[i + 20].description, pinCfg[19 - i].description,LiveConfigs[19-i].fault, function_text2, VT100_CLR_EOL );
+    sprintf(buff, "%-13s%s%c%s%4s         %-4s%s%c%s  %-s%s\r\n", 
+      function_text1, VT100_BLINK,LiveConfigs[i+20].fault,VT100_NO_BLINK, pinCfg[i + 20].description, pinCfg[19 - i].description,VT100_BLINK,LiveConfigs[19-i].fault,VT100_NO_BLINK, function_text2, VT100_CLR_EOL );
     if ( i == 0 )
-      strncpy( &buff[21], "USB", 3);
+      strncpy( &buff[21+4], "USB", 3);
     if ( i == 19 )
-      strncpy( &buff[19], "| | | |", 7);
+      strncpy( &buff[19+4*2], "| | | |", 7);
     CompositeSerial.write(buff);
   }
   function_text1[0]=0;
@@ -409,10 +384,10 @@ void USBSerialUI::DisplayFunctionPinOut(void) {
   for ( i = 0 ; i < NUM_GPIO_PINS ; i ++ )
   {
     if ( LiveConfigs[i].fault == '*' ) {
-      sprintf(function_text1,"* = Fault");
+      sprintf(function_text1,"%s* = Fault%s",VT100_BLINK,VT100_NO_BLINK);
     }
     if ( LiveConfigs[i].fault == '!' ) {
-      sprintf(function_text2,"        ! = Add 4k7 Pullup");    
+      sprintf(function_text2,"%s        ! = Add 4k7 Pullup to +5V%s",VT100_BLINK,VT100_NO_BLINK);    
     }
   }
   i = NUM_GPIO_PINS-3;
@@ -423,7 +398,7 @@ void USBSerialUI::DisplayFunctionPinOut(void) {
   sprintf(buff, "%-13s%c%-4s---+ +---%s%c  %s%s\r\n", function_text1,LiveConfigs[i].fault, pinCfg[i].description, pinCfg[i+1].description,LiveConfigs[i+1].fault,function_text2, VT100_CLR_EOL );
   CompositeSerial.write(buff);
   getFunctionText(&MenuConfigs[i+2], function_text1, 20 );
-  sprintf(buff, "%-13s%c%-4s (on Jumper via 100K resistor)%s\r\n\r\n", function_text1,LiveConfigs[i+2].fault, pinCfg[i+2].description, VT100_CLR_EOL );
+  sprintf(buff, "%-13s%c%-4s (on Jumper via 100K resistor)%s\r\n%s\r\n", function_text1,LiveConfigs[i+2].fault, pinCfg[i+2].description, VT100_CLR_EOL,VT100_CLR_EOL );
   CompositeSerial.write(buff);
 }
 

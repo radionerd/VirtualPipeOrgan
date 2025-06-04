@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <USBComposite.h>
+#include "color_wheel.h"
 #include "keyboardscan.h"
 #include "led.h"
 #include "mymidi.h"
@@ -130,10 +131,10 @@ uint32_t KeyboardScan::get_input(bool pedalboard, bool hasKeyVelocity ) {
 // Each scan line active for 1.84us
 uint32_t KeyboardScan::FastHWScan(uint32_t *kb_input,uint32_t*kb_image, bool pedalboard )
 {
-  static unsigned long lastTime=0;
-  unsigned long time_now = micros();
-  if ( time_now - lastTime < 1000 ) return 0; // 1ms scan intervals to reduce emi
-  lastTime=time_now;
+//  static unsigned long lastTime=0;
+//  unsigned long time_now = micros();
+//  if ( time_now - lastTime < 1000 ) return 0; // 1ms scan intervals to reduce emi
+//  lastTime=time_now;
   volatile uint32_t* OUT1 = (uint32_t*) (BB + ( (PORTB+ODR)<<5 ) + ((uint32_t)  4 << 2 ));
   volatile uint32_t* OUT2 = (uint32_t*) (BB + ( (PORTB+ODR)<<5 ) + ((uint32_t)  5 << 2 ));
   volatile uint32_t* OUT3 = (uint32_t*) (BB + ( (PORTB+ODR)<<5 ) + ((uint32_t)  8 << 2 ));
@@ -408,12 +409,13 @@ void KeyboardScan::Print( void ) {
 }
 void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
   char buf[120];
+  static unsigned long lastActivity;
 //  const char *note_name[12] = {
 //    "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
 //  };
 //  const int OCTAVE = 12;
 //  int note_id=-1;
-  profile.PStart(PROFILE_KEYBOARD);
+  //profile.PStart(PROFILE_KEYBOARD);
   int change = FastHWScan(kb_input,kb_image, pedalboard );
   if ( change ) {
     // process MusicKeyboard changes
@@ -447,16 +449,19 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
             }
             buf[0]=0;
             int midi_channel = midi.getKeyboardChannel() ;
+            int on_off=-1;
             if ( SUI.Cfg.Bits.hasKeyVelocity ) {
               if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
                 if ( ( j & 1 ) == 0 ) { // lower contact?
                   led.on();
+                  on_off = 1;
                   midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
                   SUI.monitorNoteOn   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
                 }
               } else { // contact just opened
                 if ( j & 1 ) { // upper contact?
                   led.off();
+                  on_off = 0;
                   midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
                   SUI.monitorNoteOff   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
                 }
@@ -465,17 +470,31 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
               midi_velocity = 64; // single contact set medium velocity
               if ( kb_input [i] & ( 1 << j ) ) { // contact just closed?
                 if ( ( j & 1 ) == 0 ) { // lower contact closing?
-                 led.on();
+                  led.on();
+                  on_off = 1;
                   midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
                   SUI.monitorNoteOn   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
                 }
               } else {
                 if ( ( j & 1 ) == 0 ) { // lower contact opening
                   led.off();
+                  on_off = 0;
                   midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
                   SUI.monitorNoteOff   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
                 }
-              }             
+              }
+             
+            }
+            // Use C# with no other activity for 5 seconds to control RGB LED Strip
+            if ( on_off >= 0 ) { 
+              if ( midi_note == 37 ) { // Lowest C#
+                if ( ( micros()-lastActivity ) > 5000000L ) {
+                   LEDStripCtrl(on_off);
+                   sprintf(buf,"LED RGB=%d\r\n",on_off);
+                }
+              } else {
+                lastActivity = micros();
+              }
             }
             if ( buf[0]) {
               CompositeSerial.write(buf);    
@@ -486,5 +505,5 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
       kb_image[i] = kb_input[i]; // inform driver
     }
   }
-  profile.PEnd(PROFILE_KEYBOARD);
+  //profile.PEnd(PROFILE_KEYBOARD);
 }

@@ -16,18 +16,9 @@ const int SCALE_0_TO_127 = 32;  // Range 0-127. May need adjustment depending on
 extern myMidi midi;
  
  void ADC::Scan ( void ) {
-   static unsigned long last_time=0;
-
-   // scan at 40ms intervals for consistant performance
-   // multiples of mains cycle period eg 20,40,60ms etc
-   // balance between response time and message flood
-   unsigned long time_now = micros();
-   if ( time_now - last_time >= 40000 ) {
-    profile.PStart(PROFILE_ADC);
-    if ( last_time == 0 ) // stagger run times to minimise max loop time
-      last_time += PID_TIME_OFFSET_US * PROFILE_ADC;
-    last_time += 40000;
-    //for ( int gpioId = 0 ; gpioId < NUM_GPIO_PINS ; gpioId++ ) {
+   static unsigned callCount;
+   if ( (++callCount &3 ) == 0 ) // run at 40ms intervals
+   {
     for ( int gpioId = MIN_ADC_GPIOID ; gpioId <= MAX_ADC_GPIOID ; gpioId++ ) {
      switch ( SUI.LiveConfigs[gpioId].function ) {
       case IP_ADC :
@@ -63,7 +54,7 @@ extern myMidi midi;
       break;
      }
     }
-    profile.PEnd(PROFILE_ADC);
+    //profile.PEnd(PROFILE_ADC);
    }
  }
  

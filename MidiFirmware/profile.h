@@ -7,12 +7,14 @@
 #endif
 
 enum item { 
-  PROFILE_KEYBOARD=0, 
-  PROFILE_BUTTONS, 
+  PROFILE_KEYBOARD=0,
+  PROFILE_SUI,
   PROFILE_ADC, 
   PROFILE_WS2812, 
-  PROFILE_MIDI_OUT_TO_SYSEX_IN,
+  PROFILE_BUTTONS,
+  PROFILE_MIDI_POLL,
   PROFILE_SYSEX,
+  PROFILE_MIDI_OUT_TO_SYSEX_IN,
   PROFILE_LOOP,
   PROFILE_PPRINT,
   PROFILE_SPARE
@@ -20,6 +22,7 @@ enum item {
 
 class PROFILE {
   private:
+
   struct { 
     unsigned long int count ; 
     unsigned long pstart; 
@@ -28,18 +31,22 @@ class PROFILE {
     unsigned long paverage; 
     unsigned long ppeak ; 
   } times[PROFILE_SPARE+1];
+ 
   const char *itemText[PROFILE_SPARE+1] = 
   {
-    (const char *)"Keyboard",
-    (const char *)"Buttons",
+    (const char *)"Music Keyboard",
+    (const char *)"SerialUI",
     (const char *)"ADC",
     (const char *)"WS2812 LED Strip",
+    (const char *)"Buttons",
+    (const char *)"Midi Poll",
+    (const char *)"Sysex",
     (const char *)"Midi Out to SysEx In",
-    (const char *)"SysEx LCD or 7 Seg",
     (const char *)"Loop", 
-    (const char *)"Print!",
+    (const char *)"This Print",
     (const char *)"Spare"
   };
+  
   public:
   void PReset ( void );
   void PPrint ( void );

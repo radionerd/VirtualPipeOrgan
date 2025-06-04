@@ -92,7 +92,7 @@ uint32_t ButtonScan::ScanSR(uint32_t *sr_input_list,uint32_t*sr_outputs ) {
         *PB11_BB = 0;
         *PB11_BB = 1;
       }
-      while ( ( micros() - time_now ) < 1000 );
+      while ( ( micros() - time_now ) < 500 );
     }
 	  // Load output LEDs
     if ( SUI.Cfg.Bits.hasButtonLEDInvert  ) {
@@ -114,11 +114,11 @@ uint32_t ButtonScan::ScanSR(uint32_t *sr_input_list,uint32_t*sr_outputs ) {
 
 void ButtonScan::Scan(void) {
 
-  static unsigned long last_time=0;
+  //static unsigned long last_time=0;
   unsigned long time_now = micros();
-  if ( time_now - last_time < 20000 ) return;
-  profile.PStart(PROFILE_BUTTONS);
-  last_time += 20000; // 20ms 50 times per second update rate
+  //if ( time_now - last_time < 20000 ) return;
+  //profile.PStart(PROFILE_BUTTONS);
+  //last_time += 10000; // 20ms 50 times per second update rate
   const int midi_velocity = 63;
   const unsigned long AUTO_REPEAT_DELAY_US = 2000000; // 2 seconds
   const unsigned long AUTO_REPEAT_PERIOD_US = 333000; // 0.333 seconds
@@ -197,7 +197,7 @@ void ButtonScan::Scan(void) {
       }
     }
   }
-  profile.PEnd  (PROFILE_BUTTONS);
+  //profile.PEnd  (PROFILE_BUTTONS);
 }
 
 void ButtonScan::Print(void) {
