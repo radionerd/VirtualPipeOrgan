@@ -490,7 +490,7 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
               if ( midi_note == 37 ) { // Lowest C#
                 if ( ( micros()-lastActivity ) > 5000000L ) {
                    LEDStripCtrl(on_off);
-                   sprintf(buf,"LED RGB=%d\r\n",on_off);
+                   //sprintf(buf,"LED RGB=%d\r\n",on_off);
                 }
               } else {
                 lastActivity = micros();

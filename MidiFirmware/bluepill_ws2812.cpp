@@ -57,7 +57,7 @@ static void clockoutPixels( uint8_t *pixels, uint16_t count, uint32_t port_addr,
   register uint32_t hi = 1 <<  port_bit;    
   register uint32_t lo = 1 << (port_bit+16); 
   cli();
-    DWT->CYCCNT = 0;
+    //DWT->CYCCNT = 0;
     for (register uint32_t i=count; i > 0; i--)
     {
       b = *(pixels++);

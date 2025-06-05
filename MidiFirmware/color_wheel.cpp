@@ -12,7 +12,9 @@
 #include "profile.h"
 
 bluepill_neopixel PIX;       // a string of pixels
-#define NUM_PIXELS 120     //   number of pixels in the string
+// 65 max pixels without disrupting micros() figures 
+#define NUM_PIXELS 60     //   number of pixels in the string
+//#define NUM_PIXELS 120     //   number of pixels in the string
 pixel string[NUM_PIXELS]; //   rgb data buffer
 #define string_port GPIOA //   pin string is connected to
 #define string_pin  13
@@ -192,10 +194,6 @@ void LEDStripCtrl(int event ) {
     case LED_STRIP_SERVICE :
     {
       if ( time_now-last_time < 50000 ) return; // 50ms service interval
-      profile.PStart(PROFILE_WS2812);
-      if ( last_time == 0 ) {
-        last_time = PROFILE_WS2812*PID_TIME_OFFSET_US;
-      }
       last_time = time_now;
       if ( ( time_now - buttonOnTime ) > 1000000 ) { // long interval since button pressed / released
         // long button on time?
@@ -271,7 +269,6 @@ void LEDStripCtrl(int event ) {
         PIX.begin(string_port, string_pin); // set pin to output
         PIX.paint( string[0].bytes, NUM_PIXELS, string_port, string_pin );
       }
-      profile.PEnd(PROFILE_WS2812);
     }
     break;
   }

@@ -144,20 +144,7 @@ void loop() {
       break;
       case PROFILE_WS2812 :
          if ( SUI.Cfg.Bits.hasPB2PA13PA14Scan ) {
-           //led.on();
-           //profile.PStart(PROFILE_SPARE);
            LEDStripCtrl( LED_STRIP_SERVICE );
-           //profile.PEnd(PROFILE_SPARE);
-           //led.off();
-           if ( true ) {
-            unsigned long time_now = micros();
-            pinMode(PA13,OUTPUT);
-            digitalWrite(PA13,1);
-            profile.PStart(PROFILE_SPARE);
-            while( (micros()-time_now)< 500  );
-            profile.PEnd(PROFILE_SPARE);
-            digitalWrite(PA13,0);
-           }
          }
       break;
       case PROFILE_BUTTONS :

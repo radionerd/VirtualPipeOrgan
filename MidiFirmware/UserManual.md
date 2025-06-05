@@ -54,11 +54,11 @@ ID addresses are shown on the LCD and 7 LED displays after power up.
 
 At power up the midi interface loads the 7 Segment display, LCDs and LED push buttons with the 'PC Comms' message and lights the Push Button LEDs until PC communication is established over the USB. Then Displays are loaded with their configured addresses. The 7 Segment Display configured address is the same as the Midi channel number. 
 
-|  State   | 7 Segment  | LCDs           | LED Push Buttons  |Built In LED  |
+|  State   | 7Seg Text  |   LCD Text     | LED Push Buttons  |Built In LED  |
 |:--------:|:----------:|:--------------:|:-----------------:|:------------:|
 |Power On  |   PC ???   | PC Comms ???   |     All Lit       |   Flash      |
 |PC Success|  Add= 3    |VirtualPipeOrgan| Light When Pressed|Breathing .5Hz|
-|          |            |i2cAddr=37  0x25|                   | ADC Toggle   |
+| "    "   |            |i2cAddr=37  0x25|                   | ADC Toggle   |
 |GrandOrgue|    GO      |       GO       |        GO         | Note: On/Off |
 
 

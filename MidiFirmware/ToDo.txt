@@ -1,22 +1,23 @@
 Done ✓
-  Clean up commented out code
   Move all print features to objects that own them
+  Extend configuration beyond 16 bits for volatile controls eg logging, scope monitor
+  Fix timing discrepancy on WS2812 profile
+  Add scope monitor pin to profile PA13 or PA14
+  Add HID reporting on 3 spare keyboard contacts 97,98,99
+  Clean up commented out code
+
   Simple multi display example
   Submit lcd pull request if possible
-  Offset object scheduling by pid
-  Extend configuration beyond 16 bits for volatile controls eg logging, scope monitor
-  Add scope monitor pin to profile PA13 or PA14
-  Add to UserManual
+
+  Update Readme / User Manual
+   Add to UserManual
     G [✓] 74HC164 Button LED Backlight enabled
     H [ ] 74HC164 Button LED inverted
-  Explain real time & timing in user manual
-  WS2812 Control on Lowest sharp when other notes silent for 5 seconds
-  Add HID reporting on 3 spare keyboard contacts 97,98,99
+    Explain real time & timing in user manual
+  
   Build with makefile?
-  Enhancement - Investigate whether LCD loading can be achieved without button LED flicker
   Enhancement - Page Turn Inc,Dec,Home,End one button/2 button
   Enhancement - Chord display
-  Update Readme / User Manual
   Kicad All Schematic
 
 0 Normal Button LEDs
