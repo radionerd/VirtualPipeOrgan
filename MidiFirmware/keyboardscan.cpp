@@ -11,6 +11,7 @@ extern myMidi midi;
 uint32_t kb_input [NUM_KEYBOARD_INPUTS]; // 16 input bits per output line
 uint32_t kb_image [NUM_KEYBOARD_INPUTS];
 unsigned long kb_time[NUM_KEYBOARD_INPUTS*NUM_KEYBOARD_OUTPUTS]; // For velocity measurment
+extern HIDKeyboard QKeyboard;
 
 KeyboardScan::KeyboardScan(){
 
@@ -482,8 +483,22 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
                   midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
                   SUI.monitorNoteOff   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
                 }
-              }
-             
+              }            
+            }
+            const int HID_KEY_OFFSET = 96;
+            if ( (on_off != -1 ) && (midi_note >=HID_KEY_OFFSET )  && ( midi_note <=HID_KEY_OFFSET+3 ) ) {
+              const unsigned control[] = {
+                KEY_PAGE_DOWN,
+                KEY_PAGE_UP,
+                KEY_HOME,
+                KEY_END};
+              if ( on_off )
+                QKeyboard.press( control[midi_note-HID_KEY_OFFSET] );
+              else
+                QKeyboard.release( control[midi_note-HID_KEY_OFFSET] );
+              char HIDBuf[80];
+              sprintf( HIDBuf,"Sending HID %02X on_off=%d\r\n", control[midi_note-HID_KEY_OFFSET] ,on_off);
+              CompositeSerial.write(HIDBuf);
             }
             // Use C# with no other activity for 5 seconds to control RGB LED Strip
             if ( on_off >= 0 ) { 

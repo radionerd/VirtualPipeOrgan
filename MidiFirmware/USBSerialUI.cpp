@@ -30,9 +30,18 @@ USBSerialUI::USBSerialUI(void) {
   adc.Begin();
 }
 void USBSerialUI::poll(void) {
-  
+
+  char buf[80];
   while (CompositeSerial.available()) {
     char c = CompositeSerial.read();
+    if ( false ) {
+      // When TRUE: show incoming codes 0x00-0xFF for HID investigation
+      char view = c&0x7f;
+      if ( view < ' ' )
+        view = ' '; 
+      sprintf(buf,"Keyboard Char=%02X %c\r\n",c,view);
+      CompositeSerial.write(buf); return;
+    }
     CommandCharDecode(c);
     LastCommand = c;
   }
@@ -294,13 +303,13 @@ void USBSerialUI::RestoreConfigFromFlash() {
 
 void USBSerialUI::DisplayTitle( const char *title ) {
   char buff[80];
-  sprintf(buff, "%s%s%s%s\r\n", VT100_UNDERLINE, title, VT100_NO_UNDERLINE, VT100_CLR_EOL );
+  sprintf(buff, "%s%s%s%s\r\n", ANSI_UNDERLINE, title, ANSI_NO_UNDERLINE, ANSI_CLR_EOL );
   CompositeSerial.write( buff );
 }
 
 void USBSerialUI::DisplayPrompt(const char *prompt ) {
   CompositeSerial.write(prompt);
-  CompositeSerial.write(VT100_ERASE_DOWN );
+  CompositeSerial.write(ANSI_ERASE_DOWN );
 }
 void USBSerialUI::DisplayConfigurationMenu() {
   int i;
@@ -344,13 +353,13 @@ void USBSerialUI::DisplayConfigurationMenu() {
       }
     }
     if ( i == 0 )
-      sprintf(buff, "%c [%d] %s, Button channel=%d%s\r\n", 'A' + i, midi.getKeyboardChannel()+1, ConfigItems[i].text, midi.getButtonChannel()+1, VT100_CLR_EOL );
+      sprintf(buff, "%c [%d] %s, Button channel=%d%s\r\n", 'A' + i, midi.getKeyboardChannel()+1, ConfigItems[i].text, midi.getButtonChannel()+1, ANSI_CLR_EOL );
     else
-      sprintf(buff, "%c [%s] %s%s\r\n", 'A' + i, valtext, ConfigItems[i].text, VT100_CLR_EOL );    
+      sprintf(buff, "%c [%s] %s%s\r\n", 'A' + i, valtext, ConfigItems[i].text, ANSI_CLR_EOL );    
     CompositeSerial.write(buff);
     i++;
   }
-  sprintf(buff, "Cfg.Word=%04X%s\r\n", Cfg.Word, VT100_CLR_EOL);
+  sprintf(buff, "Cfg.Word=%04X%s\r\n", Cfg.Word, ANSI_CLR_EOL);
   CompositeSerial.write(buff);
   DisplayPrompt((const char *)"Enter A-L,a-l To adjust cfg value, S to Save, ? - Menu:");
 }
@@ -362,8 +371,8 @@ void USBSerialUI::DisplayFunctionPinOut(void) {
   fillCfgPinData( Cfg.Word , &MenuConfigs[0] );
   if ( Cfg.Bits.hasI2C )
     mlcd.I2cCheck();
-  sprintf(buff, "%s%sSTM32 Blue Pill Assigned Pin Functions%s%s\r\n", VT100_CURSOR_00, VT100_UNDERLINE, VT100_NO_UNDERLINE, VT100_CLR_EOL );
-  CompositeSerial.write( buff ); // VT100 Cursor position 0,0
+  sprintf(buff, "%s%sSTM32 Blue Pill Assigned Pin Functions%s%s\r\n", ANSI_CURSOR_00, ANSI_UNDERLINE, ANSI_NO_UNDERLINE, ANSI_CLR_EOL );
+  CompositeSerial.write( buff ); // ANSI Cursor position 0,0
   char function_text1[80];
   char function_text2[80];
 
@@ -372,7 +381,7 @@ void USBSerialUI::DisplayFunctionPinOut(void) {
     getFunctionText( &MenuConfigs[ i + 20], &function_text1[0], 20 );
     getFunctionText( &MenuConfigs[19 -  i], &function_text2[0], 20 );
     sprintf(buff, "%-13s%s%c%s%4s         %-4s%s%c%s  %-s%s\r\n", 
-      function_text1, VT100_BLINK,LiveConfigs[i+20].fault,VT100_NO_BLINK, pinCfg[i + 20].description, pinCfg[19 - i].description,VT100_BLINK,LiveConfigs[19-i].fault,VT100_NO_BLINK, function_text2, VT100_CLR_EOL );
+      function_text1, ANSI_BLINK,LiveConfigs[i+20].fault,ANSI_NO_BLINK, pinCfg[i + 20].description, pinCfg[19 - i].description,ANSI_BLINK,LiveConfigs[19-i].fault,ANSI_NO_BLINK, function_text2, ANSI_CLR_EOL );
     if ( i == 0 )
       strncpy( &buff[21+4], "USB", 3);
     if ( i == 19 )
@@ -384,21 +393,21 @@ void USBSerialUI::DisplayFunctionPinOut(void) {
   for ( i = 0 ; i < NUM_GPIO_PINS ; i ++ )
   {
     if ( LiveConfigs[i].fault == '*' ) {
-      sprintf(function_text1,"%s* = Fault%s",VT100_BLINK,VT100_NO_BLINK);
+      sprintf(function_text1,"%s* = Fault%s",ANSI_BLINK,ANSI_NO_BLINK);
     }
     if ( LiveConfigs[i].fault == '!' ) {
-      sprintf(function_text2,"%s        ! = Add 4k7 Pullup to +5V%s",VT100_BLINK,VT100_NO_BLINK);    
+      sprintf(function_text2,"%s        ! = Add 4k7 Pullup to +5V%s",ANSI_BLINK,ANSI_NO_BLINK);    
     }
   }
   i = NUM_GPIO_PINS-3;
-  sprintf(buff, "%-19s| | | |%s%s\r\n",function_text1,function_text2, VT100_CLR_EOL);
+  sprintf(buff, "%-19s| | | |%s%s\r\n",function_text1,function_text2, ANSI_CLR_EOL);
   CompositeSerial.write(buff);
   getFunctionText(&MenuConfigs[i], function_text1, 20 );
   getFunctionText(&MenuConfigs[i+1], function_text2, 20 );
-  sprintf(buff, "%-13s%c%-4s---+ +---%s%c  %s%s\r\n", function_text1,LiveConfigs[i].fault, pinCfg[i].description, pinCfg[i+1].description,LiveConfigs[i+1].fault,function_text2, VT100_CLR_EOL );
+  sprintf(buff, "%-13s%c%-4s---+ +---%s%c  %s%s\r\n", function_text1,LiveConfigs[i].fault, pinCfg[i].description, pinCfg[i+1].description,LiveConfigs[i+1].fault,function_text2, ANSI_CLR_EOL );
   CompositeSerial.write(buff);
   getFunctionText(&MenuConfigs[i+2], function_text1, 20 );
-  sprintf(buff, "%-13s%c%-4s (on Jumper via 100K resistor)%s\r\n%s\r\n", function_text1,LiveConfigs[i+2].fault, pinCfg[i+2].description, VT100_CLR_EOL,VT100_CLR_EOL );
+  sprintf(buff, "%-13s%c%-4s (on Jumper via 100K resistor)%s\r\n%s\r\n", function_text1,LiveConfigs[i+2].fault, pinCfg[i+2].description, ANSI_CLR_EOL,ANSI_CLR_EOL );
   CompositeSerial.write(buff);
 }
 
@@ -511,7 +520,7 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
 
 
 void USBSerialUI::DisplayMenu(void) {
-  CompositeSerial.write(VT100_CLEAR);
+  CompositeSerial.write(ANSI_CLEAR);
   DisplayTitle("Midi Interface Menu" );
   CompositeSerial.write("A-J Adjust config value\r\n");
   CompositeSerial.write("K - Keyboard Contacts\r\n");
@@ -731,7 +740,7 @@ void USBSerialUI::GPIOScan(void) {
 void USBSerialUI::DisplayStatus(void) {
   char buff[80];
   char function_text[21];
-  CompositeSerial.write(VT100_CLEAR);
+  CompositeSerial.write(ANSI_CLEAR);
   DisplayTitle( (const char *) "USB Midi Interface Status" );
   sprintf(buff,"id  port   function     kbd  count input error fault\n\r");
   CompositeSerial.write(buff);

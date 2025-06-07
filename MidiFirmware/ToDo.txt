@@ -1,4 +1,7 @@
 Done ✓
+  Add Page Turning control to configuration as 'H' command
+  Reduce 74HC168 to single 2 bit command
+  Reduce Midi channel config to 3 bits
   Move all print features to objects that own them
   Extend configuration beyond 16 bits for volatile controls eg logging, scope monitor
   Fix timing discrepancy on WS2812 profile

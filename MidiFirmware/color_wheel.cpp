@@ -13,8 +13,8 @@
 
 bluepill_neopixel PIX;       // a string of pixels
 // 65 max pixels without disrupting micros() figures 
-#define NUM_PIXELS 60     //   number of pixels in the string
-//#define NUM_PIXELS 120     //   number of pixels in the string
+#define NUM_PIXELS 120     //   number of pixels in the string
+//#define NUM_PIXELS 120     //   number of pixels in the string max 65 for accurate timer interrupt
 pixel string[NUM_PIXELS]; //   rgb data buffer
 #define string_port GPIOA //   pin string is connected to
 #define string_pin  13

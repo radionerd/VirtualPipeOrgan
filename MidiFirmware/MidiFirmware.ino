@@ -25,8 +25,8 @@
 
 LED led; // or led(PC13); choose your own LED gpio pin
 TM1637 SEG7; // 7 Segment display driver
-//USBHID HID;
-//HIDKeyboard Keyboard(HID);
+USBHID HID;
+HIDKeyboard QKeyboard(HID);
 USBCompositeSerial CompositeSerial;
 myMidi midi;
 MultiLCD mlcd;
@@ -66,17 +66,17 @@ void setup() {
   USBComposite.setProductId(0x0031);
   //USBComposite.setProductId(0x0003); // spoof DFU device
   USBComposite.setManufacturerString((const char *)"New Zealand");
-  // USBComposite.setProductString((const char *)"VPOrgan-Midi+HID+Serial");
   USBComposite.setProductString( VPOConsoleMsg[ midi.getKeyboardChannel() ] );
   USBComposite.setSerialString((const char *) "00001");
 // Trim USBComposite Buffer to below 320 byte limit
-//  int buf_size = 32;
-//  HID.setTXPacketSize(buf_size);
-//  CompositeSerial.setRXPacketSize(buf_size);
-//  CompositeSerial.setTXPacketSize(buf_size);
+  int buf_size = 32;
+  HID.setTXPacketSize(buf_size);
+  CompositeSerial.setRXPacketSize(buf_size);
+  CompositeSerial.setTXPacketSize(buf_size);
   midi.registerComponent(); // Composite default midi buffer 128 bytes  
-//  HID.registerComponent();  // Composite default HID buffer 64 Bytes
-//  HID.setReportDescriptor(HID_KEYBOARD);
+  HID.registerComponent();  // Composite default HID buffer 64 Bytes
+  HID.setReportDescriptor(HID_KEYBOARD);
+  //HID.begin(); // Not required according to Rogers instructions
   CompositeSerial.registerComponent(); // Composite serial buffer 128 bytes has to be reduced
   if ( USBComposite.begin() == false ) { // Fast flash indicate error forever
     while (1) {

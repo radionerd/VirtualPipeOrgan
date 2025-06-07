@@ -177,7 +177,7 @@ void MultiLCD::saveDisplayText( int lcd_address , char *text )
   char buff[80];
 
   if ( I2cCheck() )
-    sprintf(buff,"I2C bus FAIL. %sNeeds 4k7 pullups?%s\r\n",VT100_BLINK,VT100_NO_BLINK );
+    sprintf(buff,"I2C bus FAIL. %sNeeds 4k7 pullups?%s\r\n",ANSI_BLINK,ANSI_NO_BLINK );
   else
     sprintf(buff,"I2C Bus PASS\r\n");
   CompositeSerial.write(buff);

@@ -11,16 +11,17 @@ The user manual assumes that you have programed the flash in the STM32 Bluepill 
 - Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
 - Up to 8 ADC inputs for expression pedals when scanning a pedalboard
 - Up to 4 ADC inputs when configured for a keyboard without velocity sensing
-- 40 LED illuminated button inputs using external 74HC164 shift registers
+- 64 LED illuminated button inputs using external 74HC164 shift registers
 - One 6 digit LED display per midi controller (for combination setter & crescendo display)
 - Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per IC type )
 - Interface to WS2812 RGB LED string for music stand or pedal illumination
-- USB HID (qwerty keyboard) messages for music page turning (Future)
+- USB HID (qwerty keyboard) messages for music page turning
 - Simulated serial interface over USB for viewing/saving configuration in Flash
 - Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 24.04 X86 & Arm Linux
-- Printed circuit boards to mount the STM32 Bluepill and shift register interfaces use low cost plug in cables to interconnect
+- Printed circuit boards to mount the STM32 Bluepill and shift register interfaces use low cost plug in cables to simplify wiring
 
 ## The USB Connection
+
 To discover whether the midi interface is successfully connected to the computer type 'lsusb' at the command prompt. The midi interfaces and the configured midi channel numbers for keyboard/pedalboard, and the illuminated buttons should show up in the response.
 ```
 $ lsusb
@@ -32,27 +33,27 @@ $ lsusb
 
 ## Midi Channel Assignment
 
-Midi channels for keyboard/pedalboard are configurable from 1-16 with the illuminated button channel offset by 8.
+Midi channels for keyboard/pedalboard are configurable from 1-8 with the illuminated button channel offset by 8.
 
-e.g. If the keyboard midi channel is set to 4, then the Button midi channel will be 4 + 8 = 12.
+e.g. If the pedalboard midi channel is set to 4, then the Button midi channel will be 4 + 8 = 12.
 
 ## Midi Messages
 
 |  Control   |Chan|   Midi Message  | Direction |
 |:----------:|:--:|:---------------:|:---------:|
-| Keyboard   |1-16| Midi Note 32-96 | To Comp   |
-| Pedalboard |1-16| Midi Note 32-64 | To Comp   |
-| Buttons    |1-16| Midi Note 0-127 | To   Comp |
-| Button LEDs|1-16| Midi Note 0-127 | From Comp |
-| Expression |1-16| Midi CC   20-27 | To   Comp |
+| Keyboard   |1-8 | Midi Note 32-96 | To   Comp |
+| Pedalboard |1-8 | Midi Note 32-64 | To   Comp |
+| Expression |1-8 | Midi CC   20-27 | To   Comp |
+| Buttons    |9-16| Midi Note 0-127 | To   Comp |
+| Button LEDs|9-16| Midi Note 0-127 | From Comp |
 | LED 7Seg   |N/A | Sysex ID as Chan| From Comp |
 | LCD Display|N/A | Midi Sysex 32-63| From Comp |
 
-ID addresses are shown on the LCD and 7 LED displays after power up.
+ID addresses are shown on the LCD and 7 Segment LED displays after power up.
 
 ### Power Up
 
-At power up the midi interface loads the 7 Segment display, LCDs and LED push buttons with the 'PC Comms' message and lights the Push Button LEDs until PC communication is established over the USB. Then Displays are loaded with their configured addresses. The 7 Segment Display configured address is the same as the Midi channel number. 
+At power up the midi interface loads the 7 Segment display, LCDs and LED push buttons with the 'PC Comms' message and lights the Push Button LEDs until PC communication is established over the USB. Then Displays are loaded to show their configured addresses. The 7 Segment Display configured address is the same as the Midi channel number. 
 
 |  State   | 7Seg Text  |   LCD Text     | LED Push Buttons  |Built In LED  |
 |:--------:|:----------:|:--------------:|:-----------------:|:------------:|
@@ -62,9 +63,13 @@ At power up the midi interface loads the 7 Segment display, LCDs and LED push bu
 |GrandOrgue|    GO      |       GO       |        GO         | Note: On/Off |
 
 
-The built in LED will flash during initialisation. When communication with the PC is established the LED will slowly get brigter and dimmer at approx 0.5Hz to show that all is well. Connected LCDs will show their configured addresses and the 7 sec
+The Midi Interface LED will flash during initialisation. When communication with the PC is established the Midi Interface LED will slowly get brigter and dimmer at approx 0.5Hz to show that all is well.
 
-When Keyboard or Push button are pressed or released the builtin LED will turn on of off in sync, and resume 0.5Hz breathing after 5 seconds of inactivity. The Builtin LED also toggles on or off when Midi CC messages are sent by the ADC.
+When Keyboard or Push button are pressed or released the Midi Interface LED will turn on of off in sync, and resume 0.5Hz breathing after 5 seconds of inactivity. The Builtin LED also toggles on or off when Midi CC messages are sent by the ADC.
+
+Until GranOrgue is running push button LEDs illuminate when pressed as a button and LED test feature.
+
+Once GrandOrgue is running the push button LEDs may be loaded by GrandOrgue midi note on or midi note off messages, the value field 0-127 is ignored.
 
 ## Liquid Crystal Displays
 
@@ -88,6 +93,8 @@ The ID adddresses configured in GrandOrgue are Base 10.
 | 0x27       |      39    |   0x3f   |      63    | 1 | 1 | 1 |
 
 *User solder bridges A0-A2 are used to program zeros and are binary coded. So the default address without any solder bridges is is either 0x27 (39) or 0x3F (63).
+
+The content of the LCD messages may be viewed with the 'l" command, and LCDs may be loaded with the 'L' command.
 
 # Monitoring Midi Messages
 Use 'midisnoop' to monitor messages sent between the keyboard/pedalboard and the computer. Select Alsa unless you have Jack configured.
@@ -230,19 +237,23 @@ Flash Memory Summary
 ```
 ### LED Illuminated Push Buttons
 
-LED lluminated push buttons are connected via 74HC164 shift registers.
+LED lluminated push buttons are connected via 74HC164 shift registers. LEDs may be configured by the 'G' command to light normally or inverse and to have a dim backlight which is useful for reading the button legends in a dim environment.
 
 When the Midi interface powers up all LEDs light briefly as a lamp test feature.
 
 Until the Midi Interface connects to GrandOrgue each button will illuminate when pressed for testing the button and LED operation.
 
+Once GrandOrgue is running the push button LEDs may be loaded by GrandOrgue midi note on or midi note off messages, the value field 0-127 is ignored.
+
 Buttons generate midi note messages on the configured midi channel plus 8.
 
-The first button (00) in the series acts as a shift key. When button 00 is held in, any other button pressed generates is midi note +64. The shifty feature may be used to save console buttons. For example a '+1' button may be configured to act as '-1' when shift is pressed.
+The first button (00) in the series acts as a shift key. When button 00 is held in, any other button pressed generates is midi note +64. The shift feature may be used to save console buttons. For example a '+1' button may be configured to act as '-1' when shift is pressed.
 
 When a button is held for longer than 4 seconds its midi note is set to auto repeat at 0.5 second intevals. Auto repeat may be useful for adjusting the metronome tempo.
 
+
 The status of the connected shift registers may be seen with the 'O' command.
+
 ```
 Shift Register Midi Channel 11 Note Numbers
 
@@ -254,6 +265,8 @@ SR 5   32   33   34   35   36   37   38   39
 
 i = input on, o = output on
 ```
+The power 'ON' indicator of the GrandOrgue 'Master Controls' panel may be configured with a mouse right click to send the power on status the the shift button (Midi-note 0) LED. In this way it can be seen at a glance when the organ is ready to play.
+
 ###Keyboard and Pedalboards
 
 The MAudio Keystation 61 note keyboard connectors are accomodated directly on the PCBs.
@@ -281,7 +294,21 @@ Note: The midi interface generates CC messages in the range 20-27
 
 Click 'OK' and remember to save the organ settings
 
- 
+### WS2812 LED strip
+
+The LED feature is intended for illuminating music stands and pedalboards.
+
+The LED strip is controlled by pressing the lowest C# on the midi controller to which the LED strip is connected. The C# is only active for LED control when no other notes have been active for the previous 5 seconds. The number of key presses will trigger different functions
+| | Short Press   | Long Press |
+|::|:-------------:|:---------:|
+|1| Toggle On/Off |Brightness  |
+|2| Rainbow mode  |Colour(Hue) |
+|3|               |Saturation  |
+
+Strips up to 60 LEDs in length are supported. 
+
+### Profile
+The 'P' command displays the execution times in microsecionds of different feaures in use. This is a development feature to ensure that the system is always responsive with no excessive time delays. Lower case 'p' displays executions times, upper case 'P' clears the recorded times to zero.
 
 ### 'Z' Pin Status
 This screen may be useful for viewing the 12 bit ADC results before filtering and conversion to 7 bit midi values.
@@ -333,3 +360,27 @@ id  port   function     kbd  count input error fault
 42  PB_2        BOOT1    0     0     0     0    ' ' 
 
 ```
+
+### Page Turning
+
+Page turning is configured using the 'H' and 'S' commands.
+
+The page turning feature is intended to control the display of music shown on the computer monitor using a pdf file viewer such as Evince.
+
+The midi interface sends four QWERTY keyboard commands on the USB cable from a single switch depending on how the switch is pressed. The midi interface simulates the pressing of keys, just as though they were entered on the computer keyboard. Page turning will be successful when the file viewer has focus and responds appropriately to the 'Page Up', 'Page Down', 'Home' and 'End' keys.
+
+eg To send 'Page down' one short press. For 'End' two short presses followed by a long press.
+
+```
+|   Number    | Short Press |  Long Press |
+|:-----------:|:-----------:|:-----------:|
+|      1      |  Page Down  |    Home     |
+|      2      |  Page Up    |    End      |
+```
+On a good day single short and long presses should be sufficient to work through the music and go back to the beginning.
+
+An off the shelf sustain pedal may make a useful page turning switch.
+
+The page turning switch may be attached to Midi Note 99 position of the music keyboard matrix via a diode, or between 0V and PB14 when no velocity sensing is configured. 
+
+The page turning feature uses the USB Human Interface Device (HID) protocol.

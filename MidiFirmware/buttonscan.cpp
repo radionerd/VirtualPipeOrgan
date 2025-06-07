@@ -203,7 +203,7 @@ void ButtonScan::Scan(void) {
 void ButtonScan::Print(void) {
   char buff[80];
   
-  CompositeSerial.write(VT100_CLEAR);
+  CompositeSerial.write(ANSI_CLEAR);
   sprintf(buff, "Shift Register Midi Channel %d Note Numbers", midi.getButtonChannel()+1 );
   SUI.DisplayTitle( buff );
   for ( int sr = 0 ; sr < NUM_SHIFT_REGS ; sr++ ) {

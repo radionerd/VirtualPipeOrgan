@@ -8,14 +8,19 @@ extern "C" {
 
 #include "pin.h"
 
-const char VT100_CLEAR[] = "\x1B[2J";
-const char VT100_ERASE_DOWN[] = "\x1B[J";
-const char VT100_CLR_EOL[] = "\x1B[0K";
-const char VT100_CURSOR_00[] = "\x1B[0;0H";
-const char VT100_UNDERLINE[] = "\x1B[4m";
-const char VT100_NO_UNDERLINE[] = "\x1B[0m";
-const char VT100_BLINK[] = "\x1B[5m";
-const char VT100_NO_BLINK[] = "\x1B[0m";
+const char ANSI_CLEAR[] = "\x1B[2J";
+const char ANSI_ERASE_DOWN[] = "\x1B[J";
+const char ANSI_CLR_EOL[] = "\x1B[0K";
+const char ANSI_CURSOR_00[] = "\x1B[0;0H";
+const char ANSI_UNDERLINE[] = "\x1B[4m";
+const char ANSI_NO_UNDERLINE[] = "\x1B[0m";
+const char ANSI_BLINK[] = "\x1B[5m";
+const char ANSI_NO_BLINK[] = "\x1B[0m";
+const char ANSI_HOME[] = "97";
+const char ANSI_PAGE_UP[] = "98";
+const char ANSI_PAGE_DOWN[] = "99";
+const char ANSI_END[] = "100";
+
 
 
 class USBSerialUI {
