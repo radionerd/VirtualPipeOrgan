@@ -84,10 +84,10 @@ uint32_t ButtonScan::ScanSR(uint32_t *sr_input_list,uint32_t*sr_outputs ) {
 	      *PB11_BB = 1; // Early rising clock to allow propogation delay to/from far away shift registers        *PB11_BB = 1; // Early rising clock to allow propogation delay to/from far away shift registers
 	    }
 	  }
-    // Experiment with baclighting for dark buttons
-    if ( SUI.Cfg.Bits.hasButtonLEDBacklit ) {
+    // Experiment with backlighting for dark buttons
+    if ( SUI.Cfg.Bits.hasButtonLEDMode & SUI.BUTTON_LED_BACKLIT ) {
       unsigned long time_now = micros();
-      *PB07_BB = 1; // Set all buttons on for 1ms
+      *PB07_BB = 1; // Light all buttons for 500us
       for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
         *PB11_BB = 0;
         *PB11_BB = 1;
@@ -95,7 +95,7 @@ uint32_t ButtonScan::ScanSR(uint32_t *sr_input_list,uint32_t*sr_outputs ) {
       while ( ( micros() - time_now ) < 500 );
     }
 	  // Load output LEDs
-    if ( SUI.Cfg.Bits.hasButtonLEDInvert  ) {
+    if ( SUI.Cfg.Bits.hasButtonLEDMode & SUI.BUTTON_LED_INVERT ) {
 	   for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
 	    *PB07_BB = sr_outputs[NUM_SHIFT_REG_OUTPUTS-index]^1;
 	    *PB11_BB = 0;

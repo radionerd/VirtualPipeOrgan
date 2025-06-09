@@ -109,8 +109,8 @@ void USBSerialUI::CommandCharDecode( char c )
           ConfigValue [3] = Cfg.Bits.hasKeyVelocity  ;
           ConfigValue [4] = Cfg.Bits.hasI2C       ;
           ConfigValue [5] = Cfg.Bits.hasTM1637    ;
-          ConfigValue [6] = Cfg.Bits.hasButtonLEDBacklit ;
-          ConfigValue [7] = Cfg.Bits.hasButtonLEDInvert;
+          ConfigValue [6] = Cfg.Bits.hasButtonLEDMode ;
+          ConfigValue [7] = Cfg.Bits.hasPageTurning;
           ConfigValue [8] = Cfg.Bits.hasPB2PA13PA14Scan;
           ConfigValue [9] = Cfg.Bits.hasEventLog  ; // K
           int i = 0;
@@ -135,8 +135,8 @@ void USBSerialUI::CommandCharDecode( char c )
             Cfg.Bits.hasKeyVelocity    = ConfigValue [3];
             Cfg.Bits.hasI2C            = ConfigValue [4];
             Cfg.Bits.hasTM1637         = ConfigValue [5];
-            Cfg.Bits.hasButtonLEDBacklit=ConfigValue [6];
-            Cfg.Bits.hasButtonLEDInvert= ConfigValue [7];
+            Cfg.Bits.hasButtonLEDMode  = ConfigValue [6];
+            Cfg.Bits.hasPageTurning    = ConfigValue [7];
             Cfg.Bits.hasPB2PA13PA14Scan= ConfigValue [8]; // I
             Cfg.Bits.hasEventLog       = ConfigValue [9]; // J
           }
@@ -321,8 +321,8 @@ void USBSerialUI::DisplayConfigurationMenu() {
   ConfigValue [3] = Cfg.Bits.hasKeyVelocity  ;
   ConfigValue [4] = Cfg.Bits.hasI2C       ;
   ConfigValue [5] = Cfg.Bits.hasTM1637    ;
-  ConfigValue [6] = Cfg.Bits.hasButtonLEDBacklit ;
-  ConfigValue [7] = Cfg.Bits.hasButtonLEDInvert;
+  ConfigValue [6] = Cfg.Bits.hasButtonLEDMode ;
+  ConfigValue [7] = Cfg.Bits.hasPageTurning;
   ConfigValue [8] = Cfg.Bits.hasPB2PA13PA14Scan;
   ConfigValue [9] = Cfg.Bits.hasEventLog  ; // K
 
@@ -353,9 +353,12 @@ void USBSerialUI::DisplayConfigurationMenu() {
       }
     }
     if ( i == 0 )
-      sprintf(buff, "%c [%d] %s, Button channel=%d%s\r\n", 'A' + i, midi.getKeyboardChannel()+1, ConfigItems[i].text, midi.getButtonChannel()+1, ANSI_CLR_EOL );
+      sprintf(buff, "%c [%d] %s=%d, Button channel=%d%s\r\n", 'A' + i, midi.getKeyboardChannel()+1, ConfigItems[i].text, midi.getKeyboardChannel()+1, midi.getButtonChannel()+1, ANSI_CLR_EOL );
     else
-      sprintf(buff, "%c [%s] %s%s\r\n", 'A' + i, valtext, ConfigItems[i].text, ANSI_CLR_EOL );    
+      if ( i == 6 )
+        sprintf(buff, "%c [%s] %s%s%s\r\n", 'A' + i, valtext, ConfigItems[i].text, ButtonModeText[Cfg.Bits.hasButtonLEDMode], ANSI_CLR_EOL );    
+      else  
+        sprintf(buff, "%c [%s] %s%s\r\n", 'A' + i, valtext, ConfigItems[i].text, ANSI_CLR_EOL );    
     CompositeSerial.write(buff);
     i++;
   }
@@ -383,7 +386,7 @@ void USBSerialUI::DisplayFunctionPinOut(void) {
     sprintf(buff, "%-13s%s%c%s%4s         %-4s%s%c%s  %-s%s\r\n", 
       function_text1, ANSI_BLINK,LiveConfigs[i+20].fault,ANSI_NO_BLINK, pinCfg[i + 20].description, pinCfg[19 - i].description,ANSI_BLINK,LiveConfigs[19-i].fault,ANSI_NO_BLINK, function_text2, ANSI_CLR_EOL );
     if ( i == 0 )
-      strncpy( &buff[21+4], "USB", 3);
+      strncpy( &buff[25+4], "USB", 3);
     if ( i == 19 )
       strncpy( &buff[19+4*2], "| | | |", 7);
     CompositeSerial.write(buff);
@@ -456,13 +459,16 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
             }          
             //if ( tcfg.Bits.hasWS2812 && ( newCfgs[gpio_index].count == 7 ) )
             //  newCfgs[gpio_index].function = IO_WS2812 ;
+          } else {
+            if ( ( tcfg.Bits.hasKeyVelocity == 0 ) && ( newCfgs[gpio_index].count & 1 ) )
+              newCfgs[gpio_index].function = IO_SPARE ;
           }
         } else {
           // Keyboard without velocity sense may have up to four adc's on unused scan inputs
           if ( tcfg.Bits.hasKeyVelocity == 0 ) {
             int count = newCfgs[gpio_index].count;
-            if ( count > 7 ) { // unused input range
-              if ( count & 1 ) { // only odd inputs unused
+            if ( count & 1 ) { // only odd inputs unused
+              if ( count > 7 ) { // unused input range
                 count = 15-newCfgs[gpio_index].count; // Adjust count to ADC
                 newCfgs[gpio_index].count = count;
                 if ( newCfgs[gpio_index].count/2 >= tcfg.Bits.numberADCInputs ) {
@@ -470,6 +476,8 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
                 } else {
                    newCfgs[gpio_index].function = IP_ADC ;
                 }
+              } else {
+                   newCfgs[gpio_index].function = IO_SPARE ;  
               }
             }
           }
@@ -509,6 +517,9 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
       case BOOT1 :
       break;
       case SWCLK :
+        if ( Cfg.Bits.hasPageTurning )
+          newCfgs[gpio_index].function = IO_HID;
+      break;
       case SWDIO :
         if ( Cfg.Bits.hasPB2PA13PA14Scan ) {
           newCfgs[gpio_index].function = IO_WS2812;

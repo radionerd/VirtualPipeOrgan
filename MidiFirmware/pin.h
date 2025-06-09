@@ -42,7 +42,8 @@ enum PinFunction {
   SWDIO,
   BOOT1,
   NRST,
-  IO_WS2812
+  IO_WS2812,
+  IO_HID
 };
 
 //const int NUM_SHIFT_REGISTER_BITS = 96; // 8 * 12 ; // 8 bits per shift register, 4 divisions(3 keyboards+pedals), 3 shift registers each division

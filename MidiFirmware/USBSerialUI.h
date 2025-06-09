@@ -29,9 +29,10 @@ class USBSerialUI {
     int DisplayUpdate;
     char LastCommand;
 //    const unsigned int Octave = 12; // half steps
-    const int MAX_15 = 15;
-    const int MAX_8  =  8;
-    const int MAX_1  =  1;
+//    const int MAX_15 = 15;
+    const int MAX_8  = 8;
+    const int MAX_3  = 3;
+    const int MAX_1  = 1;
 
     struct ConfigItem {
       int maxval;
@@ -40,19 +41,19 @@ class USBSerialUI {
    
 
     ConfigItem const ConfigItems[11] = {
-      { MAX_15,(const char *)"Key/Pedal Midi Channel"},  // A
+      { MAX_8, (const char *)"Key/Pedal Midi Channel"},  // A
       { MAX_1, (const char *)"Pedalboard"} ,//B
-      { MAX_8, (const char *)"  Number of ADC Inputs PA2-PB1"}, // C
+      { MAX_8, (const char *)"Number of ADC Inputs PA2-PB1"}, // C
       { MAX_1, (const char *)"Keyboard/Pedalboard Velocity Reporting"} ,//D     
-      { MAX_1, (const char *)"PCF8574 I2C LCDs 16x2" }, //E
+      { MAX_1, (const char *)"PCF8574 I2C LCDs 16x2 Line" }, //E
       { MAX_1, (const char *)"TM1637 7 segment, 6 digit display" }, // F
-      { MAX_1, (const char *)"74HC164 Button LED backlight enabled"}, // G
-      { MAX_1, (const char *)"74HC164 Button LED inverted", },  // H
-      { MAX_1, (const char *)"Use Debug Connector for WS2812 RGB LEDs PA13,PA14"}, // I
+      { MAX_3, (const char *)"74HC164 Button LED "}, // G
+      { MAX_1, (const char *)"Page Turning", },  // H
+      { MAX_1, (const char *)"WS2812 RGB LED Strip"}, // I
       { MAX_1, (const char *)"Event Log to USB Serial (may slow response time)"}, // J
       {     0, (const char *)"" }
     };
-    const char *function_text[28] = {
+    const char *function_text[29] = {
       "Spare",
       "", // Reserved
       "OP_LED",
@@ -80,7 +81,8 @@ class USBSerialUI {
       "SWDIO",
       "BOOT1",
       "NRST",
-      "WS2812 LEDs"
+      "WS2812 LEDs",
+      "HID Page Turning"
     };
 
     const char * device_names[5] = {"Unknown", "Pedalboard","Keyboard","Button","Button LED"};
@@ -105,25 +107,26 @@ class USBSerialUI {
     //GPIOPinConfig MenuConfigs [NUM_GPIO_PINS];
     GPIOPinConfig LiveConfigs [NUM_GPIO_PINS];
     //PROFILE profile;
-
+    const int BUTTON_LED_BACKLIT = 1;
+    const int BUTTON_LED_INVERT = 2;
     typedef union {
       unsigned Word;
 
       struct {
-        unsigned midiChannel : 4;       // A  4
-        unsigned hasPedalBoard : 1;     // B  5
-        unsigned numberADCInputs : 4;   // C  9
-        unsigned hasKeyVelocity: 1;     // D 10
-        unsigned hasI2C: 1;             // E 11
-        unsigned hasTM1637 : 1;         // F 12
-        unsigned hasButtonLEDBacklit: 1;// G 13
-        unsigned hasButtonLEDInvert:1;  // H 14
+        unsigned midiChannel : 3;       // A  3 0-7
+        unsigned hasPedalBoard : 1;     // B  4
+        unsigned numberADCInputs : 4;   // C  8 0-8
+        unsigned hasKeyVelocity: 1;     // D  9
+        unsigned hasI2C: 1;             // E 10
+        unsigned hasTM1637 : 1;         // F 11
+        unsigned hasButtonLEDMode: 3;   // G 13
+        unsigned hasPageTurning:1;      // H 14
         unsigned hasPB2PA13PA14Scan: 1; // I 15
         unsigned hasEventLog: 1;        // J 16
       } Bits;
     } Config;
     Config Cfg;
-
+    const char * ButtonModeText[4] = { "Normal", "Normal+Backlight","Inverted","Inverted+Backlight"};
     USBSerialUI(void);
     unsigned long GetAppOnlineTime(void) { return AppOnlineTime; };
     void poll(void);

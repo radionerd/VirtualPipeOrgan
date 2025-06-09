@@ -103,7 +103,7 @@ uint32_t KeyboardScan::get_input(bool pedalboard, bool hasKeyVelocity ) {
             // ((*IN_0X8000) << 15 );           
     }
   } else {
-    if ( hasKeyVelocity ) {
+//    if ( hasKeyVelocity ) {
     return ((*IN_0X0001) <<  0 ) +
            ((*IN_0X0002) <<  1 ) +
            ((*IN_0X0004) <<  2 ) +
@@ -112,17 +112,17 @@ uint32_t KeyboardScan::get_input(bool pedalboard, bool hasKeyVelocity ) {
            ((*IN_0X0020) <<  5 ) +
            ((*IN_0X0040) <<  6 ) +
            ((*IN_0X0080) <<  7 ) ;
-    } else {
-    return ((*IN_0X0001) <<  0 ) +
+//    } else {
+//    return ((*IN_0X0001) <<  0 ) +
            //((*IN_0X0002) <<  1 ) +
-           ((*IN_0X0004) <<  2 ) +
+//           ((*IN_0X0004) <<  2 ) +
            //((*IN_0X0008) <<  3 ) +
-           ((*IN_0X0010) <<  4 ) +
+//           ((*IN_0X0010) <<  4 ) +
            //((*IN_0X0020) <<  5 ) +
-           ((*IN_0X0040) <<  6 ) ;
+//           ((*IN_0X0040) <<  6 ) ;
            //((*IN_0X0080) <<  7 ) 
       
-    }
+//    }
   }
 }
 
@@ -312,13 +312,14 @@ void KeyboardScan::activePulldown(bool hasPedalBoard, bool hasKeyVelocity ) {
     GPIOB->regs->CRL ^= 0x0000b0bb ;
     GPIOB->regs->CRH ^= 0xbbb00000 ;
   }
-  if ( ( hasPedalBoard == 1 ) && ( hasKeyVelocity == 0 ) ) { 
-    GPIOA->regs->CRL ^= 0x00000000 ;
-    GPIOA->regs->CRH ^= 0xb00000b0 ;
-    GPIOB->regs->CRL ^= 0x00000000 ;
-    GPIOB->regs->CRH ^= 0xb0b00000 ;
-  }
-  if ( ( hasPedalBoard == 1 ) && ( hasKeyVelocity == 1 ) ) { 
+  if ( hasPedalBoard == 1 ) {
+//  if ( ( hasPedalBoard == 1 ) && ( hasKeyVelocity == 0 ) ) { 
+//    GPIOA->regs->CRL ^= 0x00000000 ;
+//    GPIOA->regs->CRH ^= 0xb00000b0 ;
+//    GPIOB->regs->CRL ^= 0x00000000 ;
+//    GPIOB->regs->CRH ^= 0xb0b00000 ;
+//  }
+//  if ( ( hasPedalBoard == 1 ) && ( hasKeyVelocity == 1 ) ) { 
     GPIOA->regs->CRL ^= 0x00000000 ;
     GPIOA->regs->CRH ^= 0xb0000bbb ;
     GPIOB->regs->CRL ^= 0x0000b000 ;
