@@ -82,7 +82,7 @@ class USBSerialUI {
       "BOOT1",
       "NRST",
       "WS2812 LEDs",
-      "HID Page Turning"
+      "HID PageTurn"
     };
 
     const char * device_names[5] = {"Unknown", "Pedalboard","Keyboard","Button","Button LED"};

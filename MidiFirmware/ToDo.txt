@@ -1,11 +1,5 @@
 Done ✓
-  Fix timing discrepancy on WS2812 profile
-  Reduce Midi channel config to 3 bits
-  Reduce 74HC168 Config item to single 2 bit
-  Add Page Turning control to configuration as 'H' command
-  
-  Impliment HID sending:
-    1short Page Down, 1Long Home, 2 short Page Up, 2 Long End
+  Add WS2812 Monitoring & fix hardware?
   Investigate HID bootloader
   Investigate compiling for load without bootloader step
   Move all print features to objects that own them

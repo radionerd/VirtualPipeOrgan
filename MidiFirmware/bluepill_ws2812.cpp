@@ -56,10 +56,10 @@ static void clockoutPixels( uint8_t *pixels, uint16_t count, uint32_t port_addr,
   register uint8_t  b;
   register uint32_t hi = 1 <<  port_bit;    
   register uint32_t lo = 1 << (port_bit+16); 
-  //cli();
+  cli();
     //DWT->CYCCNT = 0;
     for (register uint32_t i=count; i > 0; i--)
-    { cli();
+    { //cli();
       b = *(pixels++);
       clockout8bits( port, hi, lo, b );
   
@@ -68,9 +68,9 @@ static void clockoutPixels( uint8_t *pixels, uint16_t count, uint32_t port_addr,
   
       b = *(pixels++);
       clockout8bits( port, hi, lo, b );
-      sei();
+      //sei();
     }
-  //sei();
+  sei();
 }
 
 void bluepill_neopixel::paint( uint8_t *pixels, uint16_t count, uint32_t port_addr, uint8_t port_bit )

@@ -4,6 +4,7 @@
 #include "adc.h"
 #include "buttonscan.h"
 #include "color_wheel.h"
+#include "hid.h"
 #include "keyboardscan.h"
 #include "led.h"
 #include "multilcd.h"
@@ -34,6 +35,7 @@ ButtonScan Button;
 KeyboardScan kbd;
 ADC adc;
 PROFILE profile;
+HID_PT hid_pt(PA14);
 
 const char *VPOConsoleMsg[16]= {
   "VPO Console Midi Ch1, 9",
@@ -93,6 +95,7 @@ void setup() {
   mlcd.saveDisplayText( midi_display_channel,buf );
 
   mlcd.Begin((char *)""); // Display VPO & ADDr Info
+  //LEDStripCtrl(1);
   delay(2000); // for reliable CompositeSerial.write()
 //if ( SUI.Cfg.Bits.hasEventLog ) {
   //  CompositeSerial.println( VPOConsoleMsg[ SUI.midiKeyboardChannel() ] );
@@ -143,9 +146,7 @@ void loop() {
          adc.Scan();
       break;
       case PROFILE_WS2812 :
-         if ( SUI.Cfg.Bits.hasPB2PA13PA14Scan ) {
-           LEDStripCtrl( LED_STRIP_SERVICE );
-         }
+         LEDStripCtrl( LED_STRIP_SERVICE );
       break;
       case PROFILE_BUTTONS :
          Button.Scan();
@@ -153,6 +154,8 @@ void loop() {
       case PROFILE_MIDI_POLL :
         midi.poll(); // check for midi input
       break;
+      case PROFILE_HID:
+        hid_pt.service();
     }
     if ( pollCount <= PROFILE_MIDI_POLL )
       profile.PEnd( pollCount);

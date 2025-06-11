@@ -9,8 +9,8 @@ The user manual assumes that you have programed the flash in the STM32 Bluepill 
 - USB Connection to host computer, LED blink on Midi activity
 - Multiple STM32 boards may be deployed to ease wiring
 - Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
-- Up to 8 ADC inputs for expression pedals when scanning a pedalboard
 - Up to 4 ADC inputs when configured for a keyboard without velocity sensing
+- Up to 8 ADC inputs for expression pedals when scanning a pedalboard
 - 64 LED illuminated button inputs using external 74HC164 shift registers
 - One 6 digit LED display per midi controller (for combination setter & crescendo display)
 - Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per IC type )
@@ -363,24 +363,29 @@ id  port   function     kbd  count input error fault
 
 ### Page Turning
 
-Page turning is configured using the 'H' and 'S' commands.
-
 The page turning feature is intended to control the display of music shown on the computer monitor using a pdf file viewer such as Evince.
+
+The page turning feature uses the USB Human Interface Device (HID) protocol and appears to the PC as a keyboard.
+
+Page turning is configured using the 'H' and 'S' commands.
 
 The midi interface sends four QWERTY keyboard commands on the USB cable from a single switch depending on how the switch is pressed. The midi interface simulates the pressing of keys, just as though they were entered on the computer keyboard. Page turning will be successful when the file viewer has focus and responds appropriately to the 'Page Up', 'Page Down', 'Home' and 'End' keys.
 
-eg To send 'Page down' one short press. For 'End' two short presses followed by a long press.
+eg To send 'Page down' one short press.
+eg To send 'Home' long press after single presses.
+eg To go back one page, two short presses.
+A single press followed by a long press will scroll through the entire document forwards.
+A double press followed by a long press will scroll through the entire document backwards.
 
 ```
-|   Number    | Short Press |  Long Press |
-|:-----------:|:-----------:|:-----------:|
-|      1      |  Page Down  |    Home     |
-|      2      |  Page Up    |    End      |
+| Short Count | Short Press |  Long Press | Long Repeat |
+|:-----------:|:-----------:|:-----------:|:------------|
+|      1      |  Page Down  |  Ctrl+Home  |  Page Down  |
+|      2      |  Page Up    |  Ctrl+End   |  Page  Up   |
 ```
 On a good day single short and long presses should be sufficient to work through the music and go back to the beginning.
 
 An off the shelf sustain pedal may make a useful page turning switch.
 
-The page turning switch may be attached to Midi Note 99 position of the music keyboard matrix via a diode, or between 0V and PB14 when no velocity sensing is configured. 
+The page turning switch is attached between 0v and PA14 located on the Debug/Programming connector.
 
-The page turning feature uses the USB Human Interface Device (HID) protocol.

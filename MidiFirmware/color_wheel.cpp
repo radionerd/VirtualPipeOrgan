@@ -10,6 +10,7 @@
 #include "color_wheel.h"
 #include "hsvtorgb.h"
 #include "profile.h"
+#include "USBSerialUI.h"
 
 bluepill_neopixel PIX;       // a string of pixels
 // 65 max pixels without disrupting micros() figures 
@@ -178,6 +179,7 @@ void LEDStripCtrl(int event ) {
     27,23,19,16,13,11,9,8,7,6,5,4,3,3,2,2,1,1,1};
 
   static unsigned long last_time=0; // Last time this function was called
+ if ( SUI.Cfg.Bits.hasPB2PA13PA14Scan ) {
   unsigned long time_now = micros();
   switch ( event ) {
     case LED_STRIP_BUTTON_ON :
@@ -272,4 +274,5 @@ void LEDStripCtrl(int event ) {
     }
     break;
   }
+ }
 }

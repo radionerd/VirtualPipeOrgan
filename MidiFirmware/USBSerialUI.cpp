@@ -5,6 +5,7 @@
 #include "adc.h"
 #include "buttonscan.h"
 #include "color_wheel.h"
+#include "hid.h"
 #include "keyboardscan.h"
 #include "led.h"
 #include "multilcd.h"
@@ -14,15 +15,13 @@
 #include "TM1637.h"
 #include "USBSerialUI.h"
 // Copyright (C)2023 Richard Jones. MIT License applies
+extern ADC adc;
 extern ButtonScan Button;
+extern HID_PT hid_pt;
 extern KeyboardScan kbd;
 extern LED led; // or led(PC13); choose your own LED gpio pin
-extern TM1637 SEG7; // 7 Segment display driver
-//USBHID HID;
-//HIDKeyboard Keyboard(HID);
-//extern USBCompositeSerial CompositeSerial;
-extern ADC adc;
 extern MultiLCD mlcd;
+extern TM1637 SEG7; // 7 Segment display driver
 
 USBSerialUI::USBSerialUI(void) {
   RestoreConfigFromFlash();
@@ -35,7 +34,7 @@ void USBSerialUI::poll(void) {
   while (CompositeSerial.available()) {
     char c = CompositeSerial.read();
     if ( false ) {
-      // When TRUE: show incoming codes 0x00-0xFF for HID investigation
+      // if ( true ) show incoming codes 0x00-0xFF for HID investigation
       char view = c&0x7f;
       if ( view < ' ' )
         view = ' '; 
@@ -50,6 +49,7 @@ void USBSerialUI::poll(void) {
       case 'k' :
       case 'o' :
       case 'x' :
+      case 'u' :
       case 'z' :
         CommandCharDecode(LastCommand);
       break;
@@ -187,6 +187,9 @@ void USBSerialUI::CommandCharDecode( char c )
       case 't' :
         TestIO();
         break;
+      case 'u' :
+        hid_pt.Print();
+      break;
       case 'v' :
         {
           char buff[80];
@@ -542,6 +545,7 @@ void USBSerialUI::DisplayMenu(void) {
   CompositeSerial.write("R - Restore Configuration\r\n");
   CompositeSerial.write("S - Save New Configuration\r\n");
   CompositeSerial.write("T - Test IO Pins\r\n");
+  CompositeSerial.write("U - USB HID Page Turn Input\r\n");
   CompositeSerial.write("V - Version Info\r\n");
   CompositeSerial.write("X - eXpression Pedal / ADC results\r\n");
   CompositeSerial.write("Z - Pin Status\r\n");

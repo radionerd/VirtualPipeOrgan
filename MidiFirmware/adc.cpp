@@ -75,8 +75,9 @@ void ADC::Begin(void) {
 void ADC::Print(void) {
    char buff[80];
    
-   //CompositeSerial.write(VT100_CLEAR);
-   sprintf(buff,"Expression Pedal/ADC Results\r\n    ADC   AVG   REP MidiCh CCommand\r\n");
+   //CompositeSerial.write(VT100_CLEAR);  
+   CompositeSerial.write(ANSI_CLEAR);
+   sprintf(buff,"%sExpression Pedal/ADC Results\r\n    ADC   AVG   REP MidiCh CCommand\r\n",ANSI_CURSOR_00);
    //SUI.DisplayTitle(buff);
    CompositeSerial.write(buff);   
    for ( int gpioId = MIN_ADC_GPIOID ; gpioId <= MAX_ADC_GPIOID ; gpioId++ ) {
