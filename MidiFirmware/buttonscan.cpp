@@ -1,12 +1,13 @@
 #include <Arduino.h>
 #include <USBComposite.h>
 #include "buttonscan.h"
-#include "color_wheel.h"
+#include "bluepill_ws2812.h"
 #include "led.h"
 #include "mymidi.h"
 #include "pin.h"
 #include "profile.h"
 #include "USBSerialUI.h"
+#include "ws2812ctrl.h"
 
 /*
  * Fast Button Scan of 74HC164 shift register connected buttons and LEDs
@@ -150,7 +151,7 @@ void ButtonScan::Scan(void) {
           SUI.RequestDisplayUpdate();
           if ( midi_note==0 )
             if ( SUI.Cfg.Bits.hasPB2PA13PA14Scan )
-               LEDStripCtrl( LED_STRIP_BUTTON_ON ); 
+               ws2812Ctrl.service( LED_STRIP_BUTTON_ON ); 
         } else {
           ShiftRegImage[ sr_input_list[j] ].Input = 2; // Flag is active
 //          unsigned long elapsed_time_us = time_now - ShiftRegImage[ sr_input_list[j] ].Time;
@@ -192,7 +193,7 @@ void ButtonScan::Scan(void) {
           SUI.RequestDisplayUpdate();
           if ( midi_note==0 )
             if ( SUI.Cfg.Bits.hasPB2PA13PA14Scan )
-              LEDStripCtrl( LED_STRIP_BUTTON_OFF ); 
+              ws2812Ctrl.service( LED_STRIP_BUTTON_OFF ); 
         }
       }
     }

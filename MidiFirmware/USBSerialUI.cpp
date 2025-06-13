@@ -3,9 +3,9 @@
 #include <flash_stm32.h>
 #include <stdio.h>
 #include "adc.h"
+#include "bluepill_ws2812.h"
 #include "buttonscan.h"
-#include "color_wheel.h"
-#include "hid.h"
+#include "hid_pt.h"
 #include "keyboardscan.h"
 #include "led.h"
 #include "multilcd.h"
@@ -14,6 +14,7 @@
 #include "profile.h"
 #include "TM1637.h"
 #include "USBSerialUI.h"
+#include "ws2812ctrl.h"
 // Copyright (C)2023 Richard Jones. MIT License applies
 extern ADC adc;
 extern ButtonScan Button;
@@ -22,6 +23,7 @@ extern KeyboardScan kbd;
 extern LED led; // or led(PC13); choose your own LED gpio pin
 extern MultiLCD mlcd;
 extern TM1637 SEG7; // 7 Segment display driver
+extern WS2812Ctrl ws2812Ctrl;
 
 USBSerialUI::USBSerialUI(void) {
   RestoreConfigFromFlash();
@@ -48,6 +50,7 @@ void USBSerialUI::poll(void) {
     switch ( LastCommand ) {
       case 'k' :
       case 'o' :
+      case 'w' :
       case 'x' :
       case 'u' :
       case 'z' :
@@ -170,13 +173,13 @@ void USBSerialUI::CommandCharDecode( char c )
         break;
       case 'r' :// restore config from flash
         if ( c == 'R' ) {
-          CompositeSerial.println("Restart...");        
+          CompositeSerial.write("Restart...\r\n");        
           nvic_sys_reset();
         } else {
           RestoreConfigFromFlash();
           DisplayFunctionPinOut();
           DisplayConfigurationMenu();
-          CompositeSerial.println("Press 'R' to restart");        
+          CompositeSerial.write("Press 'R' to restart\r\n");        
         }
         break;
       case 'y' :
@@ -200,6 +203,9 @@ void USBSerialUI::CommandCharDecode( char c )
           sprintf ( buff , "%s %s %s\r\n","V1.0.0" , __DATE__, __TIME__);
           CompositeSerial.write(buff);
         }
+        break;
+      case 'w' :
+        ws2812Ctrl.Print();
         break;
       case 'x' :
         adc.Print();
@@ -536,7 +542,8 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
 void USBSerialUI::DisplayMenu(void) {
   CompositeSerial.write(ANSI_CLEAR);
   DisplayTitle("Midi Interface Menu" );
-  CompositeSerial.write("A-J Adjust config value\r\n");
+  CompositeSerial.write("@ - or spacebar to View Configuration\r\n");
+  CompositeSerial.write("A-J Adjust configuration value\r\n");
   CompositeSerial.write("K - Keyboard Contacts\r\n");
   CompositeSerial.write("L - LCD 'l'=view, 'L'=load\r\n");
   CompositeSerial.write("M - Flash memory summary\r\n");
@@ -547,6 +554,7 @@ void USBSerialUI::DisplayMenu(void) {
   CompositeSerial.write("T - Test IO Pins\r\n");
   CompositeSerial.write("U - USB HID Page Turn Input\r\n");
   CompositeSerial.write("V - Version Info\r\n");
+  CompositeSerial.write("W - WS2812 LED Strip\r\n");
   CompositeSerial.write("X - eXpression Pedal / ADC results\r\n");
   CompositeSerial.write("Z - Pin Status\r\n");
 }

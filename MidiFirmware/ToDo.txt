@@ -1,5 +1,4 @@
 Done ✓
-  Add WS2812 Monitoring & fix hardware?
   Investigate HID bootloader
   Investigate compiling for load without bootloader step
   Move all print features to objects that own them

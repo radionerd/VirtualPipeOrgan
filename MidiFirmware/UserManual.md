@@ -299,16 +299,31 @@ Click 'OK' and remember to save the organ settings
 The LED feature is intended for illuminating music stands and pedalboards.
 
 The LED strip is controlled by pressing the lowest C# on the midi controller to which the LED strip is connected. The C# is only active for LED control when no other notes have been active for the previous 5 seconds. The number of key presses will trigger different functions
-| | Short Press   | Long Press |
-|::|:-------------:|:---------:|
-|1| Toggle On/Off |Brightness  |
-|2| Rainbow mode  |Colour(Hue) |
-|3|               |Saturation  |
+
+|   | Short Press   | Long Press |
+|:-:|:-------------:|:----------:|
+| 1 | Toggle On/Off |Brightness  |
+| 2 | Rainbow mode  |Colour(Hue) |
+| 3 |               |Saturation  |
 
 Strips up to 60 LEDs in length are supported. 
 
 ### Profile
 The 'P' command displays the execution times in microsecionds of different feaures in use. This is a development feature to ensure that the system is always responsive with no excessive time delays. Lower case 'p' displays executions times, upper case 'P' clears the recorded times to zero.
+
+### WS2812 LED Strip Control
+
+The LED Strip control is intended to be used for illuminatingthe music stand and pedalboard, or just for decoration.
+
+The WS22812 LED strip is configured (enabled/disabled) using the 'I' command. The status of the LED strip may be viewed with the 'W' command.
+
+The LED strip is controlled using the lowest C# of the keyboard to which it is attached, when no other key activity has been present for 5 seconds or more. The number of times and duration that the C# is pressed determines the brightness, hue and saturation of the LED strip.
+
+|Short Press | Long Press |
+|:----------:|:----------:|
+| 1 - On/Off | Brightness |
+| 2 - Rainbow|    Hue     |
+| 3 - Unused | Saturation |
 
 ### 'Z' Pin Status
 This screen may be useful for viewing the 12 bit ADC results before filtering and conversion to 7 bit midi values.
@@ -377,12 +392,11 @@ eg To go back one page, two short presses.
 A single press followed by a long press will scroll through the entire document forwards.
 A double press followed by a long press will scroll through the entire document backwards.
 
-```
 | Short Count | Short Press |  Long Press | Long Repeat |
 |:-----------:|:-----------:|:-----------:|:------------|
 |      1      |  Page Down  |  Ctrl+Home  |  Page Down  |
 |      2      |  Page Up    |  Ctrl+End   |  Page  Up   |
-```
+
 On a good day single short and long presses should be sufficient to work through the music and go back to the beginning.
 
 An off the shelf sustain pedal may make a useful page turning switch.

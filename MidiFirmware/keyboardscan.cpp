@@ -1,12 +1,13 @@
 #include <Arduino.h>
 #include <USBComposite.h>
-#include "color_wheel.h"
-#include "hid.h"
+//#include "bluepill_ws2812.h"
+#include "hid_pt.h"
 #include "keyboardscan.h"
 #include "led.h"
 #include "mymidi.h"
 #include "profile.h"
 #include "USBSerialUI.h"
+//#include "ws2812ctrl.h"
 
 extern myMidi midi;
 uint32_t kb_input [NUM_KEYBOARD_INPUTS]; // 16 input bits per output line
@@ -504,17 +505,17 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
               sprintf( HIDBuf,"Sending HID %02X on_off=%d\r\n", control[midi_note-HID_KEY_OFFSET] ,on_off);
               CompositeSerial.write(HIDBuf);
             }*/
-            // Use C# with no other activity for 5 seconds to control RGB LED Strip
+            // Use Csharp/Db with no other activity for 5 seconds to control RGB LED Strip
             if ( on_off >= 0 ) { 
               if ( midi_note == 37 ) { // Lowest C#
                 if ( ( micros()-lastActivity ) > 5000000L ) {
-                   LEDStripCtrl(on_off);
-                   //sprintf(buf,"LED RGB=%d\r\n",on_off);
+                   //ws2812Ctrl.service(on_off);
+                   sprintf(buf,"LED RGB=%d\r\n",on_off);
                 }
               } else {
                 lastActivity = micros();
               }
-            }
+             }
             if ( buf[0]) {
               CompositeSerial.write(buf);    
             }

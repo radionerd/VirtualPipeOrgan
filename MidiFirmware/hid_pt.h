@@ -1,5 +1,5 @@
-#ifndef __HID_H
-#define __HID_H
+#ifndef __HID_PT_H
+#define __HID_PT_H
 
 
 #ifdef __cplusplus
@@ -37,7 +37,7 @@ class HID_PT {
   public:
    HID_PT ( int pin );
    int  getEnabled(void);
-   void monitor( int hid_code );
+   void eventMonitor( int hid_code );
    void Print ( void );
    void service(void);
 };
@@ -48,4 +48,4 @@ extern HIDKeyboard QKeyboard;
 #endif
 
 
-#endif /* __HID_H */
+#endif /* __HID_PT_H */

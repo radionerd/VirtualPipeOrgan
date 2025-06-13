@@ -78,8 +78,8 @@ int MultiLCD::Write(uint8_t lcd_address, char *buffer )
 #define NOMDEBUG
 #ifdef MDEBUG
         char buff[80];
-        sprintf(buff,"i2c=%02x x0=%2d xe0=%2d line0=[%s] lcd=[%s]",lcd_address,x0,xe0,line0+x0, lcdData[lcd_index].dmesg);
-        CompositeSerial.println(buff);
+        sprintf(buff,"i2c=%02x x0=%2d xe0=%2d line0=[%s] lcd=[%s]\r\n",lcd_address,x0,xe0,line0+x0, lcdData[lcd_index].dmesg);
+        CompositeSerial.write(buff);
 #endif
         if ( x0 < 16 ) {
           lcd.setCursor(x0, 0);
@@ -95,8 +95,8 @@ int MultiLCD::Write(uint8_t lcd_address, char *buffer )
           --xe1;
         }
 #ifdef MDEBUG
-        sprintf(buff,"i2c=%02x x1=%2d xe1=%2d line1=[%s],lcd=[%s]",lcd_address,x1,xe1,line1+x1, lcdData[lcd_index].dmesg);
-        CompositeSerial.println(buff);
+        sprintf(buff,"i2c=%02x x1=%2d xe1=%2d line1=[%s],lcd=[%s]\r\n",lcd_address,x1,xe1,line1+x1, lcdData[lcd_index].dmesg);
+        CompositeSerial.write(buff);
 #endif
         if ( x1 < 16 ) {
           lcd.setCursor(x1, 1);

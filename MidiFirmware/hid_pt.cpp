@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <USBComposite.h>
-#include "hid.h"
+#include "hid_pt.h"
 #include "led.h"
 #include "USBSerialUI.h"
    HID_PT::HID_PT ( int pin )
@@ -18,19 +18,19 @@
        const char *on_off[] = { "ON","OFF" };
        char buf[80];
        CompositeSerial.write(ANSI_CLEAR);
-       sprintf (buf,"Page Turning input = %s",on_off[last_state&1] );
-       CompositeSerial.println (buf);
+       sprintf (buf,"Page Turning input = %s\r\n",on_off[last_state&1] );
+       CompositeSerial.write (buf);
      } else {
-       CompositeSerial.println ("Page Turning Not Enabled");
+       CompositeSerial.write ("Page Turning Not Enabled\r\n");
      }
    }
 
    // Contribute to event log if enabled
-   void HID_PT::monitor( int hid_index ) {
+   void HID_PT::eventMonitor( int hid_index ) {
      if ( SUI.Cfg.Bits.hasEventLog ) {
        char buf[120];
-       sprintf( buf,"%10luus USB HID %s",micros(), hid_text[hid_index]);
-       CompositeSerial.println(buf);
+       sprintf( buf,"%10luus USB HID %s\r\n",micros(), hid_text[hid_index]);
+       CompositeSerial.write(buf);
      }
    }
 
@@ -46,7 +46,7 @@
       afio_cfg_debug_ports(AFIO_DEBUG_NONE); // Allow use of PB3, PA14
       pinMode(hid_pin,INPUT_PULLUP);
       unsigned long time_now = micros();
-      if ( time_now - time_on > DEBOUNCE_50ms ) {
+      if ( ( time_now - time_on ) > DEBOUNCE_50ms ) {
        int new_state = digitalRead(hid_pin); // Active on pull down
        if ( last_state != new_state ) {
          last_state = new_state;
@@ -87,7 +87,7 @@
                  QKeyboard.release ( KEY_PAGE_UP );
                break;
              }
-             monitor   ( short_count & 3 );
+             eventMonitor   ( short_count & 3 );
            }
          }
          long_count=0;
@@ -106,23 +106,23 @@
                  QKeyboard.press   ( KEY_HOME );
                  QKeyboard.release ( KEY_HOME );
                  QKeyboard.release ( KEY_LEFT_CTRL );
-                 monitor   ( 3 );
+                 eventMonitor   ( 3 );
               } else {
                  QKeyboard.press   ( KEY_LEFT_CTRL );
                  QKeyboard.press   ( KEY_END );
                  QKeyboard.release ( KEY_END );
                  QKeyboard.release ( KEY_LEFT_CTRL );
-                 monitor   ( 2 );               
+                 eventMonitor   ( 2 );               
               }
             } else {
               if ( short_count == 0 ) {
                  QKeyboard.press   ( KEY_PAGE_DOWN );
                  QKeyboard.release ( KEY_PAGE_DOWN );
-                 monitor   ( 0 );
+                 eventMonitor   ( 0 );
               } else {
                  QKeyboard.press   ( KEY_PAGE_UP );
                  QKeyboard.release ( KEY_PAGE_UP );
-                 monitor   ( 1 );                   
+                 eventMonitor   ( 1 );                   
               }
             }
          }

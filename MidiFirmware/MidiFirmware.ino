@@ -2,9 +2,9 @@
 #include <USBComposite.h> // https://github.com/arpruss/USBComposite_stm32f1 Arduino version does not include Sysex support
 #include <flash_stm32.h>
 #include "adc.h"
+#include "bluepill_ws2812.h"
 #include "buttonscan.h"
-#include "color_wheel.h"
-#include "hid.h"
+#include "hid_pt.h"
 #include "keyboardscan.h"
 #include "led.h"
 #include "multilcd.h"
@@ -13,6 +13,7 @@
 #include "profile.h"
 #include "TM1637.h" // Must include RJ enhancments for displayPChar(char *) https://github.com/RobTillaart/TM1637_RT
 #include "USBSerialUI.h"
+#include "ws2812ctrl.h"
 
 /*
    MidiFirmware
@@ -36,6 +37,7 @@ KeyboardScan kbd;
 ADC adc;
 PROFILE profile;
 HID_PT hid_pt(PA14);
+WS2812Ctrl ws2812Ctrl;
 
 const char *VPOConsoleMsg[16]= {
   "VPO Console Midi Ch1, 9",
@@ -93,13 +95,8 @@ void setup() {
   sprintf(buf,"Add=%-2d",midi_display_channel );
   SEG7.displayPChar(buf); // Display sysex ID
   mlcd.saveDisplayText( midi_display_channel,buf );
-
   mlcd.Begin((char *)""); // Display VPO & ADDr Info
-  //LEDStripCtrl(1);
   delay(2000); // for reliable CompositeSerial.write()
-//if ( SUI.Cfg.Bits.hasEventLog ) {
-  //  CompositeSerial.println( VPOConsoleMsg[ SUI.midiKeyboardChannel() ] );
-  // }
 }
 
 
@@ -110,9 +107,10 @@ enum item {
   PROFILE_KEYBOARD=0,
   PROFILE_SUI,
   PROFILE_ADC, 
-  PROFILE_WS2812, 
   PROFILE_BUTTONS,
+  PROFILE_WS2812, 
   PROFILE_MIDI_POLL,
+  PROFILE_HID,
   PROFILE_SYSEX,
   PROFILE_MIDI_OUT_TO_SYSEX_IN,
   PROFILE_LOOP,
@@ -136,7 +134,7 @@ void loop() {
       kbd.MusicKeyboardScan(SUI.Cfg.Bits.hasPedalBoard);
       profile.PEnd( PROFILE_KEYBOARD );
     }
-    if ( pollCount <= PROFILE_MIDI_POLL )
+    if ( pollCount <= PROFILE_WS2812 )
       profile.PStart( pollCount);
     switch ( pollCount  ) {
       case PROFILE_SUI :        
@@ -145,19 +143,20 @@ void loop() {
       case PROFILE_ADC :
          adc.Scan();
       break;
-      case PROFILE_WS2812 :
-         LEDStripCtrl( LED_STRIP_SERVICE );
-      break;
       case PROFILE_BUTTONS :
          Button.Scan();
       break;
       case PROFILE_MIDI_POLL :
         midi.poll(); // check for midi input
       break;
-      case PROFILE_HID:
+      case PROFILE_HID_PT :
         hid_pt.service();
+        break;
+      case PROFILE_WS2812 :
+         ws2812Ctrl.service( 2 );
+      break;
     }
-    if ( pollCount <= PROFILE_MIDI_POLL )
+    if ( pollCount <= PROFILE_WS2812 )
       profile.PEnd( pollCount);
     if ( ++pollCount >= 11 )
       pollCount = 1;
