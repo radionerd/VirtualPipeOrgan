@@ -64,7 +64,7 @@ void WS2812Ctrl::attenuate(pixel *p, uint8_t factor)
 
 int WS2812Ctrl::getEnabled(void)
 {
-  return SUI.Cfg.Bits.hasPB2PA13PA14Scan;
+  return SUI.Cfg.Bits.hasWS2812LEDStrip;
 };
 
 // Contribute to event log if enabled

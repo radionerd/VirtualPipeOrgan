@@ -1,13 +1,13 @@
 #include <Arduino.h>
 #include <USBComposite.h>
-//#include "bluepill_ws2812.h"
+#include "bluepill_ws2812.h"
 #include "hid_pt.h"
 #include "keyboardscan.h"
 #include "led.h"
 #include "mymidi.h"
 #include "profile.h"
 #include "USBSerialUI.h"
-//#include "ws2812ctrl.h"
+#include "ws2812ctrl.h"
 
 extern myMidi midi;
 uint32_t kb_input [NUM_KEYBOARD_INPUTS]; // 16 input bits per output line
@@ -413,7 +413,7 @@ void KeyboardScan::Print( void ) {
   CompositeSerial.write("********........ IP *=CN14 input pins 5-12\r\n");
 }
 void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
-  char buf[120];
+  //char buf[120];
   static unsigned long lastActivity;
 //  const char *note_name[12] = {
 //    "C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"
@@ -452,7 +452,7 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
             if ( key_travel_time < 100000 ) {
               midi_velocity = (100000-key_travel_time)/787;
             }
-            buf[0]=0;
+            //buf[0]=0;
             int midi_channel = midi.getKeyboardChannel() ;
             int on_off=-1;
             if ( SUI.Cfg.Bits.hasKeyVelocity ) {
@@ -509,16 +509,16 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
             if ( on_off >= 0 ) { 
               if ( midi_note == 37 ) { // Lowest C#
                 if ( ( micros()-lastActivity ) > 5000000L ) {
-                   //ws2812Ctrl.service(on_off);
-                   sprintf(buf,"LED RGB=%d\r\n",on_off);
+                   ws2812Ctrl.service(on_off);
+                   //sprintf(buf,"LED RGB=%d\r\n",on_off);
                 }
               } else {
                 lastActivity = micros();
               }
              }
-            if ( buf[0]) {
-              CompositeSerial.write(buf);    
-            }
+            //if ( buf[0]) {
+            //  CompositeSerial.write(buf);    
+            //}
           }
         }
       }

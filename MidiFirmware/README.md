@@ -2,7 +2,11 @@
 
 ## Introduction
 
-This project was conceived to connect controls to Virtual Pipe Organ software such as GrandOrgue, Hauptwerk, Cecilia etc running on a touch screen laptop. The design uses a BluePill microcontroller board with few external components. Flexibility is the main motivation as I started with little Midi or VPO experience. This project may work for you too. Let me know how you get on and whether improvements should be made. 
+This project was conceived to connect controls to Virtual Pipe Organ software such as GrandOrgue, Hauptwerk, Cecilia etc running on a touch screen laptop. The design uses an STM32F103C8T6 microcontroller board with few external components. The image below shows the STM32F103C8T6 board with the ST-Link programmer.
+
+<img src="STM32F103C8T6_ST-Link.avif" style="height: 220px; width:220px;"/>
+
+ Flexibility is the main motivation as I started with little Midi or VPO experience. This project may work for you too. Let me know how you get on and whether improvements should be made. 
 ## Block Diagram
 
 <img src="BlockDiagramTBG.png" style="height: 446px; width:580px;"/>
@@ -12,15 +16,17 @@ This project was conceived to connect controls to Virtual Pipe Organ software su
 - USB Connection to host computer, LED blink on Midi activity
 - Multiple STM32 boards may be deployed to ease wiring
 - Scanning for MAudio Keystation 61 Keyboard or 32 note pedalboard
-- 8 ADC inputs for expression pedals when scanning a pedalboard
-- 96 LED illuminated button inputs using external 74HC164 shift registers
-- One 6 digit LED display (for combination setter & crescendo display)
-- Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per manufacturer type )
-- interface to WS2812 LED string for music stand or pedal illumination
-- USB HID (qwerty keyboard) messages for music page turning (Future)
-- Simulated serial interface over USB for saving configuration in Flash
+- Up to 4 ADC inputs when configured for a keyboard without velocity sensing
+- Up to 8 ADC inputs for expression pedals when scanning a pedalboard
+- 64 LED illuminated button inputs using external 74HC164 shift registers
+- One 6 digit LED display per midi controller (for combination setter & crescendo display)
+- Multiple Liquid Crystal Display modules 16x2 line PCF8574 I2C interface ( 8 per IC type )
+- Interface to WS2812 RGB LED string for music stand or pedal illumination
+- USB HID (qwerty keyboard) messages for music page turning
+- Simulated serial interface over USB for viewing/saving configuration in Flash
 - Tested using Arduino V1.8.19 with STM32 extensions under Ubuntu 24.04 X86 & Arm Linux
-- Printed circuit boards to mount the STM32 Bluepill and shift register interfaces use off the shelf cables to interconnect
+- Printed circuit boards to mount the STM32 Bluepill and shift register interfaces use low cost plug in cables to simplify wiring
+
 ## Programming the Blue Pill
 Download the file MidiFirmware.ino.bin from github
 ### First Time

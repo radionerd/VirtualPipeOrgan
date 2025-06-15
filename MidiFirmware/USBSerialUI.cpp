@@ -114,7 +114,7 @@ void USBSerialUI::CommandCharDecode( char c )
           ConfigValue [5] = Cfg.Bits.hasTM1637    ;
           ConfigValue [6] = Cfg.Bits.hasButtonLEDMode ;
           ConfigValue [7] = Cfg.Bits.hasPageTurning;
-          ConfigValue [8] = Cfg.Bits.hasPB2PA13PA14Scan;
+          ConfigValue [8] = Cfg.Bits.hasWS2812LEDStrip;
           ConfigValue [9] = Cfg.Bits.hasEventLog  ; // K
           int i = 0;
           if ( c != ' ' ) {
@@ -140,7 +140,7 @@ void USBSerialUI::CommandCharDecode( char c )
             Cfg.Bits.hasTM1637         = ConfigValue [5];
             Cfg.Bits.hasButtonLEDMode  = ConfigValue [6];
             Cfg.Bits.hasPageTurning    = ConfigValue [7];
-            Cfg.Bits.hasPB2PA13PA14Scan= ConfigValue [8]; // I
+            Cfg.Bits.hasWS2812LEDStrip = ConfigValue [8]; // I
             Cfg.Bits.hasEventLog       = ConfigValue [9]; // J
           }
           DisplayFunctionPinOut();
@@ -196,10 +196,10 @@ void USBSerialUI::CommandCharDecode( char c )
       case 'v' :
         {
           char buff[80];
-          int i = strlen(__FILE__);
-          while ( --i ) {
-            if ( __FILE__[i - 1] == '/' ) break; // strip lengthy file path
-          }
+          //int i = strlen(__FILE__);
+          //while ( --i ) {
+          //  if ( __FILE__[i - 1] == '/' ) break; // strip lengthy file path
+          //}
           sprintf ( buff , "%s %s %s\r\n","V1.0.0" , __DATE__, __TIME__);
           CompositeSerial.write(buff);
         }
@@ -332,7 +332,7 @@ void USBSerialUI::DisplayConfigurationMenu() {
   ConfigValue [5] = Cfg.Bits.hasTM1637    ;
   ConfigValue [6] = Cfg.Bits.hasButtonLEDMode ;
   ConfigValue [7] = Cfg.Bits.hasPageTurning;
-  ConfigValue [8] = Cfg.Bits.hasPB2PA13PA14Scan;
+  ConfigValue [8] = Cfg.Bits.hasWS2812LEDStrip;
   ConfigValue [9] = Cfg.Bits.hasEventLog  ; // K
 
   DisplayTitle("Configuration Menu");
@@ -530,7 +530,7 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
           newCfgs[gpio_index].function = IO_HID;
       break;
       case SWDIO :
-        if ( Cfg.Bits.hasPB2PA13PA14Scan ) {
+        if ( Cfg.Bits.hasWS2812LEDStrip ) {
           newCfgs[gpio_index].function = IO_WS2812;
         }
         break;

@@ -1,9 +1,7 @@
 Done ✓
   Investigate HID bootloader
   Investigate compiling for load without bootloader step
-  Move all print features to objects that own them
   Extend configuration beyond 16 bits for volatile controls eg logging, scope monitor
-  Add scope monitor pin to profile PA13 or PA14
   Clean up commented out code
 
   Simple multi display example
@@ -11,55 +9,24 @@ Done ✓
 
   Update Readme / User Manual
   Check all menus & print screens are up to date
-   Add to UserManual
-    G [✓] 74HC164 Button LED Normal/Invert,  Backlight On/Off, 
-    Explain real time & timing in user manual
   
   Build with makefile?
   Enhancement - Chord display
   Kicad All Schematic
+  
+  
+  
 
-0 Normal Button LEDs
-1 Normal Button LEDs with backlight
-2 Inverted Button LEDs
-3 Inverted Button LEDs with backlight
 
-STM32 Blue Pill Assigned Pin Functions
-Spare         PB12   USB   GND    
-Scan In  0    PB13         GND    
-Scan In  1    PB14         3V3    
-Scan In  2    PB15         NRST   
-Scan In  3    PA_8         PB11   OP_SR_CLOCK
-Scan In  4    PA_9         PB10   TM1637_CK
-Scan In  5    PA10         PB_1   Scan In  8
-USB-          PA11         PB_0   IP_ADC  6
-USB+          PA12         PA_7   Scan In  a
-Scan In  6    PA15         PA_6   IP_ADC  4
-Scan In  7    PB_3         PA_5   Scan In  c
-Scan Out 4    PB_4         PA_4   IP_ADC  2
-Scan Out 5    PB_5         PA_3   Scan In  e
-Spare         PB_6         PA_2   IP_ADC  0
-Spare         PB_7         PA_1   Scan Out 3
-Scan Out 6    PB_8         PA_0   Scan Out 2
-Scan Out 7    PB_9         PC15   Scan Out 1
-               +5V         PC14   Scan Out 0
-               GND         PC13   OP_LED
-               3V3 | | | | VBAT   
-                   | | | |
-SWDIO         PA13---+ +---PA14   SWCLK
-BOOT1         PB_2 (on Jumper via 100K resistor)
+    x86_64 for intel 64-bit OS
+    armhf for arm 32-bit OS
+    aarch64 for arm 64-bit OS
+rpm: Centos,fedora, redhat,oracle, opensuse
 
-Configuration Menu
-A [3] Key/Pedal Midi Channel, Button channel=9
-B [ ] Pedalboard
-C [4]   Number of ADC Inputs PA2-PB1
-D [ ] Keyboard/Pedalboard Velocity Reporting
-E [ ] PCF8574 I2C LCDs 16x2
-F [ ] TM1637 7 segment, 6 digit display
-G [ ] 74HC164 Button LED backlight enabled
-H [ ] 74HC164 Button LED inverted
-I [ ] Use Debug Connector for WS2812 RGB LEDs PA13,PA14
-J [ ] Event Log to USB Serial (may slow response time)
-Cfg.Word=0000
-Enter A-L,a-l To adjust cfg value, S to Save, ? - Menu:
+debian
+debian9
+
+    amd64 for intel 64-bit OS
+    armhf for arm 32-bit OS
+    arm64 for arm 64-bit OS
 

@@ -149,9 +149,9 @@ void ButtonScan::Scan(void) {
           midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
           SUI.monitorNoteOn   ( midi_channel, midi_note, midi_velocity, SUI.DEV_BUTTON  );
           SUI.RequestDisplayUpdate();
-          if ( midi_note==0 )
-            if ( SUI.Cfg.Bits.hasPB2PA13PA14Scan )
-               ws2812Ctrl.service( LED_STRIP_BUTTON_ON ); 
+          //if ( midi_note==0 )
+          //  if ( SUI.Cfg.Bits.hasWS2812LEDStrip )
+          //     ws2812Ctrl.service( LED_STRIP_BUTTON_ON ); 
         } else {
           ShiftRegImage[ sr_input_list[j] ].Input = 2; // Flag is active
 //          unsigned long elapsed_time_us = time_now - ShiftRegImage[ sr_input_list[j] ].Time;
@@ -192,7 +192,7 @@ void ButtonScan::Scan(void) {
           SUI.monitorNoteOff   ( midi_channel, midi_note, midi_velocity, SUI.DEV_BUTTON  );
           SUI.RequestDisplayUpdate();
           if ( midi_note==0 )
-            if ( SUI.Cfg.Bits.hasPB2PA13PA14Scan )
+            if ( SUI.Cfg.Bits.hasWS2812LEDStrip )
               ws2812Ctrl.service( LED_STRIP_BUTTON_OFF ); 
         }
       }

@@ -45,9 +45,9 @@ typedef struct
 #define DWT                 ((DWT_Type       *)     DWT_BASE      )   /*!< DWT configuration struct           */
 #define DWT_CTRL_CYCCNTENA_Pos              0                                          /*!< DWT CTRL: CYCCNTENA Position */
 #define DWT_CTRL_CYCCNTENA_Msk             (0x1UL << DWT_CTRL_CYCCNTENA_Pos)           /*!< DWT CTRL: CYCCNTENA Mask */
-#define GPIOA 0x40010800
-#define GPIOB 0x40010C00
-#define GPIOC 0x40011000
+#define GPIOA_ADDR 0x40010800
+#define GPIOB_ADDR 0x40010C00
+#define GPIOC_ADDR 0x40011000
 // stm32 macros
 #define cli() nvic_globalirq_disable()
 #define sei() nvic_globalirq_enable()

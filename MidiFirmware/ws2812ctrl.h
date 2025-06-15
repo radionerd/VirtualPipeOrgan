@@ -32,7 +32,7 @@ const int LED_STRIP_SERVICE = 2;
     // 65 max pixels without disrupting micros() figures
     static const int NUM_PIXELS = 120;       //   number of pixels in the string max 65 for all timer interrupts
     pixel led_strip[NUM_PIXELS];      //   rgb data buffer
-    const int led_strip_port = GPIOA; // port string is connected to
+    const int led_strip_port = GPIOA_ADDR; // port string is connected to
     const int led_strip_pin = 13;     // gpio pin string is connected to
     void attenuate(pixel *p, uint8_t factor);
     int getEnabled(void);

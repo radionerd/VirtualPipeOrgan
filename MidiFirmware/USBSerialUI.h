@@ -121,7 +121,7 @@ class USBSerialUI {
         unsigned hasTM1637 : 1;         // F 11
         unsigned hasButtonLEDMode: 3;   // G 13
         unsigned hasPageTurning:1;      // H 14
-        unsigned hasPB2PA13PA14Scan: 1; // I 15
+        unsigned hasWS2812LEDStrip: 1;  // I 15
         unsigned hasEventLog: 1;        // J 16
       } Bits;
     } Config;

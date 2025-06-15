@@ -22,7 +22,7 @@ The user manual assumes that you have programed the flash in the STM32 Bluepill 
 
 ## The USB Connection
 
-To discover whether the midi interface is successfully connected to the computer type 'lsusb' at the command prompt. The midi interfaces and the configured midi channel numbers for keyboard/pedalboard, and the illuminated buttons should show up in the response.
+To discover whether the midi interface is successfully connected to the computer type 'lsusb' at the command prompt. The midi interfaces and the configured midi channel numbers for keyboard/pedalboard, and the illuminated buttons should show up in the response. e.g:
 ```
 $ lsusb
    ...
@@ -46,14 +46,14 @@ e.g. If the pedalboard midi channel is set to 4, then the Button midi channel wi
 | Expression |1-8 | Midi CC   20-27 | To   Comp |
 | Buttons    |9-16| Midi Note 0-127 | To   Comp |
 | Button LEDs|9-16| Midi Note 0-127 | From Comp |
-| LED 7Seg   |N/A | Sysex ID as Chan| From Comp |
+| LED 7Seg   |N/A | SysexID as KChan| From Comp |
 | LCD Display|N/A | Midi Sysex 32-63| From Comp |
 
 ID addresses are shown on the LCD and 7 Segment LED displays after power up.
 
 ### Power Up
 
-At power up the midi interface loads the 7 Segment display, LCDs and LED push buttons with the 'PC Comms' message and lights the Push Button LEDs until PC communication is established over the USB. Then Displays are loaded to show their configured addresses. The 7 Segment Display configured address is the same as the Midi channel number. 
+At power up the midi interface loads the 7 Segment display, LCDs with the 'PC Comms' message and lights the Push Button LEDs until PC communication is established over the USB. Then the displays are loaded to show their configured addresses. The 7 Segment Display configured address is the same as the Midi channel number. 
 
 |  State   | 7Seg Text  |   LCD Text     | LED Push Buttons  |Built In LED  |
 |:--------:|:----------:|:--------------:|:-----------------:|:------------:|
@@ -71,32 +71,7 @@ Until GranOrgue is running push button LEDs illuminate when pressed as a button 
 
 Once GrandOrgue is running the push button LEDs may be loaded by GrandOrgue midi note on or midi note off messages, the value field 0-127 is ignored.
 
-## Liquid Crystal Displays
-
-The LCDs use PCF8574 based I2C to parallel adapters.
-
-The PCF8574 and PCF8574A ICs on LCD displays use two different address ranges.
-
-Unless you need more than 8 displays it does not matter which kind you buy or whether they are mixed.
-
-The ID adddresses configured in GrandOrgue are Base 10.
-
-|  PCF8574   | Grandorgue | PCF8574A | Grandorgue | A2| A1| A0|
-|:----------:|:----------:|:--------:|:----------:|:-:|:-:|:-:|
-| 0x20       |      32    |   0x38   |      56    | 0 | 0 | 0 |
-| 0x21       |      33    |   0x39   |      57    | 0 | 0 | 1 |
-| 0x22       |      34    |   0x3a   |      58    | 0 | 1 | 0 |
-| 0x23       |      35    |   0x3b   |      59    | 0 | 1 | 1 |
-| 0x24       |      36    |   0x3c   |      60    | 1 | 0 | 0 |
-| 0x25       |      37    |   0x3d   |      61    | 1 | 0 | 1 |
-| 0x26       |      38    |   0x3e   |      62    | 1 | 1 | 0 |
-| 0x27       |      39    |   0x3f   |      63    | 1 | 1 | 1 |
-
-*User solder bridges A0-A2 are used to program zeros and are binary coded. So the default address without any solder bridges is is either 0x27 (39) or 0x3F (63).
-
-The content of the LCD messages may be viewed with the 'l" command, and LCDs may be loaded with the 'L' command.
-
-# Monitoring Midi Messages
+# Monitoring Midi Messages on the PC
 Use 'midisnoop' to monitor messages sent between the keyboard/pedalboard and the computer. Select Alsa unless you have Jack configured.
 ```
 $ midisnoop &
@@ -145,18 +120,18 @@ Configure what you require using the A-J keys, then press 'S' to save.
 STM32 Blue Pill Assigned Pin Functions
 IP_SR_DATA    PB12   USB   GND    
 Scan In  0    PB13         GND    
-Scan In  1    PB14         3V3    
+Spare         PB14         3V3    
 Scan In  2    PB15         NRST   
-Scan In  3    PA_8         PB11   OP_SR_CLOCK
+Spare         PA_8         PB11   OP_SR_CLOCK
 Scan In  4    PA_9         PB10   TM1637_CK
-Scan In  5    PA10         PB_1   Scan In  8
-USB-          PA11         PB_0   Scan In  9
+Spare         PA10         PB_1   Scan In  8
+USB-          PA11         PB_0   IP_ADC  6
 USB+          PA12         PA_7   Scan In  a
-Scan In  6    PA15         PA_6   Scan In  b
-Scan In  7    PB_3         PA_5   Scan In  c
-Scan Out 4    PB_4         PA_4   Scan In  d
+Scan In  6    PA15         PA_6   IP_ADC  4
+Spare         PB_3         PA_5   Scan In  c
+Scan Out 4    PB_4         PA_4   IP_ADC  2
 Scan Out 5    PB_5         PA_3   Scan In  e
-LCD  I2C_SCL  PB_6         PA_2   Scan In  f
+LCD  I2C_SCL  PB_6         PA_2   IP_ADC  0
 ShareI2C_SDA  PB_7         PA_1   Scan Out 3
 Scan Out 6    PB_8         PA_0   Scan Out 2
 Scan Out 7    PB_9         PC15   Scan Out 1
@@ -164,21 +139,21 @@ Scan Out 7    PB_9         PC15   Scan Out 1
                GND         PC13   OP_LED
                3V3 | | | | VBAT   
                    | | | |
-SWDIO         PA13---+ +---PA14   SWCLK
+WS2812 LEDs   PA13---+ +---PA14   HID PageTurn
 BOOT1         PB_2 (on Jumper via 100K resistor)
 
 Configuration Menu
-A [3] Key/Pedal Midi Channel, Button channel=11
-B [ ] Pedalboard & Expression Pedals (ADC inputs)
-C [0]   Number of ADC Inputs PA2-PB1
-D [✓] Keyboard Velocity Reporting
-E [✓] PCF8574 I2C LCDs 16x2
+A [3] Key/Pedal Midi Channel=3, Button channel=11
+B [ ] Pedalboard
+C [4] Number of ADC Inputs PA2-PB1
+D [ ] Keyboard/Pedalboard Velocity Reporting
+E [✓] PCF8574 I2C LCDs 16x2 Line
 F [✓] TM1637 7 segment, 6 digit display
-G [✓] 74HC164 Shift register LED buttons
-H [✓] 74HC164 Shift register LED invert
-I [ ] Use Debug Connector for WS2812 RGB LEDs PA13,PA14
+G [1] 74HC164 Button LED Normal+Backlight
+H [✓] Page Turning
+I [✓] WS2812 RGB LED Strip
 J [ ] Event Log to USB Serial (may slow response time)
-Cfg.Word=3E02
+Cfg.Word=CE42
 Enter A-L,a-l To adjust cfg value, S to Save, ? - Menu:
 ```
 The event log is useful to monitor midi messages being sent to the computer. However
@@ -187,18 +162,37 @@ using the event log may slow down performance and so should not be enabled durin
 To monitor activity on attached devices type '?' to view the hardware interface menu.
 ```
 Midi Interface Menu
-A-J Adjust config value
+@ - or spacebar to View Configuration
+A-J Adjust configuration value
 K - Keyboard Contacts
-L - LCD check
+L - LCD 'l'=view, 'L'=load
 M - Flash memory summary
 O - Shift Register IO
 P - Profile
+R - Restore Configuration
 S - Save New Configuration
 T - Test IO Pins
-R - Restore Configuration
+U - USB HID Page Turn Input
 V - Version Info
+W - WS2812 LED Strip
+X - eXpression Pedal / ADC results
 Z - Pin Status
 ```
+Single letter commands are used to configure the midi interface and to view the status of connected hardware. The the configuration has been changed the 'S' Save command should be used to store the new configuration in Flash memory.
+
+### Midi Channel Selection
+
+The 'A' command is used to select select the MIDI keyboard channel 1-8 and the corresponding LED Button channel offset by 8.
+
+### Keyboard or Pedalboard
+
+The MAudio Keystation 61 note keyboard connectors are accomodated directly on the PCBs.
+The keyboard provides two contacts per note for velocity sensing between the time that the first and second contact operates or releases.
+When Velocity sensing is not required, four unused inputs become available for ADC/Expression inputs if required.
+When pedalboard operation is selected the same keyboard note assignments are used, so the MAudio Keystation may be used to emulate a pedalboard for testing.
+
+The 'B' command toggles  between Keyboard or Pedboard configuration. The 'D' command enables/disables velocity sensing.
+
 ### 'K' Keyboard scan result.
 The MAudio Keystation 61 Mk3 music keyboard has two contacts per key to sense velocity. Keyboard scanning uses 8 outputs and 16 inputs. When pedalboard is selected the top 8 keyboard input lines are re-assigned to be used as expression pedal (ADC) inputs. The pedalboard scans 32 contacts using 8 outputs and 8 inputs. Alternate inputs are unused when there is no velocity sensing.
 ```
@@ -215,10 +209,49 @@ Keyboard Scan Result Midi Channel 3
 ........******** IP *=CN13 input pins 5-6,7=nc,8-13
 ********........ IP *=CN14 input pins 5-12
 ```
+When the keyboard contacts are operating correctly use the 'J' command to check the midi messages being sent to the PC.
 
-### 'L' LCD Check
+## Liquid Crystal Displays
 
--  I2C Display addresses are configured by PCF8574 solder bridge inputs on the LCD modules, these addresses are then configured in Grandorgue and map through the blue pill. Expect address 0x38-0x3f for Philips/NXP ICs and 0x20-0x27 for TI. The highest address is used when no solder bridges are fitted. Note that Grandorgue specifies the addresses in Base10.
+The LCDs use PCF8574 based I2C to parallel adapters.
+
+<img src="LCD1602.avif" style="height: 220px; width:220px;"/>
+
+The PCF8574 and PCF8574A ICs on LCD displays use two different address ranges.
+
+Unless you need more than 8 displays it does not matter which kind you buy or whether they are mixed.
+
+|  PCF8574   | Grandorgue | PCF8574A | Grandorgue | A2| A1| A0|
+|:----------:|:----------:|:--------:|:----------:|:-:|:-:|:-:|
+| 0x20       |      32    |   0x38   |      56    | 0 | 0 | 0 |
+| 0x21       |      33    |   0x39   |      57    | 0 | 0 | 1 |
+| 0x22       |      34    |   0x3a   |      58    | 0 | 1 | 0 |
+| 0x23       |      35    |   0x3b   |      59    | 0 | 1 | 1 |
+| 0x24       |      36    |   0x3c   |      60    | 1 | 0 | 0 |
+| 0x25       |      37    |   0x3d   |      61    | 1 | 0 | 1 |
+| 0x26       |      38    |   0x3e   |      62    | 1 | 1 | 0 |
+| 0x27       |      39    |   0x3f   |      63    | 1 | 1 | 1 |
+
+The ID adddresses configured in GrandOrgue are Base 10.
+
+- User solder bridges A0-A2 are used to program zeros and are binary coded. So the default address without any solder bridges is is either 0x27 (39) or 0x3F (63).
+
+The content of the LCD messages may be viewed with the 'l" command, and LCDs may be loaded with the 'L' command.
+
+## Seven Segment, Six Digit LED Display
+
+<img src="TM1637SixDigit7Segment.avif" style="height: 220px; width:220px;"/>
+
+The 'l' Command also displays the status of the Seven Segment TM1637 LED display.
+
+```
+LCD Display List                                                                
+Dec  Hex Text                                                                   
+ 03 0x03 [Add=3 ][]                                                             
+ 37 0x25 [VirtualPipeOrgan][i2cAddr=37  0x25]                                   
+ 62 0x3E [VirtualPipeOrgan][i2cAddr=62  0x3E]                                   
+ 63 0x3F [VirtualPipeOrgan][i2cAddr=63  0x3F]                                   
+```
 
 ### 'M' Flash Memory Summary
 Not really a user feature.  Provided for testing the 'S'ave command.
@@ -243,11 +276,11 @@ When the Midi interface powers up all LEDs light briefly as a lamp test feature.
 
 Until the Midi Interface connects to GrandOrgue each button will illuminate when pressed for testing the button and LED operation.
 
-Once GrandOrgue is running the push button LEDs may be loaded by GrandOrgue midi note on or midi note off messages, the value field 0-127 is ignored.
+Once GrandOrgue is running the push button LEDs may be loaded by GrandOrgue 'Midi note on' or 'Midi note off' messages, the value field 0-127 is ignored.
 
-Buttons generate midi note messages on the configured midi channel plus 8.
+Buttons generate midi note messages on the configured keyboard midi channel plus 8.
 
-The first button (00) in the series acts as a shift key. When button 00 is held in, any other button pressed generates is midi note +64. The shift feature may be used to save console buttons. For example a '+1' button may be configured to act as '-1' when shift is pressed.
+The first button (00) in the series acts as a shift key. When button 00 is held in, any other button pressed generates its midi note +64. The shift feature may be used to economise on the number of console buttons. For example a '+1' button may be configured to act as '-1' when shift is pressed.
 
 When a button is held for longer than 4 seconds its midi note is set to auto repeat at 0.5 second intevals. Auto repeat may be useful for adjusting the metronome tempo.
 
@@ -267,12 +300,79 @@ i = input on, o = output on
 ```
 The power 'ON' indicator of the GrandOrgue 'Master Controls' panel may be configured with a mouse right click to send the power on status the the shift button (Midi-note 0) LED. In this way it can be seen at a glance when the organ is ready to play.
 
-###Keyboard and Pedalboards
+### Profile
 
-The MAudio Keystation 61 note keyboard connectors are accomodated directly on the PCBs.
-The keyboard provides two contacts per note for velocity sensing between the time that the first and second contact operates or releases.
-When Velocity sensing is not required, four unused inputs become available for ADC/Expression inputs if required.
-When pedalboard operation is selected the same pin assignments are used, so the MAudio Keystation may be used to emulate a pedalboard.
+The 'P' command displays the execution times in microseconds of different features in use. This is a development feature to ensure that the system is always responsive with no excessive time delays. Lower case 'p' displays executions times, upper case 'P' clears the recorded times to zero.
+```
+Times in microseconds
+
+   Count Interval AvgTime MaxTime  Feature
+  344903     1001      59     116  Music Keyboard
+   34491    10000       2    7645  SerialUI
+   34490    10000       3       9  ADC
+   34490     9999     541     624  Buttons
+   34490    10002       6       8  HID PageTurn
+   34490    10000       3    5014  Midi Poll
+   34490    10000       5    1698  WS2812 LED Strip
+      15     9594      87    4511  Sysex
+       1  9999999    1369    1369  Midi Out to SysEx In
+  344902      999      63    7711  Loop
+       8  9999999    2032    2083  This Print
+       0        0       0       0  Spare
+```
+It seems as though execution times are longer when GrandOrgue is not connected.
+
+The profile feature was used in conjunction with an oscillscope to reduce execution times by :
+
+- Coding direct GPIO access in lieu of Arduino GPIO ( making the firmware much less portable )
+- Keyboard and Button scanning using STM32 Bit-Banding
+- Active pull down of keyboard scan lines ( briefly driving active inputs low rather than using pull down resistors )
+- Sending only changes to LCD displays ( the largest saving of all 40+ms to sub millisecond in some cases )
+
+Execution times for WS2812 LED strips are incorrect, as one timer interrupt is missed during loading.
+
+### Test GPIO Pins
+
+the 'T' command provides a simple check that each GPIO pin may be briefly driven high and low and read back correctly. It can by handy to isolate faulty boards.
+
+### Page Turning
+
+The page turning feature is intended to control the display of music shown on the computer monitor using a pdf file viewer such as Evince.
+
+The page turning feature uses the USB Human Interface Device (HID) protocol and appears to the PC as a keyboard.
+
+The midi interface sends four QWERTY keyboard commands on the USB cable from a single switch depending on how the switch is pressed. The midi interface simulates the pressing of keys, just as though they were entered on the computer keyboard. Page turning will be successful when the file viewer has focus and responds appropriately to the 'Page Up', 'Page Down', 'Home' and 'End' keys.
+
+eg To send 'Page down' one short press.
+eg To send 'Home' long press after single presses.
+eg To go back one page, two short presses.
+A single press followed by a long press will scroll through the entire document forwards.
+A double press followed by a long press will scroll through the entire document backwards.
+
+| Short Count | Short Press |  Long Press | Long Repeat |
+|:-----------:|:-----------:|:-----------:|:------------|
+|      1      |  Page Down  |  Ctrl+Home  |  Page Down  |
+|      2      |  Page Up    |  Ctrl+End   |  Page  Up   |
+
+On a good day single short and long presses should be sufficient to work through the music and go back to the beginning.
+
+An off the shelf sustain pedal may make a useful page turning switch.
+
+The page turning switch is attached between 0v and PA14 located on the Debug/Programming connector.
+
+Page turning is configured using the 'H' and 'S' commands, and its status viewed using the 'U' command.
+
+<mark> Note ! </mark> When using the Virtual Serial Port and minicom with the USB HID Page turn feature remember to move the PC window focus away from minicom to, for example, a pdf file viewer. Otherwise minicom will respond to the page control commands.
+
+Page Turning execution time is 20ms for Page Down, and 40ms for Page Up. So turning pages may very slightly delay keyboard notes.
+
+### Version Info
+
+The Version number and compilation date are reported with the 'V' command. e.g.
+
+```
+V0.9.1 Jun 15 2025 21:08:47
+```
 
 ### ADC & Expression Pedals
 
@@ -280,8 +380,8 @@ Up to 8 ADC inputs may be configured for Expression Pedals when the Pedalboard o
 
 Up to 4 ADC inputs may be configured for Expression Pedals when the Keyboard option is selected without velocity sensing.
 Select the number of ADC convertors to use using the 'C' command.
-Note. ADC inputs are connected to potentiometers wired between 0v and 3.3V with a 470R resistor connected to the wiper. 
-Enabling A->D conversion without any connected input may generate large amounts of meaningless midi CC messages slowing down the sysem.
+Note. ADC inputs are connected to potentiometers wired between 0v and 3.3V with a 470R resistor connected between the wiper and the Midi interface input pin. 
+Enabling A->D conversion without any connected input may generate large amounts of meaningless midi CC messages slowing down the system.
 
 On GrandOrgue right click on the expression pedal input. 
 
@@ -293,6 +393,16 @@ Click 'Detect Complex MIDI Setup', move the Expression Pedal control as directed
 Note: The midi interface generates CC messages in the range 20-27
 
 Click 'OK' and remember to save the organ settings
+
+Use the 'X' command to view the Expression pedal status. e.g.
+```
+Expression Pedal/ADC Results
+    ADC   AVG   REP MidiCh CCommand
+0  2592  2589    80     4    20
+2   161   155     4     4    22
+4   160   157     4     4    24
+6   150   157     4     4    26
+```
 
 ### WS2812 LED strip
 
@@ -308,12 +418,9 @@ The LED strip is controlled by pressing the lowest C# on the midi controller to 
 
 Strips up to 60 LEDs in length are supported. 
 
-### Profile
-The 'P' command displays the execution times in microsecionds of different feaures in use. This is a development feature to ensure that the system is always responsive with no excessive time delays. Lower case 'p' displays executions times, upper case 'P' clears the recorded times to zero.
-
 ### WS2812 LED Strip Control
 
-The LED Strip control is intended to be used for illuminatingthe music stand and pedalboard, or just for decoration.
+The LED Strip control is intended to be used for illuminating the music stand and pedalboard, or just for decoration.
 
 The WS22812 LED strip is configured (enabled/disabled) using the 'I' command. The status of the LED strip may be viewed with the 'W' command.
 
@@ -326,7 +433,8 @@ The LED strip is controlled using the lowest C# of the keyboard to which it is a
 | 3 - Unused | Saturation |
 
 ### 'Z' Pin Status
-This screen may be useful for viewing the 12 bit ADC results before filtering and conversion to 7 bit midi values.
+
+This screen is provided to view the internal pin assignements and may be useful for viewing the 12 bit ADC results before filtering and conversion to 7 bit midi values. e.g.:
 ```
 USB Midi Interface Status
 id  port   function     kbd  count input error fault
@@ -376,30 +484,10 @@ id  port   function     kbd  count input error fault
 
 ```
 
-### Page Turning
+### SignOff
 
-The page turning feature is intended to control the display of music shown on the computer monitor using a pdf file viewer such as Evince.
+Congratulations on having read this far.
+Let me know via github if you have suggestions for enhancements.
 
-The page turning feature uses the USB Human Interface Device (HID) protocol and appears to the PC as a keyboard.
-
-Page turning is configured using the 'H' and 'S' commands.
-
-The midi interface sends four QWERTY keyboard commands on the USB cable from a single switch depending on how the switch is pressed. The midi interface simulates the pressing of keys, just as though they were entered on the computer keyboard. Page turning will be successful when the file viewer has focus and responds appropriately to the 'Page Up', 'Page Down', 'Home' and 'End' keys.
-
-eg To send 'Page down' one short press.
-eg To send 'Home' long press after single presses.
-eg To go back one page, two short presses.
-A single press followed by a long press will scroll through the entire document forwards.
-A double press followed by a long press will scroll through the entire document backwards.
-
-| Short Count | Short Press |  Long Press | Long Repeat |
-|:-----------:|:-----------:|:-----------:|:------------|
-|      1      |  Page Down  |  Ctrl+Home  |  Page Down  |
-|      2      |  Page Up    |  Ctrl+End   |  Page  Up   |
-
-On a good day single short and long presses should be sufficient to work through the music and go back to the beginning.
-
-An off the shelf sustain pedal may make a useful page turning switch.
-
-The page turning switch is attached between 0v and PA14 located on the Debug/Programming connector.
-
+Richard Jones
+15th June 2025

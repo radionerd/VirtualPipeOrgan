@@ -83,6 +83,7 @@
                case 1 :
                  QKeyboard.press   ( KEY_PAGE_UP );
                  QKeyboard.release ( KEY_PAGE_UP );
+                 eventMonitor   ( short_count & 3 );
                  QKeyboard.press   ( KEY_PAGE_UP );
                  QKeyboard.release ( KEY_PAGE_UP );
                break;
