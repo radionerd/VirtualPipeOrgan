@@ -33,7 +33,7 @@ void myMidi::handleControlChange( unsigned int channel, unsigned int controller,
 }
 
 /*
-Hauptwerk LCD panel 2x18 text message format:
+Hauptwerk LCD panel 16x2 line text message format:
 Byte 1: 0xF0 – SyEx (system exclusive message start)
 Byte 2: 0x7D - manufacturer ID (Milan Digital Audio)
 Byte 3: 0x01 - message type code for Hauptwerk LCD output message
