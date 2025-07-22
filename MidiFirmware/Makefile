@@ -1,68 +1,80 @@
-### DISCLAIMER
-### This is an example Makefile and it MUST be configured to suit your needs.
-### For detailed explanations about all of the available options, please refer
-### to https://github.com/sudar/Arduino-Makefile/blob/master/arduino-mk-vars.md
+SHELL := bash
+.ONESHELL:
+.SHELLFLAGS := -eu -o pipefail -c
+.DELETE_ON_ERROR:
+MAKEFLAGS += --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules
 
-### How to setup a project using a board definition provided by the 3rd party
-### =========================================================================
+ifeq ($(origin .RECIPEPREFIX), undefined)
+  $(error This Make does not support .RECIPEPREFIX. Please use GNU Make 4.0 or later)
+endif
+.RECIPEPREFIX = >
 
-### Some vendors provide definitions/configuration of their boards separately,
-### as so-called addon packages. Originally, they are supposed to be used in
-### the Arduino IDE but they can be used with Arduino-Makefile as well:
+# Default - top level rule is what gets ran when you run just `make`
+build: out/image-id
+.PHONY: build
 
-### 1. get the package from the vendor
-###    if they provide .json file, look into it and take the URL of the package
-###       archive from there
-###
-### 2. extract the package into your ARDUINO_SKETCHBOOK directory
-###    you have to end with the directory structure like this, in your
-###    ARDUINO_SKETCHBOOK directory (sparkfun is the vendor name):
+# Clean up the output directories; since all the sentinel files go under tmp, this will cause everything to get rebuilt
+clean:
+> rm -rf tmp
+> rm -rf out
+.PHONY: clean
+CC=gcc
+CXX=g++
+RM=rm -f
+CPPFLAGS=-g $(shell root-config --cflags)
+LDFLAGS=-g $(shell root-config --ldflags)
+LDLIBS=$(shell root-config --libs)
 
-###        hardware/
-###        ├── sparkfun/
-###        │   └── avr/
-###        │       ├── boards.txt
-###        │       ├── bootloaders/
-###        │       ├── driver/
-###        │       ├── platform.txt
-###        │       ├── signed_driver/
-###        │       └── variants/
+SRCS=adc.cpp hid_pt.cpp multilcd.cpp TM1637.cpp bluepill_ws2812.cpp keyboardscan.cpp mymidi.cpp USBSerialUI.cpp buttonscan.cpp LiquidCrystal_PCF8574RJ.cpp profile.cpp   ws2812ctrl.cpp
 
-### 3. Create this Makefile (use your vendor/package name)
+OBJS=$(subst .cc,.o,$(SRCS))
 
-###        ALTERNATE_CORE      = sparkfun
-###        include $(HOME)/Arduino-Makefile/Arduino.mk
+all: tool
 
-### 4. run 'make show_boards'
-###    check that you can see (only) boards provided by this vendor
+tool: $(OBJS)
+>   $(CXX) $(LDFLAGS) -o tool $(OBJS) $(LDLIBS)
 
-### 5. select the name of your board
-###    and add a line "BOARD_TAG = ...." to your Makefile
+tool.o: tool.cc support.hh
 
-### 6. if your board has more cpu variants, run 'make show_submenu'
-###    to see them; select your one and add a line "BOARD_SUB = ...."
-###    to your Makefile
+support.o: support.hh support.cc
 
-#####
+clean:
+>   $(RM) $(OBJS)
 
-### The basic configuration should be done now.
-### The example follows:
-ARDUINO_DIR         = $(HOME)/Arduino
-ARDMK_DIR           = $(HOME)/Projects/Arduino-Makefile
-# AVR_TOOLS_DIR       = $(HOME)/.arduino15/packages/arduino/tools
-AVR_TOOLS_DIR       = $(HOME)/Downloads/arduino-1.8.19/hardware/tools/avr
-CMSIS_DIR           = $(HOME)/.arduino15/packages/per1234/hardware/sam/1.6.11-arm64/system/CMSIS
-ALTERNATE_CORE_PATH = $(HOME)/Arduino/hardware/Arduino_STM32/STM32F1
-# BOARDS_TXT          = $(HOME)/Arduino/hardware/Arduino_STM32/STM32F1/boards.txt
-ARDUINO_SKETCHBOOK  = $(HOME)/Projects/PedalBoard/Firmware/USBMidiHidPedalBoard
-ALTERNATE_CORE      = Arduino_STM32
-# ALTERNATE_CORE_PATH = $(HOME)/.arduino15/packages/arduino
-ALTERNATE_CORE_PATH = $(HOME)/Arduino/hardware/Arduino_STM32/STM32F1/cores/maple
-ALTERNATE_CORE_PATH_MAPLE = $(HOME)/Arduino/hardware/Arduino_STM32/STM32F1/cores/maple/libmaple
-ARDUINO_CORE_PATH   = $(HOME)/Arduino/hardware/Arduino_STM32/STM32F1/cores/maple
-BOARDS_TXT          = $(HOME)/Arduino/hardware/Arduino_STM32/STM32F1/boards.txt
-BOARD_TAG           = genericSTM32F103C
-BOARD_SUB	    = STM32F103C8   # 'STM32F103C8 (20k RAM. 64k Flash)'
-MCU                 = cortex-m3
-include $(ARDMK_DIR)/Sam.mk
+distclean: clean
+>   $(RM) tool
+# List of all .cpp source files.
+CPP = main.cpp $(wildcard dir1/*.cpp) $(wildcard dir2/*.cpp)
 
+# All .o files go to build dir.
+OBJ = $(CPP:%.cpp=$(BUILD_DIR)/%.o)
+# Gcc/Clang will create these .d files containing dependencies.
+DEP = $(OBJ:%.o=%.d)
+
+# Default target named after the binary.
+$(BIN) : $(BUILD_DIR)/$(BIN)
+
+# Actual target of the binary - depends on all .o files.
+$(BUILD_DIR)/$(BIN) : $(OBJ)
+    # Create build directories - same structure as sources.
+>   mkdir -p $(@D)
+    # Just link all the object files.
+>   $(CXX) $(CXX_FLAGS) $^ -o $@
+
+# Include all .d files
+-include $(DEP)
+
+# Build target for every single object file.
+# The potential dependency on header files is covered
+# by calling `-include $(DEP)`.
+$(BUILD_DIR)/%.o : %.cpp
+>   mkdir -p $(@D)
+    # The -MMD flags additionaly creates a .d file with
+    # the same name as the .o file.
+>   $(CXX) $(CXX_FLAGS) -MMD -c $< -o $@
+
+.PHONY : clean
+clean :
+    # This should remove all generated files.
+>   -rm $(BUILD_DIR)/$(BIN) $(OBJ) $(DEP)

@@ -205,7 +205,7 @@ void ButtonScan::Print(void) {
   char buff[80];
   
   CompositeSerial.write(ANSI_CLEAR);
-  sprintf(buff, "Shift Register Midi Channel %d Note Numbers", midi.getButtonChannel()+1 );
+  sprintf(buff, "Shift Register MIDI Channel %d Note Numbers", midi.getButtonChannel()+1 );
   SUI.DisplayTitle( buff );
   for ( int sr = 0 ; sr < NUM_SHIFT_REGS ; sr++ ) {
     sprintf(buff, "\r\nSR%2d  ", 1 + sr );

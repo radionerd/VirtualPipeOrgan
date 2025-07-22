@@ -15,6 +15,7 @@ const int NUM_KEYBOARD_INPUTS = 16;
 
 class KeyboardScan {
 private:
+  unsigned char note_on[129];
 uint32_t get_input(bool pedalboard, bool hasKeyVelocity );
 void activePulldown(bool pedalboard,bool hasKeyVelocity );
   // STM32F103 Cortex M3 Memory Mapped hardware register addresses Ref: RM0008-STM32F1... Sec3.3 P51

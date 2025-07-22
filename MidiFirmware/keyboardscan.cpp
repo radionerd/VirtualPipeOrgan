@@ -388,7 +388,7 @@ void KeyboardScan::Print( void ) {
  // };
   int note_id=-1;
   //CompositeSerial.write(VT100_CLEAR);
-  sprintf(buf, "Keyboard Scan Result Midi Channel %d\r\n", midi.getKeyboardChannel()+1 );
+  sprintf(buf, "Keyboard Scan Result MIDI Channel %d\r\n", midi.getKeyboardChannel()+1 );
   SUI.DisplayTitle( buf );
 
   for ( int i = 0 ; i < NUM_KEYBOARD_OUTPUTS ; i++ ) {
@@ -460,15 +460,25 @@ void KeyboardScan::MusicKeyboardScan( bool pedalboard ) {
                 if ( ( j & 1 ) == 0 ) { // lower contact?
                   led.on();
                   on_off = 1;
-                  midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
-                  SUI.monitorNoteOn   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
+                  // Ardour with fluidsynth expects on and off counts to agree
+                  // Different behaviours are found for different manufacturers partial key activation
+                  // Kawai ES920 sends n note off messages after n note on messages
+                  // M-AudioKS61Mk3 ignores repeated on 
+                  if ( ! note_on[midi_note] ) { // suppress repeat on messages
+                    note_on[midi_note]++;
+                    midi.sendNoteOn ( midi_channel, midi_note, midi_velocity );
+                    SUI.monitorNoteOn   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
+                  }
                 }
               } else { // contact just opened
                 if ( j & 1 ) { // upper contact?
                   led.off();
                   on_off = 0;
-                  midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
-                  SUI.monitorNoteOff   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
+                  if ( note_on[midi_note] ) { // suppress repeat note off messages
+                    note_on[midi_note] = 0;
+                    midi.sendNoteOff ( midi_channel, midi_note, midi_velocity );
+                    SUI.monitorNoteOff   ( midi_channel, midi_note, midi_velocity, SUI.DEV_KEYBOARD  );
+                  }
                 }
               }
             } else {

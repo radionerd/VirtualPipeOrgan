@@ -45,7 +45,7 @@ extern myMidi midi;
             SUI.RequestDisplayUpdate();
             if ( SUI.Cfg.Bits.hasEventLog ) {
                 char buff[110];
-                sprintf(buff,"%10luus MidiControl Ch=%-2d  Cont=%d  Val=%d ADC\r\n",micros(),midi_channel+1,cc_command_number, new_result );
+                sprintf(buff,"%10luus MIDIControl Ch=%-2d  Cont=%d  Val=%d ADC\r\n",micros(),midi_channel+1,cc_command_number, new_result );
                 CompositeSerial.write(buff);
             }
           }
@@ -77,7 +77,7 @@ void ADC::Print(void) {
    
    //CompositeSerial.write(VT100_CLEAR);  
    CompositeSerial.write(ANSI_CLEAR);
-   sprintf(buff,"%sExpression Pedal/ADC Results\r\n    ADC   AVG   REP MidiCh CCommand\r\n",ANSI_CURSOR_00);
+   sprintf(buff,"%sExpression Pedal/ADC Results\r\n    ADC   AVG   REP MIDICh CCommand\r\n",ANSI_CURSOR_00);
    //SUI.DisplayTitle(buff);
    CompositeSerial.write(buff);   
    for ( int gpioId = MIN_ADC_GPIOID ; gpioId <= MAX_ADC_GPIOID ; gpioId++ ) {

@@ -41,7 +41,7 @@ class USBSerialUI {
    
 
     ConfigItem const ConfigItems[11] = {
-      { MAX_8, (const char *)"Key/Pedal Midi Channel"},  // A
+      { MAX_8, (const char *)"Key/Pedal MIDI Channel"},  // A
       { MAX_1, (const char *)"Pedalboard"} ,//B
       { MAX_8, (const char *)"Number of ADC Inputs PA2-PB1"}, // C
       { MAX_1, (const char *)"Keyboard/Pedalboard Velocity Reporting"} ,//D     

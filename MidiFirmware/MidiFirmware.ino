@@ -39,23 +39,15 @@ PROFILE profile;
 HID_PT hid_pt(PA14);
 WS2812Ctrl ws2812Ctrl;
 
-const char *VPOConsoleMsg[16]= {
-  "VPO Console Midi Ch1, 9",
-  "VPO Console Midi Ch2, 10",
-  "VPO Console Midi Ch3, 11",
-  "VPO Console Midi Ch4, 12",
-  "VPO Console Midi Ch5, 13",
-  "VPO Console Midi Ch6, 14",
-  "VPO Console Midi Ch7, 15",
-  "VPO Console Midi Ch8, 16",
-  "VPO Console Midi Ch9, 1",
-  "VPO Console Midi Ch10, 2",
-  "VPO Console Midi Ch11, 3",
-  "VPO Console Midi Ch12, 4",
-  "VPO Console Midi Ch13, 5",
-  "VPO Console Midi Ch14, 6",
-  "VPO Console Midi Ch15, 7",
-  "VPO Console Midi Ch16, 8",
+const char *VPOConsoleMsg[8]= {
+  "VPO Console MIDI Ch1, 9",
+  "VPO Console MIDI Ch2, 10",
+  "VPO Console MIDI Ch3, 11",
+  "VPO Console MIDI Ch4, 12",
+  "VPO Console MIDI Ch5, 13",
+  "VPO Console MIDI Ch6, 14",
+  "VPO Console MIDI Ch7, 15",
+  "VPO Console MIDI Ch8, 16",
 };
 
 void setup() {

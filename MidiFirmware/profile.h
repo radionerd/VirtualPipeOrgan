@@ -40,10 +40,10 @@ class PROFILE {
     (const char *)"ADC",
     (const char *)"Buttons",
     (const char *)"HID PageTurn",
-    (const char *)"Midi Poll",
+    (const char *)"MIDI Poll",
     (const char *)"WS2812 LED Strip",
     (const char *)"Sysex",
-    (const char *)"Midi Out to SysEx In",
+    (const char *)"MIDI Out to SysEx In",
     (const char *)"Loop", 
     (const char *)"This Print",
     (const char *)"Spare"

@@ -24,6 +24,7 @@ extern LED led; // or led(PC13); choose your own LED gpio pin
 extern MultiLCD mlcd;
 extern TM1637 SEG7; // 7 Segment display driver
 extern WS2812Ctrl ws2812Ctrl;
+extern void * __text_start__; // Declare the _start function
 
 USBSerialUI::USBSerialUI(void) {
   RestoreConfigFromFlash();
@@ -200,8 +201,14 @@ void USBSerialUI::CommandCharDecode( char c )
           //while ( --i ) {
           //  if ( __FILE__[i - 1] == '/' ) break; // strip lengthy file path
           //}
-          sprintf ( buff , "%s %s %s\r\n","V1.0.0" , __DATE__, __TIME__);
+          sprintf ( buff , "%s %s %s\r\n","V1.0.2" , __DATE__, __TIME__);
           CompositeSerial.write(buff);
+          unsigned int text_start_address =(unsigned int )&__text_start__;
+          sprintf(buff,"Start of text section: 0x%X\r\n\n", text_start_address);
+          CompositeSerial.write(buff);
+          CompositeSerial.println("0x8000000 Bootloader None");
+          CompositeSerial.println("0x8001000 Bootloader HID");
+          CompositeSerial.println("0x8002000 Bootloader STM32duino");
         }
         break;
       case 'w' :
@@ -282,7 +289,7 @@ void USBSerialUI::SaveConfigToFlash( char c ) {
       CompositeSerial.write("Same Value, not written\r\n");
     }
   } else {
-    sprintf( buff, "Midi Flash Signature Not Found\r\n" );
+    sprintf( buff, "MIDI Flash Signature Not Found\r\n" );
     CompositeSerial.write(buff);
   }
 }
@@ -541,7 +548,7 @@ void USBSerialUI::fillCfgPinData( unsigned ConfigWord, GPIOPinConfig * newCfgs )
 
 void USBSerialUI::DisplayMenu(void) {
   CompositeSerial.write(ANSI_CLEAR);
-  DisplayTitle("Midi Interface Menu" );
+  DisplayTitle("MIDI Interface Menu" );
   CompositeSerial.write("@ - or spacebar to View Configuration\r\n");
   CompositeSerial.write("A-J Adjust configuration value\r\n");
   CompositeSerial.write("K - Keyboard Contacts\r\n");
@@ -764,7 +771,7 @@ void USBSerialUI::DisplayStatus(void) {
   char buff[80];
   char function_text[21];
   CompositeSerial.write(ANSI_CLEAR);
-  DisplayTitle( (const char *) "USB Midi Interface Status" );
+  DisplayTitle( (const char *) "USB MIDI Interface Status" );
   sprintf(buff,"id  port   function     kbd  count input error fault\n\r");
   CompositeSerial.write(buff);
   for ( int pin_id = 0 ; pin_id < NUM_GPIO_PINS ; pin_id ++ ) {
@@ -795,7 +802,7 @@ void USBSerialUI::monitorNoteOn ( unsigned int channel, unsigned int note, unsig
     // C(60) == C4 is debateable but agrees with MidiSnoop
     unsigned int octave = ( note - OCTAVE ) / OCTAVE; // C(60) == C4 is debateable but agrees with MidiSnoop
     if ( note < OCTAVE ) octave=0;
-    sprintf(buff,"%10luus MidiNoteOn  Ch=%-2d  note=%-2d/%-2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],octave, velocity, device_names[device]);
+    sprintf(buff,"%10luus MIDINoteOn  Ch=%-2d  note=%-2d/%-2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],octave, velocity, device_names[device]);
     CompositeSerial.write(buff);
   }
   RequestDisplayUpdate();
@@ -810,7 +817,7 @@ void USBSerialUI::monitorNoteOff( unsigned int channel, unsigned int note, unsig
       device = DEV_PEDALBOARD;
     unsigned octave = ( note - OCTAVE ) / OCTAVE; // C(60) == C4 is debateable but agrees with MidiSnoop
     if ( note < OCTAVE ) octave=0;
-    sprintf(buff,"%10luus MidiNoteOff Ch=%-2d  note=%-2d/%-2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],octave,velocity,device_names[device]);
+    sprintf(buff,"%10luus MIDINoteOff Ch=%-2d  note=%-2d/%-2s%d vel=%-3d %s\r\n",micros(),channel+1,note,note_name[note%OCTAVE],octave,velocity,device_names[device]);
     CompositeSerial.write(buff);
   }
   RequestDisplayUpdate();

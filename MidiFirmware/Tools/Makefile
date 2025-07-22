@@ -1,6 +1,6 @@
 
 
-STFLASHOK := $(shell which st-flash 1>&2 2> /dev/null; echo $$?)
+STFLASHOK := $(shell which st-flash 1>/dev/null 2> /dev/null; echo $$?)
 ifneq ($(STFLASHOK),0)
     $(error "Path to st-flash not found. Consider installing st-tools by typing: 'sudo apt install st-tools'")
 endif
