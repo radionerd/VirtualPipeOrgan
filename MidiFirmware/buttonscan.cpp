@@ -82,33 +82,45 @@ uint32_t ButtonScan::ScanSR(uint32_t *sr_input_list,uint32_t*sr_outputs ) {
 		        sr_input_list[active_inputs++] = index; // record button number
 		      }
 	      }
-	      *PB11_BB = 1; // Early rising clock to allow propogation delay to/from far away shift registers        *PB11_BB = 1; // Early rising clock to allow propogation delay to/from far away shift registers
+	      *PB11_BB = 1; // Early rising clock to allow propogation delay to/from far away shift registers        
+	      *PB11_BB = 1; // Early rising clock to allow propogation delay to/from far away shift registers
 	    }
 	  }
-    // Experiment with backlighting for dark buttons
-    if ( SUI.Cfg.Bits.hasButtonLEDMode & SUI.BUTTON_LED_BACKLIT ) {
-      unsigned long time_now = micros();
-      *PB07_BB = 1; // Light all buttons for 500us
-      for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
+
+    if ( getLED( PWR_ON_INDEX ) == 0 ) { // Inhibit button LEDs when organ shutdown
+      *PB07_BB = 0;
+      pinMode(PB12,INPUT_PULLDOWN); // data in
+      pinMode(PB11,OUTPUT); // Clock
+      pinMode(PB7,OUTPUT); // Data out
+      ShiftRegN8ClockBB(NUM_SHIFT_REGS); // Set all shift reg outputs to 0 
+      *PB07_BB = 0;
+      *PB07_BB = 1;
+    } else {
+      // Experiment with backlighting for dark buttons
+      if ( SUI.Cfg.Bits.hasButtonLEDMode & SUI.BUTTON_LED_BACKLIT ) {
+        unsigned long time_now = micros();
+        *PB07_BB = 1; // Light all buttons for 500us
+        for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
+          *PB11_BB = 0;
+          *PB11_BB = 1;
+        }
+        while ( ( micros() - time_now ) < 500 );
+      }
+  	  // Load output LEDs
+      if ( SUI.Cfg.Bits.hasButtonLEDMode & SUI.BUTTON_LED_INVERT ) {
+  	   for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
+  	    *PB07_BB = sr_outputs[NUM_SHIFT_REG_OUTPUTS-index]^1;
+  	    *PB11_BB = 0;
+  	    *PB11_BB = 1;
+  	   }
+  	  } else {
+       for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
+        *PB07_BB = sr_outputs[NUM_SHIFT_REG_OUTPUTS-index]^0;
         *PB11_BB = 0;
         *PB11_BB = 1;
-      }
-      while ( ( micros() - time_now ) < 500 );
+       }
+  	  }
     }
-	  // Load output LEDs
-    if ( SUI.Cfg.Bits.hasButtonLEDMode & SUI.BUTTON_LED_INVERT ) {
-	   for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
-	    *PB07_BB = sr_outputs[NUM_SHIFT_REG_OUTPUTS-index]^1;
-	    *PB11_BB = 0;
-	    *PB11_BB = 1;
-	   }
-	  } else {
-     for ( int index = 1; index <= NUM_SHIFT_REG_OUTPUTS;index++) {
-      *PB07_BB = sr_outputs[NUM_SHIFT_REG_OUTPUTS-index]^0;
-      *PB11_BB = 0;
-      *PB11_BB = 1;
-     }
-	  }
 	  *PB07_BB = 1; // Tidy up for scope monitoring
 	  return active_inputs;
 }
@@ -222,9 +234,18 @@ void ButtonScan::Print(void) {
   CompositeSerial.write("\r\n\ni = input on, o = output on");
 }
 
-void ButtonScan::SetLED(int output, int value ) {
+void ButtonScan::setLED(int output, int value ) {
   if ( output < NUM_SHIFT_REG_OUTPUTS )
   {
     sr_outputs[output] = value;
+  }
+}
+
+int ButtonScan::getLED(int output ) {
+  if ( output < NUM_SHIFT_REG_OUTPUTS )
+  {
+    return sr_outputs[output];
+  } else {
+    return 0;
   }
 }

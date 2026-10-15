@@ -39,7 +39,8 @@ public:
   ButtonScan(void);
   void Scan(void);
 	uint32_t ScanSR( uint32_t *sr_input_list, uint32_t *sr_outputs );
-  void SetLED(int output, int value );
+  void setLED(int output, int value );
+  int  getLED(int output);
   void Print(void);
 };
 

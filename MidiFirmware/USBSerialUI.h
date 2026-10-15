@@ -21,7 +21,7 @@ const char ANSI_PAGE_UP[] = "98";
 const char ANSI_PAGE_DOWN[] = "99";
 const char ANSI_END[] = "100";
 
-
+const int PWR_ON_INDEX = 63; // Configured using power on indicator lamp in GrandOrgue Master Control with additional send events
 
 class USBSerialUI {
     unsigned long AppOnlineTime=0;

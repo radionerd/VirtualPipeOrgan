@@ -23,6 +23,7 @@ class MultiLCD {
   void Print( void ) ;
   void saveDisplayText( int lcd_address, char *buff);
   int Write(uint8_t lcd_address, char *buff ) ;
+  void setBacklight( int backlight );
 };
 
 #ifdef __cplusplus

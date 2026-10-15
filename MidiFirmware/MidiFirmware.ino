@@ -89,6 +89,7 @@ void setup() {
   mlcd.saveDisplayText( midi_display_channel,buf );
   mlcd.Begin((char *)""); // Display VPO & ADDr Info
   delay(2000); // for reliable CompositeSerial.write()
+  Button.setLED(PWR_ON_INDEX,TRUE);
 }
 
 

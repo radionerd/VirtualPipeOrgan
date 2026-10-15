@@ -3,6 +3,11 @@ Done ✓
   Investigate compiling for load without bootloader step
   Extend configuration beyond 16 bits for volatile controls eg logging, scope monitor
   Clean up commented out code
+  
+  Add Flash configured 16x2 line text overlays
+  Add standby feature to turn off LCD backlights & illuminated buttons
+  Fix some A-J commands showing odd characters RPi OS
+  Work around LCD displaying Bure_ instead of Burea
 
   Simple multi display example
   Submit lcd pull request if possible
@@ -13,20 +18,4 @@ Done ✓
   Build with makefile?
   Enhancement - Chord display
   Kicad All Schematic
-  
-  
-  
-
-
-    x86_64 for intel 64-bit OS
-    armhf for arm 32-bit OS
-    aarch64 for arm 64-bit OS
-rpm: Centos,fedora, redhat,oracle, opensuse
-
-debian
-debian9
-
-    amd64 for intel 64-bit OS
-    armhf for arm 32-bit OS
-    arm64 for arm 64-bit OS
 

@@ -61,20 +61,31 @@ void USBSerialUI::poll(void) {
     DisplayUpdate = 0 ;
   }
 }
-
 void USBSerialUI::handleNoteOn( unsigned int midi_channel, unsigned int midi_note, unsigned int midi_velocity ) {
   if ( midi_channel == midi.getButtonChannel() ) {
     led.on(); // Turn on LED briefly to indicate addressed USB input
     monitorNoteOn   ( midi_channel, midi_note, midi_velocity , DEV_LED );
-    Button.SetLED(midi_note,TRUE);
+    Button.setLED(midi_note,TRUE);
+    if ( midi_note == PWR_ON_INDEX ) {
+      mlcd.setBacklight(255);
+      if ( Cfg.Bits.hasEventLog) {
+        CompositeSerial.write("Displays and Button LEDs ON\r\n");
+      }
+    }
   }
   AppOnlineTime = micros();
 }
 void USBSerialUI::handleNoteOff( unsigned int midi_channel, unsigned int midi_note, unsigned int midi_velocity ) {
   if ( midi_channel == midi.getButtonChannel() ) {
-    led.off(); // Turn off LED briefly to indicate addressed USB input
+    led.off(); // Turn off PCB LED briefly to indicate addressed USB input
     monitorNoteOff   ( midi_channel, midi_note, midi_velocity, DEV_LED );
-    Button.SetLED(midi_note,FALSE);
+    Button.setLED(midi_note,FALSE);
+    if ( midi_note == PWR_ON_INDEX ) {
+      mlcd.setBacklight(FALSE);
+      if ( Cfg.Bits.hasEventLog) {
+        CompositeSerial.write("Displays and Button LEDs OFF\r\n");
+      }
+    }
   }
   AppOnlineTime = micros();
 }
@@ -362,9 +373,12 @@ void USBSerialUI::DisplayConfigurationMenu() {
       }
       sprintf ( valtext, "%d", dvalue );
     } else {
-      strncpy(valtext, "✓", 5);
+      // strncpy(valtext, "✓", 5); // Displays badly on RPiOS
       if ( ( ConfigValue[i] ) == 0 ) {
         valtext[0] = ' ' ; // '✓';
+        valtext[1] = 0 ;
+      } else {
+        valtext[0] = 'y' ; // '✓';
         valtext[1] = 0 ;
       }
     }

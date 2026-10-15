@@ -4,7 +4,8 @@
 #include "pin.h"
 #include "LiquidCrystal_PCF8574RJ.h"
 #include "USBSerialUI.h"
-
+#include "TM1637.h"
+extern TM1637 SEG7; // 7 Segment display driver
 
 LiquidCrystal_PCF8574 lcd(0x27);  // Address specified later
 
@@ -64,6 +65,11 @@ int MultiLCD::Write(uint8_t lcd_address, char *buffer )
         char line1[20];
         strncpy (line0,buffer,17);
         line0[16]=0;
+        if ( line0[3]=='e' ) {
+          if ( line0[4]=='_' ) {
+            line0[4] = 'a' | 0x80;
+          }
+        }
         strncpy (line1,buffer+16,17);
         line1[16]=0;
         // Write changes to lcd line 0
@@ -149,7 +155,47 @@ void MultiLCD::saveDisplayText( int lcd_address , char *text )
     return error;
   }
   
-  void MultiLCD::Print( void ) {
+  void MultiLCD::setBacklight( int backlight ) {
+    for ( int index=0 ; index < NUM_LCD*2 ; index++ ) {
+      if ( lcdData[index].dmesg[0] ) {
+        uint8_t i2cAddr = lcdData[index].i2cAddr;
+        if ( i2cAddr > 16) {
+          Wire.begin(1);
+          Wire.setClock(400000); // fast speed
+          Wire.beginTransmission(i2cAddr);
+          int error = Wire.endTransmission();
+          if ( error == 0 ) {
+            lcd.seti2cAddr( i2cAddr ); // Richard Jones extended library required
+            lcd.setBacklight(backlight);
+            //char buff[80];
+            //sprintf(buff,"MultiLCD[%02X]::setBacklight(%d)\r\n",i2cAddr,backlight);
+            //CompositeSerial.write(buff);
+          }           
+        } else {
+          if (!backlight)
+           SEG7.displayPChar( "      " );         
+        }
+      }
+    }
+  }
+
+  void MultiLCD::Test(void)
+{
+  char buff[80];
+
+  if ( I2cCheck() )
+    sprintf(buff,"I2C bus FAIL. %sNeeds 4k7 pullups?%s\r\n",ANSI_BLINK,ANSI_NO_BLINK );
+  else
+    sprintf(buff,"I2C Bus PASS\r\n");
+  CompositeSerial.write(buff);
+  static int test_count = 0;
+  sprintf(buff, "LCD Check %6dABCDEFGHIKLMNOPQR\r\n", test_count++);
+  CompositeSerial.write(buff);
+  buff[32]=0;
+  Begin(buff); // Scan i2c bus to discover any displays & write to them
+}
+
+void MultiLCD::Print( void ) {
     char buff[80];
     sprintf(buff,"LCD Display List\r\nDec  Hex Text\r\n");
     CompositeSerial.write(buff);
@@ -171,19 +217,3 @@ void MultiLCD::saveDisplayText( int lcd_address , char *text )
        CompositeSerial.write(buff);
     }
   }
-
-  void MultiLCD::Test(void)
-{
-  char buff[80];
-
-  if ( I2cCheck() )
-    sprintf(buff,"I2C bus FAIL. %sNeeds 4k7 pullups?%s\r\n",ANSI_BLINK,ANSI_NO_BLINK );
-  else
-    sprintf(buff,"I2C Bus PASS\r\n");
-  CompositeSerial.write(buff);
-  static int test_count = 0;
-  sprintf(buff, "LCD Check %6dABCDEFGHIKLMNOPQR\r\n", test_count++);
-  CompositeSerial.write(buff);
-  buff[32]=0;
-  Begin(buff); // Scan i2c bus to discover any displays & write to them
-}
